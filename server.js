@@ -7,7 +7,7 @@ const cookieSession = require('cookie-session');
 const { notFound, errorHandler } = require('./middlewares/errorHandling');
 const { log } = require('./middlewares/log');
 require('dotenv').config();
-const PORT = process.env.PORT || 3020;
+const PORT = process.env.PORT || 3021;
 const HOST = process.env.HOST || 'localhost';
 const app = express();
 DB_CONNECT();

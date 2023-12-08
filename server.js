@@ -24,7 +24,7 @@ app.use(cookieSession({
 }));
 
 app.use(cors({ origin: "*", credentials: true }));
-app.get('/', (req, res) => res.json({ message: 'Welcome to the goollooper' }));
+app.get('/', (req, res) => res.json({ message: 'Welcome to the storytime' }));
 
 app.use(log);
 new API(app).registerGroups();

@@ -26,5 +26,5 @@ jobs:
             git checkut dev
             git pull origin dev
             npm install
-            pm2 start server.js --name=apis-storytime 
+            pm2 restart apis-storytime 
             pm2 list

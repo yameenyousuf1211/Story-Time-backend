@@ -1,0 +1,30 @@
+name: Pull & Deploy
+on:
+  push:
+    branches: ["dev"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Deploy NodeJS App
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{secrets.SSH_HOST}}
+          key: ${{secrets.SSH_KEY}}
+          username: ${{secrets.SSH_USERNAME}}
+          script: |
+            cd /mnt/storytime
+            git checkut dev
+            git pull origin dev
+            npm install
+            pm2 start server.js --name=apis-storytime 
+            pm2 list

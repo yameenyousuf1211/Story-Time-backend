@@ -1,7 +1,6 @@
-'use strict';
-
 const { Schema, model } = require("mongoose");
 
+// error log schema
 const logSchema = new Schema({
     timestamp: { type: Date, default: Date.now },
     body: { type: String },
@@ -22,7 +21,7 @@ class ErrorHandling {
 
     static errorHandler(err, req, res, next) {
         const statusCode = err?.statusCode ? err?.statusCode : 500;
-        const error = new Error(err?.message || 'Internal Server Error');
+        const error = new Error(err?.message.replace(/\"/g, '') || 'Internal Server Error');
 
         const log = new LogModel({
             body: JSON.stringify(req.body),
@@ -41,6 +40,7 @@ class ErrorHandling {
 
         return res.status(statusCode).json({
             message: error?.message,
+            statusCode: statusCode,
             stack: error?.stack,
         });
     }

@@ -1,46 +1,47 @@
-'use strict';
-
 const { Schema, model } = require('mongoose');
-const { sign } = require('jsonwebtoken');
-const { ROLES, PARTNER_RELATIONS } = require('../utils/constants');
+const { ROLES } = require('../utils/constants');
 const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
-const { getMongooseAggregatePaginatedData } = require("../utils");
+const { getMongooseAggregatePaginatedData } = require('../utils');
 
+// user schema
 const userSchema = new Schema({
-    firstName: { type: String, required: true },
-    lastName: { type: String, default: null },
-    dob: { type: Date, required: true },
-    email: { type: String, unique: true, required: true, lowercase: true, trim: true },
-    password: { type: String, required: true, select: false },
-    location: {
-        type: { type: String, enum: ["Point"], default: "Point" },
-        coordinates: { type: [Number, Number] },
-    },
-    image: { type: String },
-    role: { type: String, default: 'user', enum: Object.values(ROLES) },
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    username: { type: String, default: "" },
+    countryCode: { type: String, default: null },   // regex like 'PK', 'US'
+    phoneCode: { type: String, default: null }, // phoneCode like +92
+    phoneNo: { type: String, default: null },
+    completePhone: { type: String, select: false },
+    email: { type: String, lowercase: true },
+    city: { type: String },
+    zipCode: { type: String },
+    state: { type: String },
+    password: { type: String, select: false },
+    fcmToken: { type: String, select: false },
     isActive: { type: Boolean, default: true },
-    fcmToken: { type: String },
-    refreshToken: { type: String, select: false },
-}, { timestamps: true });
+    isDeleted: { type: Boolean, default: false },
+    role: { type: String, default: ROLES.USER, enum: Object.values(ROLES) },
+}, { timestamps: true, versionKey: false });
 
-// register pagination plugin to user model
+// pagination plugins
 userSchema.plugin(mongoosePaginate);
 userSchema.plugin(aggregatePaginate);
 
+// compile model from schema
 const UserModel = model('User', userSchema);
 
 // create new user
 exports.createUser = (obj) => UserModel.create(obj);
 
 // find user by query
-exports.findUser = (query) => UserModel.findOne(query);
+exports.findUser = (query) => UserModel.findOne({ ...query, isDeleted: false });
 
 // update user
 exports.updateUser = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true });
 
 // get all users
-exports.getAllUsers = async ({ query, page, limit, responseKey = 'data' }) => {
+exports.getAllUsers = async ({ query, page, limit }) => {
     const { data, pagination } = await getMongooseAggregatePaginatedData({
         model: UserModel,
         query,
@@ -48,35 +49,11 @@ exports.getAllUsers = async ({ query, page, limit, responseKey = 'data' }) => {
         limit,
     });
 
-    return { [responseKey]: data, pagination };
-};
-
-// generate token
-exports.generateToken = (user) => {
-    const token = sign({
-        id: user._id,
-        email: user.email,
-        role: user.role,
-    }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-    return token;
-};
-
-// generate refresh token
-exports.generateRefreshToken = (user) => {
-    // Generate a refresh token
-    const refreshToken = sign({ id: user._id }, process.env.REFRESH_JWT_SECRET, {
-        expiresIn: process.env.REFRESH_JWT_EXPIRATION, // Set the expiration time for the refresh token
-    });
-
-    return refreshToken;
+    return { users: data, pagination };
 };
 
 // get FcmToken
 exports.getFcmToken = async (userId) => {
-    const { fcmToken } = await UserModel.findById(userId);
-    return fcmToken;
+    const user = await UserModel.findById(userId).select('fcmToken');
+    return user?.fcmToken;
 }
-
-// remove user ( HARD DELETE)
-exports.removeUser = (userId) => UserModel.findByIdAndDelete(userId);

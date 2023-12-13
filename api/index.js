@@ -1,10 +1,6 @@
-'use strict';
-
 const { Router } = require('express');
-
-const rootApi = require('./rootApi')
-// all API routing files import here like above
-
+const rootApi = require('./rootApi');
+const AuthAPI = require('./authApi');
 
 class API {
     constructor(app) {
@@ -15,7 +11,7 @@ class API {
 
     loadRouteGroups() {
         this.routeGroups.push(new rootApi());
-        // all routes register here like above
+        this.routeGroups.push(new AuthAPI());
     }
 
     setContentType(req, res, next) {

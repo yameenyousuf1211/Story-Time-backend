@@ -1,7 +1,5 @@
-'use strict';
-
 const { Router } = require('express')
-const { DefaultHandler } = require('../controller/rootController');
+const { DefaultHandler } = require('../controllers/rootController');
 
 class RootAPI {
     constructor() {

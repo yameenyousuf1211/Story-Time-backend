@@ -1,5 +1,3 @@
-'use strict';
-
 const { generateResponse } = require('../utils');
 
 exports.DefaultHandler = (req, res, next) => {

@@ -115,7 +115,9 @@ const generateFilename = (req, file, cb) => {
 // filter image
 const filterImage = (req, file, cb) => {
     // check mime type
-    if (!file.mimetype.match(/image\/(jpg|JPG|webp|jpeg|JPEG|png|PNG|gif|GIF|jfif|JFIF)/)) {
+//    if (!file.mimetype.match(/image\/(jpg|JPG|webp|jpeg|JPEG|png|PNG|gif|GIF|jfif|JFIF)/)) {
+    if (!file.mimetype.match(/(image|video)\/(jpg|JPG|webp|jpeg|JPEG|png|PNG|gif|GIF|jfif|JFIF|mp4|MP4)/)) {
+
         req.fileValidationError = 'Only image files are allowed!';
         return cb(null, false);
     }

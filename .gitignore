@@ -1,6 +1,3 @@
 node_modules
 uploads
-pnpm-lock.yaml
-yarn.lock
-package-lock.json
 .env

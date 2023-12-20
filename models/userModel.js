@@ -22,6 +22,7 @@ const userSchema = new Schema({
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     role: { type: String, default: ROLES.USER, enum: Object.values(ROLES) },
+    refreshToken: { type: String, select: false },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

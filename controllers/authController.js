@@ -123,7 +123,6 @@ exports.sendVerificationCode = async (req, res, next) => {
 
     try {
         const user = await findUser(query).select('completePhone email');
-        console.log('first', user);
         if (!user) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Invalid Information, Record Not Found!'
@@ -159,8 +158,8 @@ exports.verifyCode = async (req, res, next) => {
     const { error } = codeValidation.validate(body);
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: error.details[0].error
-    })
+        message: error.details[0].message
+    });
 
     try {
         const otpObj = await getOTP({ otp: body.code })

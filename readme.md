@@ -3,7 +3,7 @@
 Copy the following configuration and create a `.env` file in the root of your project:
 
 ```env
-PORT=3020
+PORT=3021
 MONGODB_URL=mongodb://localhost/db_test
 JWT_SECRET=secret
 JWT_EXPIRATION=1d
@@ -12,10 +12,10 @@ REFRESH_JWT_EXPIRATION=1d
 
 COOKIE_KEY=COOKIE_SESSION_KEY
 OTP_EXPIRATION=1_200_000  # 20 minutes
-APP_NAME=goolloper
+APP_NAME=StoryTime
 
-EMAIL=EMAIL
-PASSWORD=PASSWORD
+EMAIL=dev.test.digitrends@gmail.com
+PASSWORD=zomdqqkrsbkmilie
 
 AWS_BUCKET_NAME=AWS_BUCKET_NAME
 AWS_ACCESS_KEY=AWS_ACCESS_KEY

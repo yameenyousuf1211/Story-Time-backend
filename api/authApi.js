@@ -8,7 +8,7 @@ const {
     verifyCode,
     resetPassword,
 } = require('../controllers/authController');
-const authMiddleware = require('../middlewares/Auth')
+const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
 
 class AuthAPI {

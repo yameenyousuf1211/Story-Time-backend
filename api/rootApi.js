@@ -8,7 +8,8 @@ class RootAPI {
     }
 
     setupRoutes() {
-        let router = this.router;
+        const router = this.router;
+        
         router.get('/', DefaultHandler);
     }
 

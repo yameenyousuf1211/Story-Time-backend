@@ -1,11 +1,10 @@
 const { generateResponse, parseBody, } = require('../utils');
-const { createStory } = require('../models/postModel');
-const { STATUS_CODES, ROLES } = require('../utils/constants');
-const { createTextStoryValidation, createVideoStoryValidation } = require('../validations/postValidation');
+const { createStory } = require('../models/storyModel');
+const { STATUS_CODES } = require('../utils/constants');
+const { createTextStoryValidation, createVideoStoryValidation } = require('../validations/storyValidation');
 
 //Create Text Story
 exports.createTextStory = async (req, res, next) => {
-    console.log("req.body:",req.body);
     const body = parseBody(req.body);
     
     // Joi validation
@@ -17,7 +16,7 @@ exports.createTextStory = async (req, res, next) => {
 
     try {
         // create story in db
-        let story = await createStory(body);
+        const story = await createStory(body);
 
         generateResponse({ story }, 'Story Created', res);
 
@@ -41,7 +40,7 @@ exports.createVideoStory = async (req, res, next) => {
 
     try {
         // create story in db
-        let story = await createStory(body);
+        const story = await createStory(body);
 
         generateResponse({ story }, 'Story Created', res);
 

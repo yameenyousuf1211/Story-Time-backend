@@ -1,6 +1,6 @@
 const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse } = require('../utils/index');
-const { createCategory, createSubCategory, getAllCategories, findCategory } = require('../models/categoriesModel');
+const { createCategory, getAllCategories, findCategory } = require('../models/categoriesModel');
 const { createCategoryValidation } = require('../validations/categoriesValidation');
 
 

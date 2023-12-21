@@ -50,3 +50,22 @@ exports.getAllUsers = async (req, res, next) => {
     next(error);
   }
 }
+
+// get user by id
+exports.getUserProfile = async (req, res, next) => {
+  const user = req.user.id;
+
+  try {
+    const userObj = await findUser({ _id: user });
+
+    // if user not found return error
+    if (!userObj) return next({
+      statusCode: STATUS_CODES.NOT_FOUND,
+      message: 'User profile not found!'
+    });
+
+    generateResponse(userObj, 'Profile found!', res);
+  } catch (error) {
+    next(error);
+  }
+}

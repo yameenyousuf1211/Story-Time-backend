@@ -10,7 +10,7 @@ class StoryAPI {
     }
 
     setupRoutes() {
-        router.get('/', authMiddleware([ROLES.USER]), fetchAllStories);
+        router.get('/', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchAllStories);
         router.post('/', authMiddleware([ROLES.USER]), createStory);
     }
 

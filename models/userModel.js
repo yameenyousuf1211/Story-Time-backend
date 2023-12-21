@@ -14,6 +14,7 @@ const userSchema = new Schema({
     phoneNo: { type: String, default: null },
     completePhone: { type: String, select: false },
     email: { type: String, lowercase: true },
+    profileImage: { type: String },
     city: { type: String },
     zipCode: { type: String },
     state: { type: String },
@@ -22,6 +23,8 @@ const userSchema = new Schema({
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     role: { type: String, default: ROLES.USER, enum: Object.values(ROLES) },
+    noOfFollowers: { type: Number, default: 0 },
+    noOfFollowings: { type: Number, default: 0 },
     refreshToken: { type: String, select: false },
 }, { timestamps: true, versionKey: false });
 

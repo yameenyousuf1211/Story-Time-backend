@@ -1,18 +1,17 @@
-const { Router } = require('express');
-const { createTextStory, createVideoStory } = require('../controllers/storyController');
+const router = require('express').Router();
+const { fetchAllStories, createStory } = require('../controllers/storyController');
+const authMiddleware = require('../middlewares/auth');
+const { ROLES } = require('../utils/constants');
 
 class StoryAPI {
     constructor() {
-        this.router = Router();
+        this.router = router;
         this.setupRoutes();
     }
 
     setupRoutes() {
-        const router = this.router;
-
-        router.post('/text-story', createTextStory);
-        router.post('/video-story', createVideoStory);
-
+        router.get('/', authMiddleware([ROLES.USER]), fetchAllStories);
+        router.post('/', authMiddleware([ROLES.USER]), createStory);
     }
 
     getRouter() {
@@ -20,7 +19,7 @@ class StoryAPI {
     }
 
     getRouterGroup() {
-        return '/';
+        return '/story';
     }
 }
 

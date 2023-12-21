@@ -1,19 +1,12 @@
 const Joi = require('joi');
+const { STORY_TYPES } = require('../utils/constants');
 
-exports.createTextStoryValidation = Joi.object({
-    type: Joi.string().required(),
-    creator: Joi.string().required(),
-    contributors: Joi.array().optional(),
-    content: Joi.string().required(),
-    likes: Joi.array(),
-    dislikes: Joi.array(),
-});
-
-exports.createVideoStoryValidation = Joi.object({
-    type: Joi.string().required(),
-    creator: Joi.string().required(),
-    contributors: Joi.array().optional(),
+// create story validation
+exports.createStoryValidation = Joi.object({
+    type: Joi.string().valid(...Object.values(STORY_TYPES)).required(),
     category: Joi.string().required(),
-    likes: Joi.string(),
-    dislikes: Joi.string()
-})
+    subCategory: Joi.string().required(),
+    creator: Joi.string().required(),
+    contributors: Joi.array().items(Joi.string()).required(),
+    content: Joi.string().required(),
+});

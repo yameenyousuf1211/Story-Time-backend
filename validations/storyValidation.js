@@ -5,8 +5,8 @@ exports.createTextStoryValidation = Joi.object({
     creator: Joi.string().required(),
     contributors: Joi.array().optional(),
     content: Joi.string().required(),
-    likes: Joi.string(),
-    dislikes: Joi.string(),
+    likes: Joi.array(),
+    dislikes: Joi.array(),
 });
 
 exports.createVideoStoryValidation = Joi.object({

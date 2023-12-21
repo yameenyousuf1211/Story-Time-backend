@@ -49,7 +49,7 @@ exports.register = async (req, res, next) => {
         body.password = hashedPassword;
 
         // create user in db
-        let user = await createUser(body);
+        const user = await createUser(body);
 
         // generate access token and refresh token
         const accessToken = generateToken(user);
@@ -76,7 +76,7 @@ exports.login = async (req, res, next) => {
     });
 
     try {
-        let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
+        const user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
         if (!user) return next({
             statusCode: STATUS_CODES.BAD_REQUEST,
             message: 'Invalid Email or Password'

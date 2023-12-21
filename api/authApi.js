@@ -18,6 +18,8 @@ class AuthAPI {
     }
 
     setupRoutes() {
+        const router = this.router;
+
         router.post('/register', register);
         router.post('/login', login);
         router.post('/logout', authMiddleware(Object.values(ROLES)), logout);

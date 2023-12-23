@@ -20,3 +20,8 @@ exports.STORY_TYPES = Object.freeze({
   TEXT: 'text',
   VIDEO: 'video',
 });
+
+exports.MODES = Object.freeze({
+  PUBLIC: 'public',
+  PRIVATE: 'private',
+})

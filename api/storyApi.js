@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { fetchAllStories, createStory } = require('../controllers/storyController');
+const { fetchAllStories, createStory, fetchUserStories } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { ROLES } = require('../utils/constants');
 
@@ -11,6 +11,8 @@ class StoryAPI {
 
     setupRoutes() {
         router.get('/', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchAllStories);
+        router.get('/user', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchUserStories);
+
         router.post('/', authMiddleware([ROLES.USER]), createStory);
     }
 

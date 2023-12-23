@@ -38,3 +38,6 @@ exports.getAllStories = async ({ query, page, limit }) => {
 
     return { stories: data, pagination };
 };
+
+// find story by ID
+exports.findStoryById = (id) => StoryModel.findById(id);

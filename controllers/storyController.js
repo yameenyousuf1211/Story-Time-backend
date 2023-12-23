@@ -1,8 +1,8 @@
 const { generateResponse, parseBody, } = require('../utils');
 const { createStory, getAllStories } = require('../models/storyModel');
-const { STATUS_CODES } = require('../utils/constants');
+const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
 const { createStoryValidation } = require('../validations/storyValidation');
-const { getStoriesQuery } = require('./queries/storyQueries');
+const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 
 //Create Text Story
 exports.createStory = async (req, res, next) => {
@@ -31,6 +31,29 @@ exports.fetchAllStories = async (req, res, next) => {
     const limit = req.query.limit || 10;
 
     const query = getStoriesQuery(user);
+
+    try {
+        const storiesData = await getAllStories({ query, page, limit });
+        if (storiesData?.stories.length === 0) {
+            generateResponse(null, 'No any story found', res);
+            return;
+        }
+
+        generateResponse(storiesData, 'All stories retrieved successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// get user's stories
+exports.fetchUserStories = async (req, res, next) => {
+    const user = req.query?.user || req.user.id;
+    const type = req.query?.type || STORY_TYPES.TEXT;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+
+
+    const query = getUserStoriesQuery(user, type);
 
     try {
         const storiesData = await getAllStories({ query, page, limit });

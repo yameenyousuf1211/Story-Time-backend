@@ -1,5 +1,5 @@
 const { Schema, model } = require('mongoose');
-const { ROLES } = require('../utils/constants');
+const { ROLES, MODES } = require('../utils/constants');
 const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 const { getMongooseAggregatePaginatedData } = require('../utils');
@@ -26,6 +26,7 @@ const userSchema = new Schema({
     noOfFollowers: { type: Number, default: 0 },
     noOfFollowings: { type: Number, default: 0 },
     refreshToken: { type: String, select: false },
+    mode: { type: String, enum: Object.values(MODES), default: MODES.PUBLIC },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

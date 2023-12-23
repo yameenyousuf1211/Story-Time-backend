@@ -1,8 +1,10 @@
-const { findUser, getAllUsers } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, } = require('../utils/constants');
 const { getUsersQuery } = require('./queries/userQueries');
 const { checkUsernameAvailabilityValidation } = require('../validations/userValidation');
+const { Types } = require('mongoose');
+const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 
 // check username availability
 exports.usernameAvailability = async (req, res, next) => {
@@ -65,6 +67,45 @@ exports.getUserProfile = async (req, res, next) => {
     });
 
     generateResponse(userObj, 'Profile found!', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// follow/unfollow
+exports.followUnFollowToggle = async (req, res, next) => {
+  const { following } = req.body;
+  const user = req.user.id;
+
+  if (!following || !Types.ObjectId.isValid(following)) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please, provide following properly.'
+  });
+
+  try {
+    const userExist = await findUser({ _id: following });
+    if (!userExist) return next({
+      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+      message: 'User not found'
+    });
+
+    const followingExist = await findFollowing({ user, following });
+    if (followingExist) {
+      const deletedObj = await deleteFollowing({ user, following });
+      if (deletedObj) {
+        // when unfollowing a user, decrement noOfFollowings and noOfFollowers of both users
+        await updateUser({ _id: user }, { $inc: { noOfFollowings: -1 } });
+        await updateUser({ _id: following }, { $inc: { noOfFollowers: -1 } });
+        generateResponse(null, 'Un-followed successfully', res);
+        return;
+      }
+    }
+
+    const followingObj = await addFollowing({ user, following });
+    await updateUser({ _id: user }, { $inc: { noOfFollowings: 1 } });
+    await updateUser({ _id: following }, { $inc: { noOfFollowers: 1 } });
+
+    generateResponse(followingObj, 'Follow successfully!', res);
   } catch (error) {
     next(error);
   }

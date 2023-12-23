@@ -16,3 +16,25 @@ exports.getStoriesQuery = (user) => {
         { $sort: { createdAt: -1 } }    // latest first
     ]
 }
+
+// get user's stories
+exports.getUserStoriesQuery = (user, type) => {
+    return [
+        {
+            $match: {
+                $and: [
+                    { contributors: { $in: [new Types.ObjectId(user)] } },
+                    { type },
+                ]
+            }
+        },
+        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                dislikesCount: { $size: "$dislikes" },
+            }
+        },
+        { $sort: { createdAt: -1 } }    // latest first
+    ]
+}

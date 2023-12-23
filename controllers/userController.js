@@ -55,11 +55,10 @@ exports.getAllUsers = async (req, res, next) => {
 
 // get user by id
 exports.getUserProfile = async (req, res, next) => {
-  const user = req.user.id;
+  const user = req.query?.user || req.user.id;
 
   try {
     const userObj = await findUser({ _id: user });
-
     // if user not found return error
     if (!userObj) return next({
       statusCode: STATUS_CODES.NOT_FOUND,

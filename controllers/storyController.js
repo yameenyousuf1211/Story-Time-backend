@@ -79,7 +79,12 @@ exports.fetchStoryById = async (req, res, next) => {
     });
 
     try {
-        const story = await findStoryById(storyId).populate('creator subCategory');
+        const story = await findStoryById(storyId).populate('creator subCategory').lean();
+        story.likesCount = story.likes.length;
+        story.dislikesCount = story.dislikes.length;
+        story.likedByMe = story.likes.includes(new Types.ObjectId(req.user.id));
+        story.dislikesByMe = story.dislikes.includes(new Types.ObjectId(req.user.id));
+
         if (!story) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Story not found'

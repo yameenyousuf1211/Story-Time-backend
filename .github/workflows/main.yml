@@ -23,7 +23,7 @@ jobs:
           username: ${{secrets.SSH_USERNAME}}
           script: |
             cd /mnt/storytime
-            git checkut dev
+            git checkout dev
             git pull origin dev
             npm install
             pm2 restart apis-storytime 

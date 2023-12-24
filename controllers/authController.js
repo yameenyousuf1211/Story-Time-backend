@@ -78,8 +78,8 @@ exports.login = async (req, res, next) => {
     try {
         let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
         if (!user) return next({
-            statusCode: STATUS_CODES.BAD_REQUEST,
-            message: 'Invalid Email or Password'
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: 'Email not found'
         });
 
         const isMatch = await compare(body.password, user.password);

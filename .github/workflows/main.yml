@@ -2,7 +2,7 @@ name: Pull & Deploy
 
 on:
   push:
-    branches: ["dev", "master"]
+    branches: ["dev", "main", "master"]
 
 jobs:
   deploy-dev:

@@ -46,4 +46,4 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build --if-present
-    - run: sudo pm2 restart index
+    - run: sudo pm2 restart story-time-api

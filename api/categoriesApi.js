@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { createCategory, getAllCategories, } = require('../controllers/categoriesController');
+const { createCategory, getAllCategories } = require('../controllers/categoriesController');
 const { upload } = require('../utils');
 const authMiddleware = require('../middlewares/auth');
 const { ROLES } = require('../utils/constants');
@@ -16,8 +16,7 @@ class CategoryAPI {
         router.post('/', authMiddleware(Object.values(ROLES)),
             upload('categories').single('image'), createCategory);
 
-        router.get('/', authMiddleware(Object.values(ROLES)),
-            getAllCategories);
+        router.get('/', getAllCategories);
 
     }
 

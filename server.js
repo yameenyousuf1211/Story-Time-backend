@@ -25,7 +25,7 @@ app.use(cookieSession({
 
 app.use(cors({ origin: "*", credentials: true }));
 
-app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project` }));
+app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project!` }));
 
 app.use(log);
 new API(app).registerGroups();

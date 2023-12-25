@@ -1,4 +1,11 @@
 const express = require('express');
+try {
+    const a = require("dotenv").config();
+    if (a.error) throw a;
+} catch (e) {
+    console.log(e);
+    require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+}
 const cors = require('cors');
 const API = require('./api');
 const http = require("http");
@@ -6,7 +13,6 @@ const DB_CONNECT = require('./config/dbConnect');
 const cookieSession = require('cookie-session');
 const { notFound, errorHandler } = require('./middlewares/errorHandling');
 const { log } = require('./middlewares/log');
-require('dotenv').config();
 const PORT = process.env.PORT || 3021;
 const HOST = process.env.HOST || 'localhost';
 const app = express();

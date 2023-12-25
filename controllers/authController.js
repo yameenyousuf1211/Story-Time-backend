@@ -76,7 +76,8 @@ exports.login = async (req, res, next) => {
     });
 
     try {
-        let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
+        // let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
+        let user = await findUser({ email: body?.email }).select('+password');
         if (!user) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Email not found'

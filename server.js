@@ -1,4 +1,4 @@
-const express = require('express');
+const path = require('path');
 try {
     const a = require("dotenv").config();
     if (a.error) throw a;
@@ -6,6 +6,7 @@ try {
     console.log(e);
     require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 }
+const express = require('express');
 const cors = require('cors');
 const API = require('./api');
 const http = require("http");

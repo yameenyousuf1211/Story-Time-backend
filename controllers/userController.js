@@ -1,10 +1,11 @@
-const { findUser, getAllUsers, updateUser } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
-const { STATUS_CODES, } = require('../utils/constants');
+const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery } = require('./queries/userQueries');
 const { checkUsernameAvailabilityValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
+const { hash } = require('bcrypt');
 
 // check username availability
 exports.usernameAvailability = async (req, res, next) => {
@@ -109,3 +110,33 @@ exports.followUnFollowToggle = async (req, res, next) => {
     next(error);
   }
 }
+
+// create default admin account
+(async function createDefaultAdminAccount() {
+  try {
+    const userExist = await findUser({
+      email: process.env.ADMIN_EMAIL,
+      role: ROLES.ADMIN,
+    });
+
+    if (userExist) {
+      console.log('admin exists -> ', userExist.email);
+      return
+    };
+
+    console.log('admin not exist');
+    const password = await hash(process.env.ADMIN_PASSWORD, 10);
+
+    // create default admin
+    await createUser({
+      email: process.env.ADMIN_EMAIL,
+      password,
+      firstName: 'Admin',
+      role: ROLES.ADMIN,
+    });
+
+    console.log('Admin default created successfully');
+  } catch (error) {
+    console.log(error);
+  }
+})();

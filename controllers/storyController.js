@@ -95,3 +95,75 @@ exports.fetchStoryById = async (req, res, next) => {
         next(error);
     }
 }
+
+// like a story
+exports.likeStoryToggle = async (req, res, next) => {
+    const user = req.user.id;
+    const { storyId } = req.params;
+
+    if (!Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please, provide valid storyId.'
+    });
+
+    try {
+        const story = await findStoryById(storyId);
+        if (!story) return next({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: 'Story not found'
+        });
+
+        // check if user has already liked
+        if (story.likes.includes(user)) {
+            story.likes.pull(user);
+            await story.save();
+
+            generateResponse(story, 'Story liked removed successfully', res);
+            return;
+        }
+
+        // like the story
+        story.likes.push(user);
+        await story.save();
+
+        generateResponse(story, 'Story liked successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// dislike a story
+exports.dislikeStoryToggle = async (req, res, next) => {
+    const user = req.user.id;
+    const { storyId } = req.params;
+
+    if (!Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please, provide valid storyId.'
+    });
+
+    try {
+        const story = await findStoryById(storyId);
+        if (!story) return next({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: 'Story not found'
+        });
+
+        // check if user has already liked
+        if (story.dislikes.includes(user)) {
+            story.dislikes.pull(user);
+            await story.save();
+
+            generateResponse(story, 'Story disliked removed successfully', res);
+            return;
+        }
+
+        // like the story
+        story.dislikes.push(user);
+        await story.save();
+
+        generateResponse(story, 'Story disliked successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}

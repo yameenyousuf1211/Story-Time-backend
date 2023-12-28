@@ -1,8 +1,10 @@
 const { generateResponse, parseBody, } = require('../utils');
-const { createStory, getAllStories, findStoryById } = require('../models/storyModel');
+const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
 const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
-const { createStoryValidation } = require('../validations/storyValidation');
+const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
+const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
+
 const { Types } = require('mongoose');
 
 //Create Text Story
@@ -163,6 +165,114 @@ exports.dislikeStoryToggle = async (req, res, next) => {
         await story.save();
 
         generateResponse(story, 'Story disliked successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// add comment to post
+exports.addCommentOnStory = async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    // Joi validation
+    const { error } = createCommentValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message
+    });
+
+    body.user = req.user.id;
+    body.media = req.file.path;
+
+    try {
+    //    if (req?.files?.media?.length > 0) body.media = await s3Uploadv3(req.files?.media);
+
+        let comment = await createComment(body);
+
+        // update parent comment
+        if (body.parent) {
+            await updateCommentById(body.parent, { $push: { replies: comment._id } });
+        }
+
+        await updateStoryById(body.post, { $inc: { commentsCount: 1 } });
+        comment = await getCommentById(comment._id).populate('user', 'firstName lastName profileImage');
+        generateResponse(comment, 'Comment created successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+// remove comment from post
+exports.removeCommentOnPost = async (req, res, next) => {
+    const userId = req.user.id;
+    const { commentId } = req.params;
+
+    try {
+        // check userId is comment owner
+        const commentObj = await getCommentById(commentId);
+        if (!commentObj) return next({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: 'comment not found',
+        });
+
+
+        if (userId !== commentObj.user.toString()) return next({
+            statusCode: STATUS_CODES.FORBIDDEN,
+            message: "You do not have permission to delete this comment.",
+        });
+
+        const deletedComment = await removeCommentById(commentId);
+        await updateStoryById(commentObj.story, { $pull: { comments: commentId } });
+
+        generateResponse(deletedComment, 'Comment deleted successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+// get story comments
+exports.getCommentsOfStory = async (req, res, next) => {
+    const { storyId } = req.params;
+
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 10;
+
+    if (!storyId || !Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please, provide storyId properly.'
+    });
+
+    const query = { story: new Types.ObjectId(storyId), parent: null };   //getAllCommentsQuery(postId);
+
+    try {
+        const commentsData = await getAllComments({
+            query, page, limit,
+            populate: [
+                { path: 'user', select: 'firstName lastName username profileImage' },
+                {
+                    path: 'replies',
+                    populate: [
+                        { path: 'user', select: 'firstName lastName username profileImage' },
+                        {
+                            path: 'replies',
+                            // perDocumentLimit: 2,
+                            populate: [
+                                { path: 'user', select: 'firstName lastName username profileImage' },
+                            ]
+                        },
+                    ]
+                },
+            ]
+        });
+
+        if (commentsData?.comments?.length === 0) {
+            generateResponse(null, 'No comments found', res);
+            return;
+        }
+
+        commentsData.commentsCount = await countComments({ story: new Types.ObjectId(storyId) });
+        generateResponse(commentsData, 'Comments fetched successfully', res);
     } catch (error) {
         next(error);
     }

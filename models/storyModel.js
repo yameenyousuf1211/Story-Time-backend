@@ -13,6 +13,7 @@ const storySchema = new Schema({
     subCategory: { type: Schema.Types.ObjectId, ref: 'Category' },
     likes: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     dislikes: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
+    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
     commentsCount: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
@@ -41,3 +42,6 @@ exports.getAllStories = async ({ query, page, limit }) => {
 
 // find story by ID
 exports.findStoryById = (id) => StoryModel.findById(id);
+
+exports.updateStoryById = (id, obj) => StoryModel.findByIdAndUpdate(id, obj, { new: true });
+

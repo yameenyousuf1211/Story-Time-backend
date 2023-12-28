@@ -5,9 +5,13 @@ const {
     fetchUserStories,
     fetchStoryById,
     likeStoryToggle,
-    dislikeStoryToggle
+    dislikeStoryToggle,
+    removeCommentOnPost,
+    getCommentsOfStory,
+    addCommentOnStory
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
+const { upload } = require('../utils');
 const { ROLES } = require('../utils/constants');
 
 class StoryAPI {
@@ -25,6 +29,16 @@ class StoryAPI {
 
         router.put('/like/:storyId', authMiddleware([ROLES.USER]), likeStoryToggle);
         router.put('/dislike/:storyId', authMiddleware([ROLES.USER]), dislikeStoryToggle);
+
+        router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
+
+        router.post('/add-comment', authMiddleware(Object.values(ROLES)),
+        upload('comments').single('media'),
+          //  upload.fields([{ name: "media", maxCount: 5 }]),
+          addCommentOnStory);
+
+        router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
+
     }
 
     getRouter() {

@@ -10,3 +10,9 @@ exports.createStoryValidation = Joi.object({
     contributors: Joi.array().items(Joi.string()).required(),
     content: Joi.string().required(),
 });
+
+exports.createCommentValidation = Joi.object({
+    story: Joi.string().required(),
+    parent: Joi.string().trim().optional(),
+    text: Joi.string().trim().optional(),
+});

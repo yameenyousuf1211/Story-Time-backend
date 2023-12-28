@@ -56,7 +56,6 @@ exports.getAllCategories = async (req, res, next) => {
     }
 }
 
-
 // delete category by id (soft deleted)
 exports.deleteCategoryById = async (req, res, next) => {
     const { categoryId } = req.params;
@@ -82,3 +81,30 @@ exports.deleteCategoryById = async (req, res, next) => {
         next(error);
     }
 }
+
+//Get A Random Category
+exports.getRandomCategory = async (req, res, next) => {
+    const { parent = null } = req.query;
+    const query = { parent };
+
+    // Function to get a random element from an array
+    const getRandomElement = (array) => {
+        const randomIndex = Math.floor(Math.random() * array.length);
+        return array[randomIndex];
+    };
+
+    try {
+        const categoriesData = await getAllCategories({ query });
+
+        if (categoriesData?.categories.length === 0) {
+            generateResponse(null, 'No categories found', res);
+            return;
+        }
+        const randomCategory = getRandomElement(categoriesData.categories);
+
+        generateResponse(randomCategory, `Random ${parent ? 'Sub-' : ''}Category retrieved successfully`, res);
+    } catch (error) {
+        next(error);
+    }
+};
+

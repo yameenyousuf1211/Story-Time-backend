@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { createCategory, getAllCategories } = require('../controllers/categoriesController');
+const { createCategory, getAllCategories, getRandomCategory } = require('../controllers/categoriesController');
 const { upload } = require('../utils');
 const authMiddleware = require('../middlewares/auth');
 const { ROLES } = require('../utils/constants');
@@ -17,6 +17,8 @@ class CategoryAPI {
             upload('categories').single('image'), createCategory);
 
         router.get('/', getAllCategories);
+
+        router.get('/random', getRandomCategory)
 
     }
 

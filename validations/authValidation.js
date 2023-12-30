@@ -55,15 +55,30 @@ exports.loginUserValidation = Joi.object({
 });
 
 // send code validation
-exports.sendCodeValidation = Joi.object({
+// exports.sendCodeValidation = Joi.object({
+//     email: Joi.string(),
+//     phone: Joi.string().regex(/^\+\d*$/).min(7).max(14).messages({
+//         'string.pattern.base': 'phone number is not valid.',
+//         'string.min': 'phone number must be at least {#limit} characters long.',
+//         'string.max': 'phone number must be at most {#limit} characters long.',
+//         'any.required': 'phone number is required.',
+//     }),
+// }).xor('email', 'phone');
+
+//send code Email Validation
+exports.sendCodeEmailValidation = Joi.object({
     email: Joi.string(),
+});
+
+//send code Email Validation
+exports.sendCodePhoneValidation = Joi.object({
     phone: Joi.string().regex(/^\+\d*$/).min(7).max(14).messages({
         'string.pattern.base': 'phone number is not valid.',
         'string.min': 'phone number must be at least {#limit} characters long.',
         'string.max': 'phone number must be at most {#limit} characters long.',
         'any.required': 'phone number is required.',
     }),
-}).xor('email', 'phone');
+})
 
 exports.codeValidation = Joi.object({
     code: Joi.string().min(6).max(6).required(),

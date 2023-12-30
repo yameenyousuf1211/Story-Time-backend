@@ -9,7 +9,7 @@ const {
     updateUser,
 } = require('../models/userModel');
 const { STATUS_CODES, ROLES } = require('../utils/constants');
-const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation } = require('../validations/authValidation');
+const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation, sendCodeEmailValidation, sendCodePhoneValidation } = require('../validations/authValidation');
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
@@ -109,21 +109,64 @@ exports.logout = async (req, res, next) => {
 }
 
 // send verification code
-exports.sendVerificationCode = async (req, res, next) => {
+// exports.sendVerificationCode = async (req, res, next) => {
+//     const body = parseBody(req.body);
+
+//     // Joi Validation
+//     const { error } = sendCodeValidation.validate(body);
+//     if (error) return next({
+//         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+//         message: error.details[0].message
+//     });
+
+//     const { email, phone: completePhone } = body;
+//     const query = { $or: [{ email }, { completePhone }] };
+
+//     try {
+//         const user = await findUser(query).select('completePhone email');
+//         if (!user) return next({
+//             statusCode: STATUS_CODES.NOT_FOUND,
+//             message: 'Invalid Information, Record Not Found!'
+//         });
+
+//         // Delete all previous OTPs
+//         await deleteOTPs(query);
+
+//         const otpObj = await addOTP({
+//             email: user.email,
+//             completePhone: user.completePhone,
+//             otp: generateRandomOTP(),
+//         });
+
+//         if (email) {
+//             await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
+//         } else if (completePhone) {
+//             console.log(`Your OTP Code is ${otpObj.otp}`);
+//             // send SMS using twilio
+//         }
+
+//         generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
+//Send Code With Email
+exports.sendVerificationCodeEmail = async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi Validation
-    const { error } = sendCodeValidation.validate(body);
+    const { error } = sendCodeEmailValidation.validate(body);
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message
     });
 
-    const { email, phone: completePhone } = body;
-    const query = { $or: [{ email }, { completePhone }] };
+    const { email } = body;
+    const query = { email };
 
     try {
-        const user = await findUser(query).select('completePhone email');
+        const user = await findUser(query).select('email');
         if (!user) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Invalid Information, Record Not Found!'
@@ -134,13 +177,50 @@ exports.sendVerificationCode = async (req, res, next) => {
 
         const otpObj = await addOTP({
             email: user.email,
-            completePhone: user.completePhone,
             otp: generateRandomOTP(),
         });
 
         if (email) {
             await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
-        } else if (completePhone) {
+        }
+
+        generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
+    } catch (error) {
+        next(error);
+    }
+};
+
+//Send Code With Phone
+exports.sendVerificationCodePhone = async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    // Joi Validation
+    const { error } = sendCodePhoneValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message
+    });
+
+    const { phone: completePhone } = body;
+    const query = { completePhone };
+
+    try {
+        const user = await findUser(query).select('completePhone ');
+
+        if (!user) return next({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: 'Invalid Information, Record Not Found!'
+        });
+
+        // Delete all previous OTPs
+        await deleteOTPs(query);
+
+        const otpObj = await addOTP({
+            email: user.email,
+            otp: generateRandomOTP(),
+        });
+
+        if (completePhone) {
             console.log(`Your OTP Code is ${otpObj.otp}`);
             // send SMS using twilio
         }

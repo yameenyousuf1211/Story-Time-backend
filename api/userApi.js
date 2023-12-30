@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
-const { usernameAvailability, getAllUsers, getUserProfile, followUnFollowToggle } = require('../controllers/userController');
+const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle } = require('../controllers/userController');
 
 class UserAPI {
   constructor() {
@@ -13,7 +13,7 @@ class UserAPI {
     router.get('/', authMiddleware(Object.values(ROLES)), getAllUsers);
     router.get('/profile', authMiddleware(Object.values(ROLES)), getUserProfile);
 
-    router.post('/check-username', usernameAvailability);
+    router.post('/check-availability', checkAvailability);
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
   }
 

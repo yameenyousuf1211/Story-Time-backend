@@ -2,31 +2,32 @@ const { findUser, getAllUsers, updateUser, createUser } = require('../models/use
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery } = require('./queries/userQueries');
-const { checkUsernameAvailabilityValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
 
 // check username availability
-exports.usernameAvailability = async (req, res, next) => {
+exports.checkAvailability = async (req, res, next) => {
   const body = parseBody(req.body);
 
   // Joi validation
-  const { error } = checkUsernameAvailabilityValidation.validate(body);
+  const { error } = checkAvailabilityValidation.validate(body);
   if (error) return next({
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: error.details[0].message
   });
 
-  const { username } = body;
+  const key = body.username ? 'username' : body.email ? 'email' : 'completePhone';
 
   try {
-    const user = await findUser({ username, isDeleted: false });
+    const user = await findUser({ [key]: body[key], role: ROLES.USER, isDeleted: false });
     if (user) return next({
       statusCode: STATUS_CODES.CONFLICT,
-      message: 'Username already exists'
+      message: `${key} already exists`
     });
-    generateResponse(null, 'Username available', res);
+
+    generateResponse(null, `${key} available`, res);
   } catch (error) {
     next(error);
   }

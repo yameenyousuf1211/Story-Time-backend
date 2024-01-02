@@ -56,7 +56,7 @@ exports.getUsersQuery = (keyword, user) => {
         },
         {
             $addFields: {
-                isFollower: { $cond: [{ $gt: [{ $size: '$follower' }, 0] }, true, false] },
+                //  isFollower: { $cond: [{ $gt: [{ $size: '$follower' }, 0] }, true, false] },
                 isFollowing: { $cond: [{ $gt: [{ $size: '$following' }, 0] }, true, false] },
             },
         },
@@ -65,3 +65,55 @@ exports.getUsersQuery = (keyword, user) => {
         // { $sort: { createdAt: -1 } }    // latest first
     ]
 }
+
+exports.getFriendsQuery = (keyword, user) => {
+    return [
+        {
+            $match: {
+                $and: [
+                    { _id: { $ne: new Types.ObjectId(user) } },
+                    { role: { $ne: ROLES.ADMIN } },
+                    { isActive: true },
+                    { isDeleted: false },
+                    {
+                        $or: [
+                            { username: { $regex: keyword, $options: 'i' } }, // Match username if provided
+                            { username: { $exists: false } }, // Match all when username is not provided
+                        ]
+                    },
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'followings',
+                let: { user: new Types.ObjectId(user), targetId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$user', '$$user'] },
+                                    { $eq: ['$following', '$$targetId'] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'following',
+            },
+        },
+        {
+            $addFields: {
+                isFollowing: { $cond: [{ $gt: [{ $size: '$following' }, 0] }, true, false] },
+            },
+        },
+        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0 } },
+        { $sort: { isFollowing: -1 } },
+        {
+            $match: {
+                isFollowing: true,
+            },
+        },
+    ];
+};

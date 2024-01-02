@@ -15,6 +15,7 @@ const storySchema = new Schema({
     dislikes: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
     commentsCount: { type: Number, default: 0 },
+    tag: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     isDeleted: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 

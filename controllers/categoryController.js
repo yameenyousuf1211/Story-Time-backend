@@ -1,8 +1,7 @@
 const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse, getRandomIndexFromArray } = require('../utils/index');
-const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoriesModel');
-const { createCategoryValidation } = require('../validations/categoriesValidation');
-
+const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoryModel');
+const { createCategoryValidation } = require('../validations/categoryValidation');
 
 exports.createCategory = async (req, res, next) => {
     const body = parseBody(req.body);

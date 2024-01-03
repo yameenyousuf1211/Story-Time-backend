@@ -23,14 +23,10 @@ class AuthAPI {
         router.post('/register', register);
         router.post('/login', login);
         router.post('/logout', authMiddleware(Object.values(ROLES)), logout);
-       router.post('/send-code', sendVerificationCode);
+        router.post('/send-code', sendVerificationCode);
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware([ROLES.USER]), resetPassword);
         router.put('/refresh-token', getRefreshToken);
-
-        // router.post('/send-code-email',sendVerificationCodeEmail)
-        // router.post('/send-code-phone',sendVerificationCodePhone)
-
     }
 
     getRouter() {

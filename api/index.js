@@ -1,10 +1,9 @@
 const { Router } = require('express');
 const rootApi = require('./rootApi');
 const AuthAPI = require('./authApi');
-const CategoryAPI = require('./categoriesApi');
+const CategoryAPI = require('./categoryApi');
 const UserAPI = require('./userApi');
 const StoryAPI = require('./storyApi');
-
 
 class API {
     constructor(app) {
@@ -19,7 +18,6 @@ class API {
         this.routeGroups.push(new CategoryAPI());
         this.routeGroups.push(new UserAPI());
         this.routeGroups.push(new StoryAPI());
-
     }
 
     setContentType(req, res, next) {

@@ -9,7 +9,7 @@ const {
     removeCommentOnPost,
     getCommentsOfStory,
     addCommentOnStory,
-    tagFriendsToggle
+    tagFriendToggle
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -25,22 +25,16 @@ class StoryAPI {
         router.get('/', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchAllStories);
         router.get('/user', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchUserStories);
         router.get("/:storyId", authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchStoryById);
+        router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
 
         router.post('/', authMiddleware([ROLES.USER]), createStory);
+        router.post('/add-comment', authMiddleware(Object.values(ROLES)), upload('comments').fields([{ name: "media", maxCount: 5 }]), addCommentOnStory);
 
         router.put('/like/:storyId', authMiddleware([ROLES.USER]), likeStoryToggle);
         router.put('/dislike/:storyId', authMiddleware([ROLES.USER]), dislikeStoryToggle);
-
-        router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
-
-        router.post('/add-comment', authMiddleware(Object.values(ROLES)),
-           // upload('comments').array('media'),
-              upload('comments').fields([{ name: "media", maxCount: 5 }]),
-            addCommentOnStory);
+        router.put('/tag-friend', authMiddleware([ROLES.USER]), tagFriendToggle)
 
         router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
-
-        router.put('/tag-friends',authMiddleware([ROLES.USER]),tagFriendsToggle)
     }
 
     getRouter() {

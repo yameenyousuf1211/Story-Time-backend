@@ -14,5 +14,5 @@ exports.createStoryValidation = Joi.object({
 exports.createCommentValidation = Joi.object({
     story: Joi.string().required(),
     parent: Joi.string().trim().optional(),
-    text: Joi.string().trim().optional(),
+    text: Joi.string().trim().required(),
 });

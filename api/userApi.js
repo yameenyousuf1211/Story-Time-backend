@@ -16,7 +16,6 @@ class UserAPI {
 
     router.post('/check-availability', checkAvailability);
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
-
   }
 
   getRouter() {

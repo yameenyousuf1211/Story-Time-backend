@@ -38,3 +38,6 @@ exports.findCategory = (query) => CategoryModel.findOne({ ...query, isDeleted: f
 
 // update category by ID
 exports.updateCategoryById = (id, obj) => CategoryModel.findByIdAndUpdate(id, { $set: obj }, { new: true });
+
+//find Categories
+exports.findCategories = (query) => CategoryModel.find({ ...query, isDeleted: false });

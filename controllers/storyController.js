@@ -183,10 +183,11 @@ exports.addCommentOnStory = async (req, res, next) => {
     });
 
     body.user = req.user.id;
-    body.media = req.file.path;
+
+    if (req.files?.media?.length > 0) body.media = req.files.media.map(file => file.path);
 
     try {
-        //    if (req?.files?.media?.length > 0) body.media = await s3Uploadv3(req.files?.media);
+        // if (req?.files?.media?.length > 0) body.media = await s3Uploadv3(req.files?.media);
 
         let comment = await createComment(body);
 
@@ -194,8 +195,7 @@ exports.addCommentOnStory = async (req, res, next) => {
         if (body.parent) {
             await updateCommentById(body.parent, { $push: { replies: comment._id } });
         }
-
-        await updateStoryById(body.post, { $inc: { commentsCount: 1 } });
+        await updateStoryById(body.story, { $inc: { commentsCount: 1 } });
         comment = await getCommentById(comment._id).populate('user', 'firstName lastName profileImage');
         generateResponse(comment, 'Comment created successfully', res);
     } catch (error) {

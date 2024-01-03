@@ -123,7 +123,7 @@ exports.sendVerificationCode = async (req, res, next) => {
     const query = { $or: [{ email }, { completePhone }] };
 
     try {
-        const user = await findUser(query).select('completePhone email');
+        const user = await findUser({ ...query, role: ROLES.USER }).select('completePhone email');
         if (!user) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Invalid Information, Record Not Found!'

@@ -1,7 +1,7 @@
 const { findUser, getAllUsers, updateUser, createUser } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
-const { getUsersQuery } = require('./queries/userQueries');
+const { getUsersQuery, getFriendsQuery } = require('./queries/userQueries');
 const { checkAvailabilityValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
@@ -141,3 +141,25 @@ exports.followUnFollowToggle = async (req, res, next) => {
     console.log(error);
   }
 })();
+
+// get all Friends
+exports.getAllFriends = async (req, res, next) => {
+  const user = req.user.id;
+  const { search = "" } = req.query;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+
+  const query = getFriendsQuery(search, user);
+
+  try {
+      const usersData = await getAllUsers({ query, page, limit });
+      if (usersData?.users.length === 0) {
+          generateResponse(null, 'No Friends found', res);
+          return;
+      }
+
+      generateResponse(usersData, 'All Friends retrieved successfully', res);
+  } catch (error) {
+      next(error);
+  }
+}

@@ -34,10 +34,11 @@ class StoryAPI {
         router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
         
         router.post('/add-comment', authMiddleware(Object.values(ROLES)),
-        upload('comments').single('media'),
-        //  upload.fields([{ name: "media", maxCount: 5 }]),
-        addCommentOnStory);
         
+           // upload('comments').array('media'),
+              upload('comments').fields([{ name: "media", maxCount: 5 }]),
+            addCommentOnStory);
+
         router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
         router.put('/tag-friends',authMiddleware([ROLES.USER]),tagFriendsToggle)
     }

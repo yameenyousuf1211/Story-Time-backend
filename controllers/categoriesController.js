@@ -1,6 +1,6 @@
 const { STATUS_CODES } = require('../utils/constants');
-const { parseBody, generateResponse } = require('../utils/index');
-const { createCategory, getAllCategories, findCategory } = require('../models/categoriesModel');
+const { parseBody, generateResponse, getRandomIndexFromArray } = require('../utils/index');
+const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoriesModel');
 const { createCategoryValidation } = require('../validations/categoriesValidation');
 
 
@@ -86,23 +86,16 @@ exports.deleteCategoryById = async (req, res, next) => {
 exports.getRandomCategory = async (req, res, next) => {
     const { parent = null } = req.query;
     const query = { parent };
-
-    // Function to get a random element from an array
-    const getRandomElement = (array) => {
-        const randomIndex = Math.floor(Math.random() * array.length);
-        return array[randomIndex];
-    };
-
     try {
-        const categoriesData = await getAllCategories({ query });
+        const categoriesData = await findCategories(query);
 
-        if (categoriesData?.categories.length === 0) {
+        if (categoriesData?.length === 0) {
             generateResponse(null, 'No categories found', res);
             return;
         }
-        const randomCategory = getRandomElement(categoriesData.categories);
 
-        generateResponse(randomCategory, `Random ${parent ? 'Sub-' : ''}Category retrieved successfully`, res);
+        const index = getRandomIndexFromArray(categoriesData.length);
+        generateResponse(categoriesData[index], `Random ${parent ? 'Sub-' : ''}Category retrieved successfully`, res);
     } catch (error) {
         next(error);
     }

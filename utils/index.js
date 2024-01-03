@@ -139,3 +139,6 @@ exports.upload = (folderName) => {
         fileFilter: filterImage
     })
 }
+
+// Function to get a random index from an array
+exports.getRandomIndexFromArray = (arrayLength) => Math.floor(Math.random() * arrayLength);

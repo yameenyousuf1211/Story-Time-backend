@@ -66,7 +66,7 @@ exports.getUsersQuery = (keyword, user) => {
     ]
 }
 
-//Get All Friends
+// get all friends
 exports.getFriendsQuery = (keyword, user) => {
     return [
         {
@@ -78,8 +78,7 @@ exports.getFriendsQuery = (keyword, user) => {
                     { isDeleted: false },
                     {
                         $or: [
-                            { username: { $regex: keyword, $options: 'i' } }, // Match username if provided
-                            { username: { $exists: false } }, // Match all when username is not provided
+                            { username: { $regex: keyword, $options: 'i' } }
                         ]
                     },
                 ]
@@ -101,20 +100,12 @@ exports.getFriendsQuery = (keyword, user) => {
                         },
                     },
                 ],
-                as: 'following',
+                as: 'followings',
             },
         },
-        {
-            $addFields: {
-                isFollowing: { $cond: [{ $gt: [{ $size: '$following' }, 0] }, true, false] },
-            },
-        },
-        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0 } },
+        { $addFields: { isFollowing: { $cond: [{ $gt: [{ $size: '$followings' }, 0] }, true, false] } } },
+        { $match: { isFollowing: true } },
         { $sort: { isFollowing: -1 } },
-        {
-            $match: {
-                isFollowing: true,
-            },
-        },
+        { $project: { followings: 0, isFollowing: 0, refreshToken: 0, password: 0 } },
     ];
 };

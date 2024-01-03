@@ -2,9 +2,9 @@ const { generateResponse, parseBody, } = require('../utils');
 const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
 const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
-const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
+const { getStoriesQuery, getUserStoriesQuery, tagFriendsToggleQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
-
+const { getAllUsers } = require('../models/userModel');
 const { Types } = require('mongoose');
 
 //Create Text Story
@@ -230,7 +230,6 @@ exports.removeCommentOnPost = async (req, res, next) => {
     }
 }
 
-
 // get story comments
 exports.getCommentsOfStory = async (req, res, next) => {
     const { storyId } = req.params;
@@ -273,6 +272,60 @@ exports.getCommentsOfStory = async (req, res, next) => {
 
         commentsData.commentsCount = await countComments({ story: new Types.ObjectId(storyId) });
         generateResponse(commentsData, 'Comments fetched successfully', res);
+    } catch (error) {
+        next(error);
+    }
+}
+
+//Tag or Untag Friend in a Story
+exports.tagFriendsToggle = async (req, res, next) => {
+
+    const user = req.user.id;
+    const { storyId, taggedUserId } = req.body;
+
+    if (!Types.ObjectId.isValid(storyId) || !Types.ObjectId.isValid(taggedUserId)) {
+        return next({
+            statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+            message: 'Please provide valid storyId and taggedUserId.'
+        });
+    }
+
+    try {
+        const story = await findStoryById(storyId);
+
+        // Check if the current user is the creator of the story
+        if (!story || !story.creator.equals(user)) {
+            return next({
+                statusCode: STATUS_CODES.UNAUTHORIZED,
+                message: 'You are not authorized to tag friends for this story.'
+            });
+        }
+        // Execute the aggregation to get the isFollowing value
+        const usersData = await getAllUsers({ query: tagFriendsToggleQuery(user, taggedUserId) });
+
+        // Check if the user follows the tagged user
+        const isFollowing = usersData.users[0]?.isFollowing;
+        if (!isFollowing) {
+            return next({
+                statusCode: STATUS_CODES.UNAUTHORIZED,
+                message: 'You can only tag friends whom you follow.'
+            });
+        }
+
+        // Check if the user is already tagged
+        if (story.tag.includes(taggedUserId)) {
+            story.tag.pull(taggedUserId);
+            await story.save();
+            generateResponse(story, 'User tag removed successfully', res);
+            return;
+        }
+
+        // Tag the user in the story
+        story.tag.push(taggedUserId);
+        await story.save();
+
+        generateResponse(story, 'User Tagged Successfully', res);
+
     } catch (error) {
         next(error);
     }

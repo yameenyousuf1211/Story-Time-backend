@@ -8,7 +8,8 @@ const {
     dislikeStoryToggle,
     removeCommentOnPost,
     getCommentsOfStory,
-    addCommentOnStory
+    addCommentOnStory,
+    tagFriendsToggle
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -39,6 +40,7 @@ class StoryAPI {
 
         router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
 
+        router.put('/tag-friends',authMiddleware([ROLES.USER]),tagFriendsToggle)
     }
 
     getRouter() {

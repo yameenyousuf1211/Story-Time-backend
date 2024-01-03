@@ -112,6 +112,28 @@ exports.followUnFollowToggle = async (req, res, next) => {
   }
 }
 
+// get all Friends
+exports.getAllFriends = async (req, res, next) => {
+  const user = req.user.id;
+  const { search = "" } = req.query;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+
+  const query = getFriendsQuery(search, user);
+
+  try {
+    const usersData = await getAllUsers({ query, page, limit });
+    if (usersData?.users.length === 0) {
+      generateResponse(null, 'No Friends found', res);
+      return;
+    }
+
+    generateResponse(usersData, 'All Friends retrieved successfully', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
 // create default admin account
 (async function createDefaultAdminAccount() {
   try {
@@ -142,24 +164,3 @@ exports.followUnFollowToggle = async (req, res, next) => {
   }
 })();
 
-// get all Friends
-exports.getAllFriends = async (req, res, next) => {
-  const user = req.user.id;
-  const { search = "" } = req.query;
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
-
-  const query = getFriendsQuery(search, user);
-
-  try {
-      const usersData = await getAllUsers({ query, page, limit });
-      if (usersData?.users.length === 0) {
-          generateResponse(null, 'No Friends found', res);
-          return;
-      }
-
-      generateResponse(usersData, 'All Friends retrieved successfully', res);
-  } catch (error) {
-      next(error);
-  }
-}

@@ -13,7 +13,6 @@ const storySchema = new Schema({
     subCategory: { type: Schema.Types.ObjectId, ref: 'Category' },
     likes: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     dislikes: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
-    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
     commentsCount: { type: Number, default: 0 },
     tag: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     isDeleted: { type: Boolean, default: false },

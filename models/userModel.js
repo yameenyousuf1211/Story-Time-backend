@@ -15,6 +15,7 @@ const userSchema = new Schema({
     completePhone: { type: String, select: false },
     email: { type: String, lowercase: true },
     profileImage: { type: String },
+    coverImage: { type: String },
     city: { type: String },
     zipCode: { type: String },
     state: { type: String },

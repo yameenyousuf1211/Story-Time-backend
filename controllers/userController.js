@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser } = require('../models/use
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -129,6 +129,39 @@ exports.getAllFriends = async (req, res, next) => {
     }
 
     generateResponse(usersData, 'All Friends retrieved successfully', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+// update profile
+exports.updateProfile = async (req, res, next) => {
+  const body = parseBody(req.body);
+  const userId = req.user.id;
+
+  // Joi validation
+  const { error } = updateProfileValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  body.completePhone = body.phoneCode + body.phoneNo;
+
+  if (req.files) {
+    body.profileImage = req.files['profileImage'] ? req.files['profileImage'][0].path : body.profileImage;
+    body.coverImage = req.files['coverImage'] ? req.files['coverImage'][0].path : body.coverImage;
+  }
+
+  try {
+    // uploading to s3
+    //  if (req?.files?.profileImage?.length > 0) [body.profileImage] = await s3Uploadv3(req.files?.profileImage);
+    //  if (req?.files?.coverImage?.length > 0) [body.coverImage] = await s3Uploadv3(req.files?.coverImage);
+
+
+    const user = await updateUser({ _id: userId }, { $set: body });
+    generateResponse(user, 'Profile updated successfully', res);
   } catch (error) {
     next(error);
   }

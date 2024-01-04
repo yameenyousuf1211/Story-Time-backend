@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
-const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends } = require('../controllers/userController');
+const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends, updateProfile } = require('../controllers/userController');
+const { upload } = require('../utils');
 
 class UserAPI {
   constructor() {
@@ -16,6 +17,11 @@ class UserAPI {
 
     router.post('/check-availability', checkAvailability);
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
+
+    router.put('/update-profile', authMiddleware(Object.values(ROLES)),
+      upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
+      updateProfile);
+
   }
 
   getRouter() {

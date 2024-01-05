@@ -24,4 +24,10 @@ exports.STORY_TYPES = Object.freeze({
 exports.MODES = Object.freeze({
   PUBLIC: 'public',
   PRIVATE: 'private',
-})
+});
+
+exports.GUIDELINE = Object.freeze({
+  PRIVACY_POLICY: 'PrivacyPolicy',
+  TERMS_AND_CONDITIONS: 'TermsAndConditions',
+  FAQS: 'FAQs',
+});

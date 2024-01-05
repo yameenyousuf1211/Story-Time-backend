@@ -174,28 +174,27 @@ exports.NotificationsToggle = async (req, res, next) => {
 
   // Joi validation
   const { error } = NotificationsToggleValidation.validate(body);
-  if (error) return next({
-    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: error.details[0].message
-  });
+  if (error) {
+    return next({
+      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+      message: error.details[0].message
+    });
+  }
 
-  const key = body.systemNotification ? 'systemNotification' :
-    body.inAppNotifications ? 'inAppNotifications' :
-      'appVibrations';
-
+  const key = body.key;
   try {
-    const user = await findUser({ _id: userId, });
-
+    const user = await findUser({ _id: userId });
     // Toggle the value
     user.settings[key] = !user.settings[key];
 
     // Save the updated user
     const updatedUser = await user.save();
     generateResponse(updatedUser, `${key} toggled successfully`, res);
+
   } catch (error) {
     next(error);
   }
-}
+};
 
 // create default admin account
 (async function createDefaultAdminAccount() {

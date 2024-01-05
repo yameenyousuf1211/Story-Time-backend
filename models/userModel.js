@@ -4,6 +4,12 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 const { getMongooseAggregatePaginatedData } = require('../utils');
 
+const settingSchema = new Schema({
+    systemNotification: { type: Boolean, default: false },
+    inAppNotifications: { type: Boolean, default: true },
+    appVibrations: { type: Boolean, default: true },
+}, { versionKey: false, _id: false })
+
 // user schema
 const userSchema = new Schema({
     firstName: { type: String, default: "" },
@@ -28,6 +34,7 @@ const userSchema = new Schema({
     noOfFollowings: { type: Number, default: 0 },
     refreshToken: { type: String, select: false },
     mode: { type: String, enum: Object.values(MODES), default: MODES.PUBLIC },
+    settings:  { type: settingSchema, default: {} },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

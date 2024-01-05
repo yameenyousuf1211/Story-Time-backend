@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser } = require('../models/use
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, NotificationsToggleValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -162,6 +162,36 @@ exports.updateProfile = async (req, res, next) => {
 
     const user = await updateUser({ _id: userId }, { $set: body });
     generateResponse(user, 'Profile updated successfully', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// notification toggle
+exports.NotificationsToggle = async (req, res, next) => {
+  const body = parseBody(req.body);
+  const userId = req.user.id;
+
+  // Joi validation
+  const { error } = NotificationsToggleValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  const key = body.systemNotification ? 'systemNotification' :
+    body.inAppNotifications ? 'inAppNotifications' :
+      'appVibrations';
+
+  try {
+    const user = await findUser({ _id: userId, });
+
+    // Toggle the value
+    user.settings[key] = !user.settings[key];
+
+    // Save the updated user
+    const updatedUser = await user.save();
+    generateResponse(updatedUser, `${key} toggled successfully`, res);
   } catch (error) {
     next(error);
   }

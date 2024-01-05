@@ -43,3 +43,10 @@ exports.updateProfileValidation = Joi.object({
   state: Joi.string().required(),
   city: Joi.string().required(),
 })
+
+exports.NotificationsToggleValidation = Joi.object({
+  systemNotification: Joi.boolean(),
+  inAppNotifications: Joi.boolean(),
+  appVibrations: Joi.boolean(),
+}).or('systemNotification', 'inAppNotifications', 'appVibrations')
+.xor('systemNotification', 'inAppNotifications', 'appVibrations');

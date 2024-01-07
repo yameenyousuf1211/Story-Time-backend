@@ -10,8 +10,11 @@ const guidelineSchema = new Schema({
 
 const GuidelineModel = model('Guideline', guidelineSchema);
 
-// create new terms and setting
+// create new guideline
 exports.createGuideline = (obj) => GuidelineModel.create(obj);
+
+// create or update new guideline
+exports.createOrUpdateGuideline = (query, obj) => GuidelineModel.updateOne(query, obj, { new: true, upsert: true });
 
 // find terms and setting by query
 exports.findGuideline = (query) => GuidelineModel.findOne(query)

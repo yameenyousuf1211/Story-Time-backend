@@ -1,9 +1,9 @@
-const { createGuideline, findAllGuideline, deleteGuideline, findGuideline } = require("../models/guidelineModel");
+const { createGuideline, findAllGuideline, deleteGuideline, findGuideline, createOrUpdateGuideline } = require("../models/guidelineModel");
 const { parseBody, generateResponse } = require("../utils");
 const { addGuidelineValidation, getGuidelineValidation } = require("../validations/guidelineValidation");
-const { STATUS_CODES } = require("../utils/constants");
+const { STATUS_CODES, GUIDELINE } = require("../utils/constants");
 
-
+//add guidelines 
 exports.addGuidelines = async (req, res, next) => {
     const body = parseBody(req.body);
 
@@ -15,19 +15,27 @@ exports.addGuidelines = async (req, res, next) => {
     });
 
     try {
-        const termsAndPolicy = await createGuideline(body);
-        if (!termsAndPolicy) {
-            return {
-                statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
-                message: `${body.type} creation failed`,
-            };
+        if (body.type === GUIDELINE.FAQS) {
+            if (!body._id) {
+                // Create new FAQ
+                const faq = await createGuideline(body);
+                return generateResponse(faq, 'FAQ created successfully', res);
+            } else {
+                // Update existing FAQ using _id
+                const updatedFaq = await createOrUpdateGuideline({ _id: body._id, type: GUIDELINE.FAQS }, body);
+                return generateResponse(updatedFaq, 'FAQ updated successfully', res);
+            }
         }
+
+        // For other types (PrivacyPolicy, TermsAndConditions)
+        const termsAndPolicy = await createOrUpdateGuideline({ type: body.type }, body);
         generateResponse(termsAndPolicy, `${body.type} created`, res);
     } catch (error) {
-        next(error)
+        next(error);
     }
-
 }
+
+
 
 exports.getGuidelines = async (req, res, next) => {
     const body = parseBody(req.body);

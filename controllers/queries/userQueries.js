@@ -109,3 +109,33 @@ exports.getFriendsQuery = (keyword, user) => {
         { $project: { followings: 0, isFollowing: 0, refreshToken: 0, password: 0 } },
     ];
 };
+
+// get list of blocked users
+exports.getBlockedUsersQuery = (user, blockedUserIds) => {
+    return [
+      {
+        $match: {
+          userId: new Types.ObjectId(user),
+          blockId: { $in: blockedUserIds } 
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "blockId",
+          foreignField: "_id",
+          as: "blockedUser"
+        }
+      },
+      {
+        $unwind: "$blockedUser"
+      },
+      {
+        $replaceRoot: {
+          newRoot: "$blockedUser"
+        }
+      },
+      { $sort: { blockedUser: -1 } }
+    ];
+  };
+  

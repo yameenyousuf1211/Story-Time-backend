@@ -1,11 +1,12 @@
 const { findUser, getAllUsers, updateUser, createUser } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
-const { getUsersQuery, getFriendsQuery } = require('./queries/userQueries');
+const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery } = require('./queries/userQueries');
 const { checkAvailabilityValidation, updateProfileValidation, NotificationsToggleValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
+const { findBlockUser, unblockUser, blockUser, getBlockList, findBlockedUsers } = require('../models/blockModel');
 
 // check username availability
 exports.checkAvailability = async (req, res, next) => {
@@ -134,7 +135,6 @@ exports.getAllFriends = async (req, res, next) => {
   }
 }
 
-
 // update profile
 exports.updateProfile = async (req, res, next) => {
   const body = parseBody(req.body);
@@ -195,6 +195,59 @@ exports.NotificationsToggle = async (req, res, next) => {
     next(error);
   }
 };
+
+// Block User Toggle
+exports.blockToggle = async (req, res, next) => {
+  const userId = req.user.id;
+  const { blockId } = req.body;
+
+  if (!blockId) return next({
+    statusCode: STATUS_CODES.BAD_REQUEST,
+    message: 'User Id is required'
+  })
+  try {
+    const blockExist = await findBlockUser({ userId, blockId })
+    if (blockExist) {
+      const deletedObj = await unblockUser({ userId, blockId })
+      if (deletedObj) {
+        return generateResponse(blockExist, 'Unblock Successfully', res)
+      }
+    }
+
+    const blockObj = await blockUser({ userId, blockId })
+    if (blockObj) {
+      generateResponse(blockObj, 'Blocked Successfully', res)
+    }
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+// get block list
+exports.getBlockList = async (req, res, next) => {
+  const user = req.user.id;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+
+  try {
+    const blockedUsers = await findBlockedUsers({user});
+    const blockedUserIds = blockedUsers.map(user => user.blockId);
+
+    const query = getBlockedUsersQuery(user, blockedUserIds);
+
+    const blockList = await getBlockList({ query, page, limit });
+    if (blockList?.blocksList.length === 0) return next({
+      statusCode: STATUS_CODES.NOT_FOUND,
+      message: "Block list not found",
+    });
+
+    generateResponse(blockList, 'Block list retrieved Successfully', res);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // create default admin account
 (async function createDefaultAdminAccount() {

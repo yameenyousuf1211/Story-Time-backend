@@ -1,4 +1,4 @@
-const { createGuideline, deleteGuideline, findGuideline, createOrUpdateGuideline, getAllGuidelines } = require("../models/guidelineModel");
+const { createGuideline, deleteGuidelineById, findGuideline, createOrUpdateGuideline, getAllGuidelines } = require("../models/guidelineModel");
 const { parseBody, generateResponse } = require("../utils");
 const { addGuidelineValidation, getGuidelineValidation } = require("../validations/guidelineValidation");
 const { STATUS_CODES, GUIDELINE } = require("../utils/constants");
@@ -14,22 +14,21 @@ exports.addGuidelines = async (req, res, next) => {
         message: error.details[0].message
     });
 
+    let result, successMessage;
+
     try {
         if (body.type === GUIDELINE.FAQS) {
-            if (!body._id) {
-                // Create new FAQ
-                const faq = await createGuideline(body);
-                return generateResponse(faq, 'FAQ created successfully', res);
-            } else {
-                // Update existing FAQ using _id
-                const updatedFaq = await createOrUpdateGuideline({ _id: body._id, type: GUIDELINE.FAQS }, body);
-                return generateResponse(updatedFaq, 'FAQ updated successfully', res);
-            }
+            result = body.faqId
+                ? await createOrUpdateGuideline({ _id: body.faqId, type: GUIDELINE.FAQS }, body)
+                : await createGuideline(body);
+
+            successMessage = body.faqId ? 'FAQ updated successfully' : 'FAQ created successfully';
+        } else {
+            result = await createOrUpdateGuideline({ type: body.type }, body);
+            successMessage = `${body.type} created`;
         }
 
-        // For other types (PrivacyPolicy, TermsAndConditions)
-        const termsAndPolicy = await createOrUpdateGuideline({ type: body.type }, body);
-        generateResponse(termsAndPolicy, `${body.type} created`, res);
+        generateResponse(result, successMessage, res);
     } catch (error) {
         next(error);
     }
@@ -42,18 +41,17 @@ exports.getGuidelines = async (req, res, next) => {
     const query = { type };
 
     // Joi Validation
-    const { error } = getGuidelineValidation.validate( req.query ); 
+    const { error } = getGuidelineValidation.validate(req.query);
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message
     });
-    
+
     try {
-        const guideline = await getAllGuidelines({ query, page, limit }); 
-        if (guideline.guidelines.length === 0) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: "Guideline not found",
-        });
+        const guideline = await getAllGuidelines({ query, page, limit });
+        if (guideline?.guidelines?.length === 0) {
+            return generateResponse(null, `No ${type} Found`, res);
+        }
 
         generateResponse(guideline, `${type} Found`, res);
     } catch (error) {
@@ -61,23 +59,19 @@ exports.getGuidelines = async (req, res, next) => {
     }
 }
 
-
 exports.deleteGuideline = async (req, res, next) => {
     const { guidelineId } = req.params;
 
     try {
-        // check userId is comment owner
         const guidelineObj = await findGuideline({ _id: guidelineId });
         if (!guidelineObj) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Guideline not found',
         });
 
-        const deleteAGuideline = await deleteGuideline({ _id: guidelineId })
-        generateResponse(deleteAGuideline, "guideline deleted successfully", res)
-    }
-    catch (error) {
+        await deleteGuidelineById(guidelineId);
+        generateResponse(guidelineObj, "Deleted successfully", res);
+    } catch (error) {
         next(error)
     }
-
 }

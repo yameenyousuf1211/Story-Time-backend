@@ -19,24 +19,25 @@ const GuidelineModel = model('Guideline', guidelineSchema);
 exports.createGuideline = (obj) => GuidelineModel.create(obj);
 
 // create or update new guideline
-exports.createOrUpdateGuideline = (query, obj) => GuidelineModel.updateOne(query, obj, { new: true, upsert: true });
+exports.createOrUpdateGuideline = (query, obj) => GuidelineModel.findOneAndUpdate(query, obj, { new: true, upsert: true });
 
 // find terms and setting by query
 exports.findGuideline = (query) => GuidelineModel.findOne(query)
 
 exports.findAllGuideline = (query) => GuidelineModel.find(query)
 
-// delete guideline 
-exports.deleteGuideline = (query) => GuidelineModel.deleteOne(query);
+// delete guideline by id
+exports.deleteGuidelineById = (id) => GuidelineModel.findByIdAndDelete(id)
 
 // get all guidelines
 exports.getAllGuidelines = async ({ query, page, limit }) => {
   const { data, pagination } = await getMongoosePaginatedData({
-  model: GuidelineModel,
-  query,
-  page,
-  limit,
-});
+    model: GuidelineModel,
+    query,
+    page,
+    limit,
+    sort: { createdAt: 1 },
+  });
 
-return { guidelines: data, pagination };
+  return { guidelines: data, pagination };
 };

@@ -3,16 +3,45 @@ const { Types } = require("mongoose")
 // get all stories
 exports.getStoriesQuery = (user) => {
     return [
-        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
-        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
+        {
+            $lookup: {
+                from: 'followings',
+                let: { user: new Types.ObjectId(user), creatorId: '$creator' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$user', '$$user'] },
+                                    { $eq: ['$following', '$$creatorId'] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'followings',
+            },
+        },
         {
             $addFields: {
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
                 likedByMe: { $in: [new Types.ObjectId(user), "$likes"] },
                 dislikesByMe: { $in: [new Types.ObjectId(user), "$dislikes"] },
+                isFollowing: { $cond: [{ $gt: [{ $size: '$followings' }, 0] }, true, false] },
+                isTagged: { $in: [new Types.ObjectId(user), "$tag"] },
             }
         },
+        {
+            $match: {
+                $or: [
+                    { isFollowing: true },
+                    { isTagged: true },
+                ],
+            },
+        },
+        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
+        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
         { $sort: { createdAt: -1 } }    // latest first
     ]
 }

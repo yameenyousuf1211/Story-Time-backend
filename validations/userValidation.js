@@ -44,6 +44,7 @@ exports.updateProfileValidation = Joi.object({
   city: Joi.string().required(),
 })
 
-exports.NotificationsToggleValidation = Joi.object({
+// toggle notifications validation
+exports.notificationsToggleValidation = Joi.object({
   key: Joi.string().valid('systemNotification', 'inAppNotifications', 'appVibrations')
 }).required();

@@ -25,7 +25,7 @@ exports.getBlockList = async ({ query, page, limit }) => {
         page,
         limit,
     });
-    return { blocksList: data, pagination };
+    return { blockUsers: data, pagination };
 };
 
 // find block

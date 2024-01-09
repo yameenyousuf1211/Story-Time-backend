@@ -155,11 +155,6 @@ exports.updateProfile = async (req, res, next) => {
   }
 
   try {
-    // uploading to s3
-    //  if (req?.files?.profileImage?.length > 0) [body.profileImage] = await s3Uploadv3(req.files?.profileImage);
-    //  if (req?.files?.coverImage?.length > 0) [body.coverImage] = await s3Uploadv3(req.files?.coverImage);
-
-
     const user = await updateUser({ _id: userId }, { $set: body });
     generateResponse(user, 'Profile updated successfully', res);
   } catch (error) {
@@ -200,10 +195,11 @@ exports.blockToggle = async (req, res, next) => {
   const userId = req.user.id;
   const { blockId } = req.body;
 
-  if (!blockId) return next({
-    statusCode: STATUS_CODES.BAD_REQUEST,
-    message: 'User Id is required'
-  })
+  if (!blockId || !Types.ObjectId.isValid(blockId)) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please, provide valid blockId.'
+  });
+
   try {
     const blockExist = await findBlockUser({ userId, blockId })
     if (blockExist) {
@@ -214,10 +210,7 @@ exports.blockToggle = async (req, res, next) => {
     }
 
     const blockObj = await blockUser({ userId, blockId })
-    if (blockObj) {
-      generateResponse(blockObj, 'Blocked Successfully', res)
-    }
-
+    generateResponse(blockObj, 'Blocked Successfully', res)
   } catch (error) {
     next(error)
   }
@@ -236,10 +229,9 @@ exports.getBlockList = async (req, res, next) => {
     const query = getBlockedUsersQuery(user, blockedUserIds);
 
     const blockList = await getBlockList({ query, page, limit });
-    if (blockList?.blocksList.length === 0) return next({
-      statusCode: STATUS_CODES.NOT_FOUND,
-      message: "Block list not found",
-    });
+    if (blockList?.blockUsers?.length === 0) {
+      return generateResponse(null, 'No block list found', res);
+    }
 
     generateResponse(blockList, 'Block list retrieved Successfully', res);
   } catch (error) {
@@ -269,6 +261,7 @@ exports.getBlockList = async (req, res, next) => {
       email: process.env.ADMIN_EMAIL,
       password,
       firstName: 'Admin',
+      completePhone: '+921111111111',
       role: ROLES.ADMIN,
     });
 

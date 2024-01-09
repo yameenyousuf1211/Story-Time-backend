@@ -1,4 +1,4 @@
-const { createGuideline, findAllGuideline, deleteGuideline, findGuideline, createOrUpdateGuideline } = require("../models/guidelineModel");
+const { createGuideline, deleteGuideline, findGuideline, createOrUpdateGuideline, getAllGuidelines } = require("../models/guidelineModel");
 const { parseBody, generateResponse } = require("../utils");
 const { addGuidelineValidation, getGuidelineValidation } = require("../validations/guidelineValidation");
 const { STATUS_CODES, GUIDELINE } = require("../utils/constants");
@@ -36,17 +36,21 @@ exports.addGuidelines = async (req, res, next) => {
 }
 
 exports.getGuidelines = async (req, res, next) => {
-    const { type } = req.query;
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 10;
+    const { type = null } = req.query;
+    const query = { type };
 
     // Joi Validation
-    const { error } = getGuidelineValidation.validate(req.query);
+    const { error } = getGuidelineValidation.validate( req.query ); 
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message
     });
+    
     try {
-        const guideline = await findAllGuideline({ type });
-        if (guideline.length === 0) return next({
+        const guideline = await getAllGuidelines({ query, page, limit }); 
+        if (guideline.guidelines.length === 0) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: "Guideline not found",
         });
@@ -56,6 +60,7 @@ exports.getGuidelines = async (req, res, next) => {
         next(error)
     }
 }
+
 
 exports.deleteGuideline = async (req, res, next) => {
     const { guidelineId } = req.params;

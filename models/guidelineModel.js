@@ -1,5 +1,7 @@
 const { Schema, model } = require('mongoose');
 const { GUIDELINE } = require('../utils/constants');
+const { getMongoosePaginatedData } = require('../utils');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 // Guideline Schema
 const guidelineSchema = new Schema({
@@ -7,6 +9,9 @@ const guidelineSchema = new Schema({
   title: { type: String },
   content: { type: String, required: true },
 }, { timestamps: true, versionKey: false });
+
+// pagination plugins
+guidelineSchema.plugin(mongoosePaginate);
 
 const GuidelineModel = model('Guideline', guidelineSchema);
 
@@ -23,3 +28,15 @@ exports.findAllGuideline = (query) => GuidelineModel.find(query)
 
 // delete guideline 
 exports.deleteGuideline = (query) => GuidelineModel.deleteOne(query);
+
+// get all guidelines
+exports.getAllGuidelines = async ({ query, page, limit }) => {
+  const { data, pagination } = await getMongoosePaginatedData({
+  model: GuidelineModel,
+  query,
+  page,
+  limit,
+});
+
+return { guidelines: data, pagination };
+};

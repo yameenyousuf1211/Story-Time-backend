@@ -4,7 +4,7 @@ const {
     deleteGuideline,
     addGuidelines,
 } = require("../controllers/guidelineController");
-const authMiddleware = require("../middlewares/Auth");
+const authMiddleware = require("../middlewares/auth");
 const { ROLES } = require("../utils/constants");
 
 class GuidelineAPI {

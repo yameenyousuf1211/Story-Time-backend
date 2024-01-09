@@ -23,10 +23,7 @@ class UserAPI {
       upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
       updateProfile);
     router.put('/notifications', authMiddleware(Object.values(ROLES)), notificationsToggle)
-
     router.put('/block', authMiddleware(Object.values(ROLES)), blockToggle)
-
-
   }
 
   getRouter() {

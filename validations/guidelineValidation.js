@@ -2,9 +2,7 @@ const Joi = require("joi");
 const { GUIDELINE } = require("../utils/constants");
 
 exports.addGuidelineValidation = Joi.object({
-  type: Joi.string()
-    .valid(...Object.values(GUIDELINE))
-    .required(),
+  type: Joi.string().valid(...Object.values(GUIDELINE)).required(),
   content: Joi.string().required(),
   title: Joi.string().allow(null, ""),
   _id: Joi.string().when('type', {
@@ -19,7 +17,5 @@ exports.addGuidelineValidation = Joi.object({
 });
 
 exports.getGuidelineValidation = Joi.object({
-  type: Joi.string()
-    .valid(...Object.values(GUIDELINE))
-    .required(),
+  type: Joi.string().valid(...Object.values(GUIDELINE)).required(),
 })

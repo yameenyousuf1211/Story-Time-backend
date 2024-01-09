@@ -14,8 +14,6 @@ class GuidelineAPI {
     }
 
     setupRoutes() {
-        const router = this.router;
-
         router.get("/", getGuidelines);
         router.post("/", addGuidelines);
         router.delete("/:guidelineId", authMiddleware([ROLES.ADMIN]), deleteGuideline);

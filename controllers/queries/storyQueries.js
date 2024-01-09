@@ -34,15 +34,13 @@ exports.getStoriesQuery = (user) => {
         },
         {
             $match: {
-                $or: [
-                    { isFollowing: true },
-                    { isTagged: true },
-                ],
+                $or: [{ isFollowing: true }, { isTagged: true }],
             },
         },
         { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
-        { $sort: { createdAt: -1 } }    // latest first
+        { $sort: { createdAt: -1 } },    // latest first
+        { $project: { followings: 0 } }
     ]
 }
 

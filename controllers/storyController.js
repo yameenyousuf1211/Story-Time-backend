@@ -4,7 +4,6 @@ const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
-const { getAllUsers } = require('../models/userModel');
 const { Types } = require('mongoose');
 
 //Create Text Story
@@ -37,7 +36,7 @@ exports.fetchAllStories = async (req, res, next) => {
 
     try {
         const storiesData = await getAllStories({ query, page, limit });
-        if (storiesData?.stories.length === 0) {
+        if (storiesData?.stories?.length === 0) {
             generateResponse(null, 'No any story found', res);
             return;
         }

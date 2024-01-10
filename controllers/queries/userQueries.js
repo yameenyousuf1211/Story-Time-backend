@@ -2,7 +2,7 @@ const { Types } = require("mongoose")
 const { ROLES } = require("../../utils/constants")
 
 // get all users (excluding currentUser & admin)
-exports.getUsersQuery = (keyword, user) => {
+exports.getUsersQuery = (keyword, user, story) => {
     return [
         {
             $match: {
@@ -55,14 +55,32 @@ exports.getUsersQuery = (keyword, user) => {
             },
         },
         {
+            $lookup: {
+                from: 'stories',
+                let: { userId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $and: [
+                                { $expr: { $in: ['$$userId', '$tag'] } },
+                                { isDeleted: false },
+                                { _id: { $eq: new Types.ObjectId(story) } }, // Match against the provided story _id
+                            ],
+                        },
+                    },
+                ],
+                as: 'taggedStory',
+            },
+        },
+        {
             $addFields: {
                 isFollower: { $cond: [{ $gt: [{ $size: '$follower' }, 0] }, true, false] },
                 isFollowing: { $cond: [{ $gt: [{ $size: '$following' }, 0] }, true, false] },
+                isTagged: { $cond: [{ $gt: [{ $size: '$taggedStory' }, 0] }, true, false] },
             },
         },
-        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0 } },
-        { $sort: { isFollowing: -1 } }
-        // { $sort: { createdAt: -1 } }    // latest first
+        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0, taggedStory: 0 } },
+        { $sort: { isTagged: -1, createdAt: -1 } }, // sort on tagged first then latest
     ]
 }
 

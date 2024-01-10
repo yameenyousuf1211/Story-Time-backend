@@ -48,3 +48,11 @@ exports.updateProfileValidation = Joi.object({
 exports.notificationsToggleValidation = Joi.object({
   key: Joi.string().valid('systemNotification', 'inAppNotifications', 'appVibrations')
 }).required();
+
+// get all users validation
+exports.getAllUsersValidation = Joi.object({
+  limit: Joi.number().min(1).max(100).optional(),
+  page: Joi.number().min(1).optional(),
+  search: Joi.string().optional().allow(null, ''),
+  story: Joi.string()
+});

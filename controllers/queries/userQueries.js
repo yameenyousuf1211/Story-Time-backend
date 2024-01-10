@@ -111,31 +111,22 @@ exports.getFriendsQuery = (keyword, user) => {
 };
 
 // get list of blocked users
-exports.getBlockedUsersQuery = (user, blockedUserIds) => {
+exports.getBlockedUsersQuery = (user) => {
     return [
-      {
-        $match: {
-          userId: new Types.ObjectId(user),
-          blockId: { $in: blockedUserIds } 
+        { $match: { userId: new Types.ObjectId(user) } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "blockId",
+                foreignField: "_id",
+                as: "blockedUser"
+            }
+        },
+        { $unwind: "$blockedUser" },
+        {
+            $replaceRoot: {
+                newRoot: "$blockedUser"
+            }
         }
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "blockId",
-          foreignField: "_id",
-          as: "blockedUser"
-        }
-      },
-      {
-        $unwind: "$blockedUser"
-      },
-      {
-        $replaceRoot: {
-          newRoot: "$blockedUser"
-        }
-      },
-      { $sort: { blockedUser: -1 } }
     ];
-  };
-  
+};

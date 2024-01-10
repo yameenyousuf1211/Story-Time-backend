@@ -6,7 +6,7 @@ const { checkAvailabilityValidation, updateProfileValidation, notificationsToggl
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
-const { findBlockUser, unblockUser, blockUser, getBlockList, findBlockedUsers } = require('../models/blockModel');
+const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../models/blockModel');
 
 // check username availability
 exports.checkAvailability = async (req, res, next) => {
@@ -221,19 +221,15 @@ exports.getBlockList = async (req, res, next) => {
   const user = req.user.id;
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
+  const query = getBlockedUsersQuery(user);
 
   try {
-    const blockedUsers = await findBlockedUsers({ user });
-    const blockedUserIds = blockedUsers.map(user => user.blockId);
-
-    const query = getBlockedUsersQuery(user, blockedUserIds);
-
-    const blockList = await getBlockList({ query, page, limit });
-    if (blockList?.blockUsers?.length === 0) {
+    const blockedUsersObj = await getBlockList({ query, page, limit });
+    if (blockedUsersObj?.blockUsers?.length === 0) {
       return generateResponse(null, 'No block list found', res);
     }
 
-    generateResponse(blockList, 'Block list retrieved Successfully', res);
+    generateResponse(blockedUsersObj, 'Block users retrieved successfully!', res);
   } catch (error) {
     next(error);
   }

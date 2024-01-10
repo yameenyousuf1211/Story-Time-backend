@@ -33,7 +33,3 @@ exports.findBlockUser = (query) => BlockModel.findOne(query);
 
 // delete Block User
 exports.unblockUser = (query) => BlockModel.deleteOne(query);
-
-// get all blocked users
-exports.findBlockedUsers = (query) => BlockModel.find(query);
-

@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser } = require('../models/use
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -36,12 +36,20 @@ exports.checkAvailability = async (req, res, next) => {
 
 // get all users
 exports.getAllUsers = async (req, res, next) => {
+
+  // Joi validation
+  const { error } = getAllUsersValidation.validate(req.query);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
   const user = req.user.id;
-  const { search = "" } = req.query;
+  const { search = "", story } = req.query;
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
 
-  const query = getUsersQuery(search, user);
+  const query = getUsersQuery(search, user, story);
 
   try {
     const usersData = await getAllUsers({ query, page, limit });
@@ -234,7 +242,6 @@ exports.getBlockList = async (req, res, next) => {
     next(error);
   }
 };
-
 
 // create default admin account
 (async function createDefaultAdminAccount() {

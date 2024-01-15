@@ -14,6 +14,7 @@ const DB_CONNECT = require('./config/dbConnect');
 const cookieSession = require('cookie-session');
 const { notFound, errorHandler } = require('./middlewares/errorHandling');
 const { log } = require('./middlewares/log');
+const socketio = require("socket.io");
 const PORT = process.env.PORT || 3021;
 const HOST = process.env.HOST || 'localhost';
 const app = express();
@@ -42,3 +43,11 @@ app.use(errorHandler);
 server.listen(PORT, HOST, () => {
     console.log(`Server running at http://${HOST}:${PORT}/`);
 });
+
+// sockets for chat module
+const io = socketio(server).sockets;
+
+// Import supportService and pass io to initialize it
+const supportService = require('./service/supportService');
+supportService.socketIO(io);
+

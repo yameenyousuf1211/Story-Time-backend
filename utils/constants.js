@@ -31,3 +31,9 @@ exports.GUIDELINE = Object.freeze({
   TERMS_AND_CONDITIONS: 'TermsAndConditions',
   FAQS: 'FAQs',
 });
+
+exports.SUPPORT_CHAT_STATUS = Object.freeze({
+  ONGOING: 'ongoing',
+  CLOSED: 'closed',
+  PENDING: 'pending'
+});

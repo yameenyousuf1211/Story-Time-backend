@@ -241,7 +241,7 @@ exports.getCommentsOfStory = async (req, res, next) => {
         message: 'Please, provide storyId properly.'
     });
 
-    const query = { story: new Types.ObjectId(storyId), parent: null };   //getAllCommentsQuery(postId);
+    const query = { story: new Types.ObjectId(storyId), parent: null }; 
 
     try {
         const commentsData = await getAllComments({
@@ -254,7 +254,7 @@ exports.getCommentsOfStory = async (req, res, next) => {
                         { path: 'user', select: 'firstName lastName username profileImage' },
                         {
                             path: 'replies',
-                            // perDocumentLimit: 2,
+                       
                             populate: [
                                 { path: 'user', select: 'firstName lastName username profileImage' },
                             ]

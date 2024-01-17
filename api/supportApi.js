@@ -2,7 +2,8 @@ const router = require('express').Router();
 const {
     getChatList,
     closeChat,
-    sendMessage
+    sendMessage,
+    getChatMessages
 } = require('../controllers/supportController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -19,6 +20,7 @@ class SupportAPI {
 
         router.get('/chat-list', authMiddleware(Object.values(ROLES)), getChatList);
         // router.get('/', authMiddleware(Object.values(ROLES)), getMessages);
+        router.get('/chat-messages/:chatId', authMiddleware(Object.values(ROLES)), getChatMessages);
 
         router.post('/send-message',
             authMiddleware(Object.values(ROLES)),

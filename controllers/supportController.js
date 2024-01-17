@@ -2,7 +2,7 @@ const { findChats, findChat, createChat, updateChat } = require('../models/suppo
 const { generateResponse, parseBody } = require('../utils');
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require('../utils/constants');
 const { s3Uploadv3 } = require('../utils/s3Upload');
-const { findMessageById, createMessage } = require('../models/supportMessageModel');
+const { findMessageById, createMessage, findMessages } = require('../models/supportMessageModel');
 const { sendMessageValidation } = require('../validations/supportChatValidation');
 const { Types } = require('mongoose');
 const { sendMessageIO, closeTicketIO } = require('../service/supportService');
@@ -47,7 +47,7 @@ exports.sendMessage = async (req, res, next) => {
 
     try {
         if (req.files?.media?.length > 0) body.media = req.files.media.map(file => file.path);
-        
+
         // media upload to s3
         //if (req?.files?.media?.length > 0) body.media = await s3Uploadv3(req.files?.media);
 
@@ -102,3 +102,30 @@ exports.closeChat = async (req, res, next) => {
         next(error);
     }
 }
+
+// get chat messages
+exports.getChatMessages = async (req, res, next) => {
+    const { chatId } = req.params;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+
+    if (!chatId || !Types.ObjectId.isValid(chatId)) {
+        return next({
+            statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+            message: 'Please, provide a valid chat id.'
+        });
+    }
+
+    try {
+        const messagesData = await findMessages({ query: { chat: chatId }, page, limit, });
+
+        if (messagesData?.supportMessages?.length === 0) {
+            generateResponse(null, "No messages found for the chat", res);
+            return;
+        }
+
+        generateResponse(messagesData, "Chat messages fetched successfully", res);
+    } catch (error) {
+        next(error);
+    }
+};

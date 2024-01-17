@@ -2,11 +2,13 @@ const { findUser, getAllUsers, updateUser, createUser } = require('../models/use
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
 const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../models/blockModel');
+const { findStoryById } = require('../models/storyModel');
+const { createReport, findReportById, findReports } = require('../models/reportModel');
 
 // check username availability
 exports.checkAvailability = async (req, res, next) => {
@@ -242,6 +244,63 @@ exports.getBlockList = async (req, res, next) => {
     next(error);
   }
 };
+
+//report user
+exports.reportUser = async (req, res, next) => {
+  const user = req.user.id;
+  const body = parseBody(req.body);
+
+  // Joi validation
+  const { error } = reportUserValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  try {
+    const story = await findStoryById(body.story);
+    if (!story) {
+      return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Story not found',
+      });
+    }
+
+    // Create a report for the creator of the story
+    const report = await createReport({
+      user: user,
+      reportedUser: story.creator,
+      story: body.story,
+      text: body.text,
+    });
+
+    const populatedReport = await findReportById(report._id)
+      .populate('user', 'firstName lastName username profileImage')
+      .populate('reportedUser', 'firstName lastName username profileImage');
+
+    generateResponse(populatedReport, 'Report submitted successfully!', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+exports.getAllReports = async (req, res, next) => {
+  const page = parseInt(req.query?.page) || 1;
+  const limit = parseInt(req.query?.limit) || 10;
+
+  const query = {};
+  try {
+
+    const reportsList = await findReports({ query, page, limit });
+    if (reportsList?.reports.length === 0) {
+      generateResponse(null, 'No Reports found', res);
+      return;
+    }
+    generateResponse(reportsList, "Reports found Successfully", res);
+  } catch (error) {
+    next(error)
+  }
+}
 
 // create default admin account
 (async function createDefaultAdminAccount() {

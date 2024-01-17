@@ -56,3 +56,8 @@ exports.getAllUsersValidation = Joi.object({
   search: Joi.string().optional().allow(null, ''),
   story: Joi.string()
 });
+
+exports.reportUserValidation = Joi.object({
+  story: Joi.string().required(),
+  text: Joi.string().required(), 
+})

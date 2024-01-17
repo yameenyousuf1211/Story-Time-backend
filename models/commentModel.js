@@ -5,7 +5,7 @@ const { getMongoosePaginatedData } = require("../utils");
 
 const commentSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User' },
-  story: { type: Schema.Types.ObjectId, ref: 'Post' },
+  story: { type: Schema.Types.ObjectId, ref: 'Story' },
   media: [String],
   replies: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
   text: { type: String, default: null },

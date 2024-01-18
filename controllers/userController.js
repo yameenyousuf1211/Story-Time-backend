@@ -259,12 +259,10 @@ exports.reportUser = async (req, res, next) => {
 
   try {
     const story = await findStoryById(body.story);
-    if (!story) {
-      return next({
-        statusCode: STATUS_CODES.NOT_FOUND,
-        message: 'Story not found',
-      });
-    }
+    if (!story) return next({
+      statusCode: STATUS_CODES.NOT_FOUND,
+      message: 'Story not found',
+    });
 
     // Create a report for the creator of the story
     const report = await createReport({

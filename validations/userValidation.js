@@ -51,7 +51,7 @@ exports.notificationsToggleValidation = Joi.object({
 
 // get all users validation
 exports.getAllUsersValidation = Joi.object({
-  limit: Joi.number().min(1).max(100).optional(),
+  limit: Joi.number().min(1).optional(),
   page: Joi.number().min(1).optional(),
   search: Joi.string().optional().allow(null, ''),
   story: Joi.string()
@@ -59,5 +59,5 @@ exports.getAllUsersValidation = Joi.object({
 
 exports.reportUserValidation = Joi.object({
   story: Joi.string().required(),
-  text: Joi.string().required(), 
+  text: Joi.string().required(),
 })

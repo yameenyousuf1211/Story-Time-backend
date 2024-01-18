@@ -7,8 +7,6 @@ const {
     sendVerificationCode,
     verifyCode,
     resetPassword,
-    // sendVerificationCodeEmail,
-    // sendVerificationCodePhone,
 } = require('../controllers/authController');
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');

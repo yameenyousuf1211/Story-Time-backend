@@ -109,22 +109,20 @@ exports.getChatMessages = async (req, res, next) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    if (!chatId || !Types.ObjectId.isValid(chatId)) {
-        return next({
-            statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-            message: 'Please, provide a valid chat id.'
-        });
-    }
+    if (!Types.ObjectId.isValid(chatId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Invalid chat ID'
+    });
 
     try {
         const messagesData = await findMessages({ query: { chat: chatId }, page, limit, });
 
         if (messagesData?.supportMessages?.length === 0) {
-            generateResponse(null, "No messages found for the chat", res);
+            generateResponse(null, "No messages found", res);
             return;
         }
 
-        generateResponse(messagesData, "Chat messages fetched successfully", res);
+        generateResponse(messagesData, "Messages fetched successfully", res);
     } catch (error) {
         next(error);
     }

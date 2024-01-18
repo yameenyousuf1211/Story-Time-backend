@@ -19,13 +19,11 @@ class SupportAPI {
     setupRoutes() {
 
         router.get('/chat-list', authMiddleware(Object.values(ROLES)), getChatList);
-        // router.get('/', authMiddleware(Object.values(ROLES)), getMessages);
-        router.get('/chat-messages/:chatId', authMiddleware(Object.values(ROLES)), getChatMessages);
+        router.get('/:chatId', authMiddleware(Object.values(ROLES)), getChatMessages);
 
         router.post('/send-message',
             authMiddleware(Object.values(ROLES)),
             upload('chat').fields([{ name: "media", maxCount: 5 }]), sendMessage);
-        //  upload.fields([{ name: "media", maxCount: 5 }]), sendMessage);
 
         router.put('/close-ticket', authMiddleware(Object.values(ROLES)), closeChat);
     }

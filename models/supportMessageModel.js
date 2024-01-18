@@ -25,6 +25,10 @@ exports.findMessages = async ({ query, page, limit }) => {
         query,
         page,
         limit,
+        populate: {
+            path: 'user',
+            select: 'firstName lastName username profileImage'
+        },
     });
 
     return { supportMessages: data, pagination };

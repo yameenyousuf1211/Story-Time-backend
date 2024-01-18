@@ -30,6 +30,11 @@ exports.findReports = async ({ query, page, limit }) => {
         query,
         page,
         limit,
+        populate: [
+            { path: 'user', select: 'firstName lastName username profileImage' },
+            { path: 'reportedUser', select: 'firstName lastName username profileImage' },
+            { path: 'story' }
+        ],
     });
 
     return { reports: data, pagination };

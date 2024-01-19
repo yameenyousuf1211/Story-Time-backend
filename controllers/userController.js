@@ -300,6 +300,26 @@ exports.getAllReports = async (req, res, next) => {
   }
 }
 
+// delete user (soft delete)
+exports.deleteUser = async (req, res, next) => {
+  const user = req.user.id;
+
+  try {
+      const userObj = await findUser({ _id: user, isDeleted: false });
+      if (!userObj) return next({
+          statusCode: STATUS_CODES.NOT_FOUND,
+          message: 'User not found'
+      });
+
+      userObj.isDeleted = true;
+      await userObj.save();
+
+      generateResponse(userObj, 'User deleted successfully', res);
+  } catch (error) {
+      next(error);
+  }
+}
+
 // create default admin account
 (async function createDefaultAdminAccount() {
   try {

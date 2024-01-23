@@ -320,6 +320,23 @@ exports.deleteUser = async (req, res, next) => {
   }
 }
 
+// get card details
+exports.getCard = async (req, res, next) => {
+  const user = req.user.id;
+
+  try {
+    const existingUser = await findUser({ _id: user });
+    
+    if (!existingUser.card) {
+      return generateResponse(null, 'No card found for the user', res);
+    }
+
+    generateResponse(existingUser.card, 'Card details retrieved successfully', res);
+  } catch (error) {
+    next(error)
+  }
+}
+
 // add or update card for payment
 exports.addOrUpdateCard = async (req, res, next) => {
   const userId = req.user.id;
@@ -360,7 +377,7 @@ exports.deleteCard = async (req, res, next) => {
       return generateResponse(null, 'User Not Found', res);
     }
 
-    existingUser.card = undefined;
+    existingUser.card = null;
     await existingUser.save();
     generateResponse(existingUser, 'Card deleted successfully', res);
 

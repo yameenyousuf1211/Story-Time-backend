@@ -10,6 +10,15 @@ const settingSchema = new Schema({
     appVibrations: { type: Boolean, default: true },
 }, { versionKey: false, _id: false })
 
+// payment card Schema
+const cardSchema = new Schema({
+    fullName: { type: String, default: "" },
+    country: { type: String, default: "" },
+    cardNumber: { type: String, default: "" },
+    expiryDate: { type: String, default: "" },
+    cvv: { type: String, default: "" },
+}, { versionKey: false, _id: false })
+
 // user schema
 const userSchema = new Schema({
     firstName: { type: String, default: "" },
@@ -34,7 +43,8 @@ const userSchema = new Schema({
     noOfFollowings: { type: Number, default: 0 },
     refreshToken: { type: String, select: false },
     mode: { type: String, enum: Object.values(MODES), default: MODES.PUBLIC },
-    settings:  { type: settingSchema, default: {} },
+    settings: { type: settingSchema, default: {} },
+    card: { type: cardSchema, default: {} },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins
@@ -70,3 +80,9 @@ exports.getFcmToken = async (userId) => {
     const user = await UserModel.findById(userId).select('fcmToken');
     return user?.fcmToken;
 }
+
+// add or update new card
+exports.addOrUpdateCard = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true, upsert: true });
+
+// delete card (hard delete)
+exports.deleteCard = (query) => UserModel.deleteOne(query);

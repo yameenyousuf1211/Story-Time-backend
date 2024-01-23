@@ -1,8 +1,8 @@
-const { findUser, getAllUsers, updateUser, createUser } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -305,18 +305,67 @@ exports.deleteUser = async (req, res, next) => {
   const user = req.user.id;
 
   try {
-      const userObj = await findUser({ _id: user, isDeleted: false });
-      if (!userObj) return next({
-          statusCode: STATUS_CODES.NOT_FOUND,
-          message: 'User not found'
-      });
+    const userObj = await findUser({ _id: user, isDeleted: false });
+    if (!userObj) return next({
+      statusCode: STATUS_CODES.NOT_FOUND,
+      message: 'User not found'
+    });
 
-      userObj.isDeleted = true;
-      await userObj.save();
+    userObj.isDeleted = true;
+    await userObj.save();
 
-      generateResponse(userObj, 'User deleted successfully', res);
+    generateResponse(userObj, 'User deleted successfully', res);
   } catch (error) {
-      next(error);
+    next(error);
+  }
+}
+
+// add or update card for payment
+exports.addOrUpdateCard = async (req, res, next) => {
+  const userId = req.user.id;
+  const body = parseBody(req.body);
+
+  // Joi validation
+  const { error } = addCardValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  try {
+    const existingUser = await findUser({ _id: userId });
+
+    if (existingUser.card) {
+      // Update existing card
+      const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } });
+      generateResponse(updatedUser, 'Card Saved successfully', res);
+    } else {
+      // Add new card
+      const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } }, { new: true, upsert: true });
+      generateResponse(updatedUser, 'Card Added successfully', res);
+    }
+  } catch (error) {
+    next(error)
+  }
+
+}
+
+// delete user card (hard delete)
+exports.deleteCard = async (req, res, next) => {
+  const user = req.user.id;
+  try {
+    const existingUser = await findUser({ _id: user });
+
+    if (!existingUser.card) {
+      return generateResponse(null, 'User Not Found', res);
+    }
+
+    existingUser.card = undefined;
+    await existingUser.save();
+    generateResponse(existingUser, 'Card deleted successfully', res);
+
+  } catch (error) {
+    next(error);
   }
 }
 

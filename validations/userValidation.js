@@ -60,4 +60,12 @@ exports.getAllUsersValidation = Joi.object({
 exports.reportUserValidation = Joi.object({
   story: Joi.string().required(),
   text: Joi.string().required(),
-})
+});
+
+exports.addCardValidation = Joi.object({
+  fullName: Joi.string().required(),
+  country: Joi.string().required(),
+  cardNumber:Joi.number().required(),
+  expiryDate:Joi.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/).required(), // MM/YY format
+  cvv:Joi.string().min(3).max(3).required()
+});

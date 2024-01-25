@@ -375,7 +375,6 @@ exports.deleteCard = async (req, res, next) => {
   const user = req.user.id;
   try {
     const existingUser = await findUser({ _id: user });
-
     if (!existingUser.card) {
       return generateResponse(null, 'User Not Found', res);
     }
@@ -383,7 +382,6 @@ exports.deleteCard = async (req, res, next) => {
     existingUser.card = null;
     await existingUser.save();
     generateResponse(existingUser, 'Card deleted successfully', res);
-
   } catch (error) {
     next(error);
   }

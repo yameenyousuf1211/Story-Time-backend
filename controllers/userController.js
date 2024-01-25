@@ -302,7 +302,10 @@ exports.getAllReports = async (req, res, next) => {
 
 // delete user (soft delete)
 exports.deleteUser = async (req, res, next) => {
-  const user = req.user.id;
+  let user;
+
+  if (req.user.role === ROLES.ADMIN) user = req.query?.user;
+  else user = req.user.id;
 
   try {
     const userObj = await findUser({ _id: user, isDeleted: false });
@@ -326,7 +329,7 @@ exports.getCard = async (req, res, next) => {
 
   try {
     const existingUser = await findUser({ _id: user });
-    
+
     if (!existingUser.card) {
       return generateResponse(null, 'No card found for the user', res);
     }

@@ -44,7 +44,7 @@ const userSchema = new Schema({
     refreshToken: { type: String, select: false },
     mode: { type: String, enum: Object.values(MODES), default: MODES.PUBLIC },
     settings: { type: settingSchema, default: {} },
-    card: { type: cardSchema, default: {} },
+    card: { type: cardSchema, default: null },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

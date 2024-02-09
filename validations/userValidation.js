@@ -69,3 +69,10 @@ exports.addCardValidation = Joi.object({
   expiryDate: Joi.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/).required(), // MM/YY format
   cvv: Joi.string().min(3).max(3).required()
 });
+
+// get all users validation
+exports.getAllUsersForAdminValidation = Joi.object({
+  limit: Joi.number().min(1).optional(),
+  page: Joi.number().min(1).optional(),
+  search: Joi.string().optional().allow(null, ''),
+});

@@ -98,4 +98,9 @@ exports.refreshTokenValidation = Joi.object({
     refreshToken: Joi.string().required(),
 });
 
+exports.resetTokenValidation = Joi.object({
+    resetToken: Joi.string().required(),
+});
+
+
 

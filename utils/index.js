@@ -142,3 +142,9 @@ exports.upload = (folderName) => {
 
 // Function to get a random index from an array
 exports.getRandomIndexFromArray = (arrayLength) => Math.floor(Math.random() * arrayLength);
+
+// generate reset token link
+exports.generateResetLink = (resetToken) => {
+    // You may want to customize the reset link structure based on your requirements
+    return `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+};

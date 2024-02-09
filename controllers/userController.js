@@ -1,8 +1,8 @@
 const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = require('../models/userModel');
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
-const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation } = require('../validations/userValidation');
+const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -382,6 +382,36 @@ exports.deleteCard = async (req, res, next) => {
     existingUser.card = null;
     await existingUser.save();
     generateResponse(existingUser, 'Card deleted successfully', res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// get all users
+exports.getAllUsersForAdmin = async (req, res, next) => {
+
+  // Joi validation
+  const { error } = getAllUsersForAdminValidation.validate(req.query);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  const user = req.user.id;
+  const { search = "" } = req.query;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+
+  const query = getAllUserQuery(search, user);
+
+  try {
+    const usersData = await getAllUsers({ query, page, limit });
+    if (usersData?.users.length === 0) {
+      generateResponse(null, 'No users found', res);
+      return;
+    }
+
+    generateResponse(usersData, 'All users retrieved successfully', res);
   } catch (error) {
     next(error);
   }

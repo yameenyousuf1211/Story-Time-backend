@@ -148,3 +148,110 @@ exports.getBlockedUsersQuery = (user) => {
         }
     ];
 };
+
+// get all users for admin
+exports.getAllUserQuery = (keyword, user) => {
+    return [
+        {
+            $match: {
+                _id: { $ne: new Types.ObjectId(user) },
+                role: { $ne: ROLES.ADMIN },
+                isActive: true,
+                isDeleted: false,
+                username: { $regex: keyword, $options: 'i' },
+            },
+        },
+        {
+            $lookup: {
+                from: 'followings',
+                let: { user: new Types.ObjectId(user), targetId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$user', '$$user'] },
+                                    { $eq: ['$following', '$$targetId'] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'following',
+            },
+        },
+        {
+            $lookup: {
+                from: 'followings',
+                let: { user: new Types.ObjectId(user), targetId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$user', '$$targetId'] },
+                                    { $eq: ['$following', '$$user'] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'follower',
+            },
+        },
+        {
+            $lookup: {
+                from: 'stories',
+                let: { userId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $and: [
+                                { $expr: { $eq: ['$creator', '$$userId'] } },
+                                { isDeleted: false },
+                                { type: 'text' },
+                            ],
+                        },
+                    },
+                ],
+                as: 'textStories',
+            },
+        },
+        {
+            $lookup: {
+                from: 'stories',
+                let: { userId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $and: [
+                                { $expr: { $eq: ['$creator', '$$userId'] } },
+                                { isDeleted: false },
+                                { type: 'video' },
+                            ],
+                        },
+                    },
+                ],
+                as: 'videoStories',
+            },
+        },
+        {
+            $addFields: {
+                textStoriesCount: { $size: '$textStories' },
+                videoStoriesCount: { $size: '$videoStories' },
+            },
+        },
+        {
+            $unset: ['textStories', 'videoStories'],
+        },
+        {
+            $project: {
+                follower: 0,
+                following: 0,
+                refreshToken: 0,
+                password: 0,
+            },
+        },
+        { $sort: { createdAt: -1 } },
+    ];
+};

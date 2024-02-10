@@ -2,6 +2,7 @@ const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse, getRandomIndexFromArray } = require('../utils/index');
 const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoryModel');
 const { createCategoryValidation } = require('../validations/categoryValidation');
+const { Types } = require('mongoose');
 
 exports.createCategory = async (req, res, next) => {
     const body = parseBody(req.body);
@@ -40,7 +41,7 @@ exports.getAllCategories = async (req, res, next) => {
     const page = parseInt(req.query?.page) || 1;
     const limit = parseInt(req.query?.limit) || 10;
     const { parent = null } = req.query;
-    const query = { parent };
+    const query = { parent, isDeleted: false };
 
     try {
         const categoriesData = await getAllCategories({ query, page, limit });
@@ -57,10 +58,10 @@ exports.getAllCategories = async (req, res, next) => {
 
 // delete category by id (soft deleted)
 exports.deleteCategoryById = async (req, res, next) => {
-    const { categoryId } = req.params;
+    const { categoryId } = req.query;
 
     // check if ID is valid
-    if (!Types.ObjectId.isValid(categoryId)) return next({
+    if (!categoryId || !Types.ObjectId.isValid(categoryId)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: 'Please, provide categoryId properly.'
     });

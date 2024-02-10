@@ -417,6 +417,34 @@ exports.getAllUsersForAdmin = async (req, res, next) => {
   }
 };
 
+exports.userStatusToggle = async (req, res, next) => {
+  const { userId } = req.query;
+
+  if (!userId || !Types.ObjectId.isValid(userId)) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please, provide valid userId.'
+  });
+  try {
+    const userObj = await findUser({ _id: userId, isDeleted: false });
+
+    if (!userObj) {
+      return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'User not found'
+      });
+    }
+
+    userObj.isActive = !userObj.isActive;
+
+    await userObj.save();
+
+    const message = userObj.isActive ? 'User enabled successfully' : 'User disabled successfully';
+    generateResponse(userObj, message, res);
+  } catch (error) {
+    next(error);
+  }
+}
+
 // create default admin account
 (async function createDefaultAdminAccount() {
   try {

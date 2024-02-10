@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = requi
 const { generateResponse, parseBody } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -442,6 +442,30 @@ exports.userStatusToggle = async (req, res, next) => {
     generateResponse(userObj, message, res);
   } catch (error) {
     next(error);
+  }
+}
+
+exports.editAdminInfo = async (req, res, next) => {
+  const body = parseBody(req.body);
+  const userId = req.user.id;
+
+  // Joi validation
+  const { error } = editAdminInfoValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  try {
+
+    // hash password
+    const hashedPassword = await hash(body.password, 10);
+    body.password = hashedPassword;
+
+    const user = await updateUser({ _id: userId }, { $set: body });
+    generateResponse(user, 'Profile updated successfully', res);
+  } catch (error) {
+
   }
 }
 

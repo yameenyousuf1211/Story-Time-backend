@@ -75,4 +75,5 @@ exports.getAllUsersForAdminValidation = Joi.object({
   limit: Joi.number().min(1).optional(),
   page: Joi.number().min(1).optional(),
   search: Joi.string().optional().allow(null, ''),
+  status: Joi.string()
 });

@@ -389,20 +389,20 @@ exports.deleteCard = async (req, res, next) => {
 
 // get all users
 exports.getAllUsersForAdmin = async (req, res, next) => {
-
-  // Joi validation
   const { error } = getAllUsersForAdminValidation.validate(req.query);
-  if (error) return next({
-    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: error.details[0].message
-  });
+  if (error) {
+    return next({
+      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+      message: error.details[0].message,
+    });
+  }
 
   const user = req.user.id;
-  const { search = "" } = req.query;
+  const { search = "", status } = req.query;
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
 
-  const query = getAllUserQuery(search, user);
+  const query = getAllUserQuery(search, user, status);
 
   try {
     const usersData = await getAllUsers({ query, page, limit });
@@ -415,7 +415,7 @@ exports.getAllUsersForAdmin = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 // create default admin account
 (async function createDefaultAdminAccount() {

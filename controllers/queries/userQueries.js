@@ -150,16 +150,25 @@ exports.getBlockedUsersQuery = (user) => {
 };
 
 // get all users for admin
-exports.getAllUserQuery = (keyword, user) => {
+exports.getAllUserQuery = (keyword, user, status) => {
+    const matchStage = {
+        _id: { $ne: new Types.ObjectId(user) },
+        role: { $ne: ROLES.ADMIN },
+        isDeleted: false,
+        username: { $regex: keyword, $options: 'i' },
+    };
+
+    if (status === 'active') {
+        matchStage.isActive = true;
+    } else if (status === 'inactive') {
+        matchStage.isActive = false;
+    }
+
     return [
         {
-            $match: {
-                _id: { $ne: new Types.ObjectId(user) },
-                role: { $ne: ROLES.ADMIN },
-                isActive: true,
-                isDeleted: false,
-                username: { $regex: keyword, $options: 'i' },
-            },
+
+            $match: matchStage,
+
         },
         {
             $lookup: {

@@ -77,3 +77,21 @@ exports.getAllUsersForAdminValidation = Joi.object({
   search: Joi.string().optional().allow(null, ''),
   status: Joi.string()
 });
+
+exports.editAdminInfoValidation = Joi.object({
+  firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(3).max(30).messages({
+    "string.pattern.base": "First name is not valid.",
+    "string.min": "First name must be at least {#limit} characters long.",
+    "string.max": "First name must be at most {#limit} characters long.",
+    "any.required": "First name is required.",
+  }),
+  lastName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(3).max(30).messages({
+    "string.pattern.base": "Last name is not valid.",
+    "string.min": "Last name must be at least {#limit} characters long.",
+    "string.max": "Last name must be at most {#limit} characters long.",
+    "any.required": "Last name is required.",
+  }),
+  username: Joi.string().min(3).max(20),
+  email: Joi.string().email({ minDomainSegments: 2 }),
+  password: Joi.string().min(8).max(30),
+})

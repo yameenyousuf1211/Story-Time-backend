@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
-const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends, updateProfile, notificationsToggle, blockToggle, getBlockList, reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard, getAllUsersForAdmin, userStatusToggle, editAdminInfo } = require('../controllers/userController');
+const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends, updateProfile, notificationsToggle, blockToggle, getBlockList, reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard, getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo } = require('../controllers/userController');
 const { upload } = require('../utils');
 
 class UserAPI {
@@ -18,6 +18,8 @@ class UserAPI {
     router.get('/report-list', authMiddleware([ROLES.ADMIN]), getAllReports)
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
     router.get('/admin', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
+    router.get('/get-admin-info', authMiddleware([ROLES.ADMIN]), getAdminInfo);
+
 
 
 

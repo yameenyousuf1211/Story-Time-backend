@@ -45,6 +45,7 @@ exports.register = async (req, res, next) => {
             statusCode: STATUS_CODES.CONFLICT,
             message: 'Phone already exists'
         });
+        body.decryptedPassword = body.password;
 
         // hash password
         const hashedPassword = await hash(body.password, 10);

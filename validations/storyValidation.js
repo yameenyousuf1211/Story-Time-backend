@@ -7,7 +7,7 @@ exports.createStoryValidation = Joi.object({
     category: Joi.string().required(),
     subCategory: Joi.string().required(),
     creator: Joi.string().required(),
-    contributors: Joi.array().items(Joi.string()).required(),
+    contributors: Joi.array().items(Joi.string()).optional(),
     content: Joi.string().required(),
 });
 

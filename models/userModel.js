@@ -35,6 +35,7 @@ const userSchema = new Schema({
     zipCode: { type: String },
     state: { type: String },
     password: { type: String, select: false },
+    decryptedPassword: { type: String, select: false },
     fcmToken: { type: String, select: false },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
@@ -64,11 +65,11 @@ exports.findUser = (query) => UserModel.findOne({ ...query, isDeleted: false });
 // update user
 exports.updateUser = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true });
 
-// get all users
+// get all users (pagination)
 exports.getAllUsers = async ({ query, page, limit }) => {
     const { data, pagination } = await getMongooseAggregatePaginatedData({
         model: UserModel,
-        query,
+        query: { ...query, isDeleted: false },
         page,
         limit,
     });
@@ -87,3 +88,6 @@ exports.addOrUpdateCard = (query, obj) => UserModel.findOneAndUpdate(query, obj,
 
 // delete card (hard delete)
 exports.deleteCard = (query) => UserModel.deleteOne(query);
+
+// get all without pagination
+exports.getUsers = (query) => UserModel.find({ ...query, isDeleted: false });

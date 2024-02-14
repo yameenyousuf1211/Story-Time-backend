@@ -469,6 +469,16 @@ exports.editAdminInfo = async (req, res, next) => {
   }
 }
 
+exports.getAdminInfo = async (req, res, next) => {
+  const userId = req.user.id;
+  try {
+    const user = await findUser({ _id: userId })
+    generateResponse(user, "Admin Details Retrieved Successfully", res)
+  } catch (error) {
+    next(error)
+  }
+}
+
 // create default admin account
 (async function createDefaultAdminAccount() {
   try {

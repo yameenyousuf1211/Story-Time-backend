@@ -4,8 +4,9 @@ const AuthAPI = require('./authApi');
 const CategoryAPI = require('./categoryApi');
 const UserAPI = require('./userApi');
 const StoryAPI = require('./storyApi');
-const GuidelineAPI = require('./guidelineApi')
-const SupportAPI = require('./supportApi')
+const GuidelineAPI = require('./guidelineApi');
+const SupportAPI = require('./supportApi');
+const NotificationAPI = require('./notificationApi');
 class API {
     constructor(app) {
         this.app = app;
@@ -21,6 +22,8 @@ class API {
         this.routeGroups.push(new StoryAPI());
         this.routeGroups.push(new GuidelineAPI());
         this.routeGroups.push(new SupportAPI());
+        this.routeGroups.push(new NotificationAPI());
+
     }
 
     setContentType(req, res, next) {

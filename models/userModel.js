@@ -83,6 +83,12 @@ exports.getFcmToken = async (userId) => {
     return user?.fcmToken;
 }
 
+// get fcm tokens
+exports.getFcmTokens = async (ids) => {
+    const users = await UserModel.find({ _id: { $in: ids } }).select('fcmTokens');
+    return users?.map(user => user?.fcmTokens);
+}
+
 // add or update new card
 exports.addOrUpdateCard = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true, upsert: true });
 

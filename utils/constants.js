@@ -30,6 +30,7 @@ exports.GUIDELINE = Object.freeze({
   PRIVACY_POLICY: 'PrivacyPolicy',
   TERMS_AND_CONDITIONS: 'TermsAndConditions',
   FAQS: 'FAQs',
+  ABOUT_US: 'AboutUs'
 });
 
 exports.SUPPORT_CHAT_STATUS = Object.freeze({

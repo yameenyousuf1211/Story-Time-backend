@@ -20,9 +20,9 @@ const CategoryModel = model('Category', categorySchema);
 
 // get all categories
 exports.getAllCategories = async ({ query, page, limit }) => {
-        const { data, pagination } = await getMongoosePaginatedData({
+    const { data, pagination } = await getMongoosePaginatedData({
         model: CategoryModel,
-        query,
+        query: { ...query, isDeleted: false },
         page,
         limit,
     });

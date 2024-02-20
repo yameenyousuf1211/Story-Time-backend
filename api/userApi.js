@@ -17,17 +17,13 @@ class UserAPI {
     router.get('/block-list', authMiddleware(Object.values(ROLES)), getBlockList)
     router.get('/report-list', authMiddleware([ROLES.ADMIN]), getAllReports)
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
-    router.get('/admin', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
+    router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
     router.get('/get-admin-info', authMiddleware([ROLES.ADMIN]), getAdminInfo);
-
-
-
 
     router.post('/check-availability', checkAvailability);
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
     router.post('/report-user', authMiddleware([ROLES.USER]), reportUser);
     router.post('/card', authMiddleware(Object.values(ROLES)), addOrUpdateCard)
-
 
     router.put('/update-profile', authMiddleware(Object.values(ROLES)),
       upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
@@ -39,8 +35,6 @@ class UserAPI {
 
     router.delete('/delete-account', authMiddleware(Object.values(ROLES)), deleteUser);
     router.delete('/delete-card', authMiddleware(Object.values(ROLES)), deleteCard);
-
-
   }
 
   getRouter() {

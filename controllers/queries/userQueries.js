@@ -165,11 +165,7 @@ exports.getAllUserQuery = (keyword, user, status) => {
     }
 
     return [
-        {
-
-            $match: matchStage,
-
-        },
+        { $match: matchStage },
         {
             $lookup: {
                 from: 'followings',

@@ -69,7 +69,7 @@ exports.updateUser = (query, obj) => UserModel.findOneAndUpdate(query, obj, { ne
 exports.getAllUsers = async ({ query, page, limit }) => {
     const { data, pagination } = await getMongooseAggregatePaginatedData({
         model: UserModel,
-        query: { ...query, isDeleted: false },
+        query,
         page,
         limit,
     });

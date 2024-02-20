@@ -70,13 +70,13 @@ exports.addCardValidation = Joi.object({
   cvv: Joi.string().min(3).max(3).required()
 });
 
-// get all users validation
-exports.getAllUsersForAdminValidation = Joi.object({
-  limit: Joi.number().min(1).optional(),
-  page: Joi.number().min(1).optional(),
-  search: Joi.string().optional().allow(null, ''),
-  status: Joi.string()
-});
+// // get all users validation
+// exports.getAllUsersForAdminValidation = Joi.object({
+//   limit: Joi.number().min(1).optional(),
+//   page: Joi.number().min(1).optional(),
+//   search: Joi.string().optional().allow(null, ''),
+//   status: Joi.string()
+// });
 
 exports.editAdminInfoValidation = Joi.object({
   firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(3).max(30).messages({

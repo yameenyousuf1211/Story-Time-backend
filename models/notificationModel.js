@@ -31,6 +31,7 @@ exports.getAllNotifications = async ({ query, page, limit }) => {
 // create and send notification 
 exports.createAndSendNotifications = async ({ users, message, title }) => {
     const fcmTokens = await getFcmTokens(users);
+    console.log('first fcmTokens >>> ', fcmTokens)
 
     const notification = await NotificationModel.create({ title, message });
 

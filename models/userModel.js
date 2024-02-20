@@ -77,16 +77,10 @@ exports.getAllUsers = async ({ query, page, limit }) => {
     return { users: data, pagination };
 };
 
-// get FcmToken
-exports.getFcmToken = async (userId) => {
-    const user = await UserModel.findById(userId).select('fcmToken');
-    return user?.fcmToken;
-}
-
 // get fcm tokens
 exports.getFcmTokens = async (ids) => {
-    const users = await UserModel.find({ _id: { $in: ids } }).select('fcmTokens');
-    return users?.map(user => user?.fcmTokens);
+    const users = await UserModel.find({ _id: { $in: ids }, isDeleted: false }).select('fcmToken');
+    return users?.map(user => user?.fcmToken);
 }
 
 // add or update new card

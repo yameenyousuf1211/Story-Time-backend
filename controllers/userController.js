@@ -389,14 +389,6 @@ exports.deleteCard = async (req, res, next) => {
 
 // get all users
 exports.getAllUsersForAdmin = async (req, res, next) => {
-  const { error } = getAllUsersForAdminValidation.validate(req.query);
-  if (error) {
-    return next({
-      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-      message: error.details[0].message,
-    });
-  }
-
   const user = req.user.id;
   const { search = "", status } = req.query;
   const page = req.query.page || 1;

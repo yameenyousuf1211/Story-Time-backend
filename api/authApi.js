@@ -7,7 +7,7 @@ const {
     sendVerificationCode,
     verifyCode,
     resetPassword,
-    sendResetTokenEmail,
+    sendResetLink,
     verifyResetToken,
 } = require('../controllers/authController');
 const authMiddleware = require('../middlewares/auth')
@@ -28,7 +28,7 @@ class AuthAPI {
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);
         router.put('/refresh-token', getRefreshToken);
-        router.put('/reset-password-admin', authMiddleware([ROLES.ADMIN]), sendResetTokenEmail);
+        router.put('/forget-password', authMiddleware([ROLES.ADMIN]), sendResetLink);
         router.put('/verify-reset-token', authMiddleware([ROLES.ADMIN]), verifyResetToken);
 
     }

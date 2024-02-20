@@ -148,3 +148,8 @@ exports.generateResetLink = (resetToken) => {
     // You may want to customize the reset link structure based on your requirements
     return `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 };
+
+// async handler
+exports.asyncHandler = (requestHandler) => {
+    return (req, res, next) => Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
+}

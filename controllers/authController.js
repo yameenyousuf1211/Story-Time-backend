@@ -3,7 +3,8 @@ const {
     generateRandomOTP, generateToken,
     generateRefreshToken,
     generateResetToken,
-    generateResetLink } = require('../utils');
+    generateResetLink,
+    asyncHandler } = require('../utils');
 const {
     createUser,
     findUser,
@@ -212,7 +213,6 @@ exports.resetPassword = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-
 }
 
 // get refresh token
@@ -245,7 +245,8 @@ exports.getRefreshToken = async (req, res, next) => {
     }
 }
 
-exports.sendResetTokenEmail = async (req, res, next) => {
+// send reset link
+exports.sendResetLink = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi Validation
@@ -254,38 +255,36 @@ exports.sendResetTokenEmail = async (req, res, next) => {
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message
     });
+
     const { email } = body;
-    try {
-        const user = await findUser({ email, role: ROLES.ADMIN }).select('email resetToken');
-        if (!user) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Invalid Information, Record Not Found!'
-        });
+    const user = await findUser({ email, role: ROLES.ADMIN }).select('email resetToken');
+    if (!user) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Invalid Information, Record Not Found!'
+    });
 
-        const resetToken = generateResetToken(user);
-        // Generate reset link
-        const resetLink = generateResetLink(resetToken);
+    // generate reset token
+    const resetToken = generateResetToken(user);
 
-        // Update user resetToken in DB
-        user.resetToken = resetToken;
-        await user.save();
+    // generate reset link
+    const resetLink = generateResetLink(resetToken);
 
-        // Send email
-        await sendEmail({
-            email: user.email,
-            subject: 'Password Reset',
-            message: `Click on the following link to reset your password: ${resetLink}`,
-        });
-        generateResponse(null, 'Reset link sent successfully.', res);
+    // update user resetToken in DB
+    user.resetToken = resetToken;
+    await user.save();
 
+    // send email
+    await sendEmail({
+        email: user.email,
+        subject: 'Password Reset',
+        message: `Click on the following link to reset your password: ${resetLink}`,
+    });
 
+    generateResponse(null, 'Reset link sent successfully.', res);
+});
 
-    } catch (error) {
-        next(error)
-    }
-}
-
-exports.verifyResetToken = async (req, res, next) => {
+// verify reset token
+exports.verifyResetToken = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     //Joi Validation
@@ -295,27 +294,13 @@ exports.verifyResetToken = async (req, res, next) => {
         message: error.details[0].message
     });
 
+    // Verify the token
+    jwt.verify(body.resetToken, process.env.JWT_SECRET, function (err, decoded) {
+        if (err) return next({
+            statusCode: STATUS_CODES.UNAUTHORIZED,
+            message: 'reset token has expired'
+        });
 
-    const token = body.resetToken;
-    try {
-        // Verify the token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Check if the token has expired
-        const isExpired = decoded.exp < Date.now() / 1000;
-
-        if (isExpired) {
-            return generateResponse(null, 'Reset Token Has Expired', res);
-        }
-
-        // Token is valid and not expired
         generateResponse(null, 'Reset Token is Valid', res);
-
-    } catch (error) {
-        if (error.message === 'jwt expired') {
-            return generateResponse(null, 'Reset Token Has Expired', res);
-        } else {
-            next(error);
-        }
-    }
-}
+    });
+});

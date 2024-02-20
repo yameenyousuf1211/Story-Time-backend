@@ -18,7 +18,6 @@ class UserAPI {
     router.get('/report-list', authMiddleware([ROLES.ADMIN]), getAllReports)
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
     router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
-    router.get('/get-admin-info', authMiddleware([ROLES.ADMIN]), getAdminInfo);
 
     router.post('/check-availability', checkAvailability);
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
@@ -30,7 +29,7 @@ class UserAPI {
       updateProfile);
     router.put('/notifications', authMiddleware(Object.values(ROLES)), notificationsToggle)
     router.put('/block', authMiddleware(Object.values(ROLES)), blockToggle)
-    router.put('/user-status', authMiddleware([ROLES.ADMIN]), userStatusToggle)
+    router.put('/update-status', authMiddleware([ROLES.ADMIN]), userStatusToggle)
     router.put('/admin-info', authMiddleware([ROLES.ADMIN]), editAdminInfo)
 
     router.delete('/delete-account', authMiddleware(Object.values(ROLES)), deleteUser);

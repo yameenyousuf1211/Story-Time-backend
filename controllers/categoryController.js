@@ -1,5 +1,5 @@
 const { STATUS_CODES } = require('../utils/constants');
-const { parseBody, generateResponse, getRandomIndexFromArray } = require('../utils/index');
+const { parseBody, generateResponse, getRandomIndexFromArray, asyncHandler } = require('../utils/index');
 const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoryModel');
 const { createCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
@@ -57,30 +57,26 @@ exports.getAllCategories = async (req, res, next) => {
 }
 
 // delete category by id (soft deleted)
-exports.deleteCategoryById = async (req, res, next) => {
-    const { categoryId } = req.query;
+exports.deleteCategoryById = asyncHandler(async (req, res, next) => {
+    const { categoryId } = req.params;
 
     // check if ID is valid
-    if (!categoryId || !Types.ObjectId.isValid(categoryId)) return next({
+    if (!Types.ObjectId.isValid(categoryId)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Please, provide categoryId properly.'
+        message: 'invalid category id'
     });
 
-    try {
-        const category = await findCategory({ _id: categoryId });
-        if (!category) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Category not found'
-        });
+    const category = await findCategory({ _id: categoryId });
+    if (!category) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Category not found'
+    });
 
-        category.isDeleted = true;
-        await category.save();
+    category.isDeleted = true;
+    await category.save();
 
-        generateResponse(category, 'Category deleted successfully', res);
-    } catch (error) {
-        next(error);
-    }
-}
+    generateResponse(category, 'Category deleted successfully', res);
+});
 
 //Get A Random Category
 exports.getRandomCategory = async (req, res, next) => {

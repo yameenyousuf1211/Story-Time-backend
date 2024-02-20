@@ -1,5 +1,5 @@
 const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = require('../models/userModel');
-const { generateResponse, parseBody } = require('../utils/index');
+const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
 const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation } = require('../validations/userValidation');
@@ -67,22 +67,19 @@ exports.getAllUsers = async (req, res, next) => {
 }
 
 // get user by id
-exports.getUserProfile = async (req, res, next) => {
+exports.getUserProfile = asyncHandler(async (req, res, next) => {
   const user = req.query?.user || req.user.id;
 
-  try {
-    const userObj = await findUser({ _id: user });
-    // if user not found return error
-    if (!userObj) return next({
-      statusCode: STATUS_CODES.NOT_FOUND,
-      message: 'User profile not found!'
-    });
+  const userObj = await findUser({ _id: user }).select('+decryptedPassword');
 
-    generateResponse(userObj, 'Profile found!', res);
-  } catch (error) {
-    next(error);
-  }
-}
+  // if user not found return error
+  if (!userObj) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'User profile not found!'
+  });
+
+  generateResponse(userObj, 'Profile found!', res);
+});
 
 // follow/unfollow
 exports.followUnFollowToggle = async (req, res, next) => {
@@ -409,35 +406,29 @@ exports.getAllUsersForAdmin = async (req, res, next) => {
   }
 };
 
-exports.userStatusToggle = async (req, res, next) => {
+exports.userStatusToggle = asyncHandler(async (req, res, next) => {
   const { userId } = req.query;
 
   if (!userId || !Types.ObjectId.isValid(userId)) return next({
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: 'Please, provide valid userId.'
   });
-  try {
-    const userObj = await findUser({ _id: userId, isDeleted: false });
 
-    if (!userObj) {
-      return next({
-        statusCode: STATUS_CODES.NOT_FOUND,
-        message: 'User not found'
-      });
-    }
+  const userObj = await findUser({ _id: userId, isDeleted: false });
 
-    userObj.isActive = !userObj.isActive;
+  if (!userObj) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'User not found'
+  });
 
-    await userObj.save();
+  userObj.isActive = !userObj.isActive;
+  await userObj.save();
 
-    const message = userObj.isActive ? 'User enabled successfully' : 'User disabled successfully';
-    generateResponse(userObj, message, res);
-  } catch (error) {
-    next(error);
-  }
-}
+  const message = userObj.isActive ? 'User enabled successfully' : 'User disabled successfully';
+  generateResponse(userObj, message, res);
+});
 
-exports.editAdminInfo = async (req, res, next) => {
+exports.editAdminInfo = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
   const userId = req.user.id;
 
@@ -448,28 +439,16 @@ exports.editAdminInfo = async (req, res, next) => {
     message: error.details[0].message
   });
 
-  try {
+  // if password is provided, decrypt it
+  body.decryptedPassword = body.password;
 
-    // hash password
-    const hashedPassword = await hash(body.password, 10);
-    body.password = hashedPassword;
+  // hash password
+  const hashedPassword = await hash(body.password, 10);
+  body.password = hashedPassword;
 
-    const user = await updateUser({ _id: userId }, { $set: body });
-    generateResponse(user, 'Profile updated successfully', res);
-  } catch (error) {
-
-  }
-}
-
-exports.getAdminInfo = async (req, res, next) => {
-  const userId = req.user.id;
-  try {
-    const user = await findUser({ _id: userId })
-    generateResponse(user, "Admin Details Retrieved Successfully", res)
-  } catch (error) {
-    next(error)
-  }
-}
+  const user = await updateUser({ _id: userId }, { $set: body });
+  generateResponse(user, 'Profile updated successfully', res);
+});
 
 // create default admin account
 (async function createDefaultAdminAccount() {

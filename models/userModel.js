@@ -43,7 +43,7 @@ const userSchema = new Schema({
     noOfFollowers: { type: Number, default: 0 },
     noOfFollowings: { type: Number, default: 0 },
     refreshToken: { type: String, select: false },
-    mode: { type: String, enum: Object.values(MODES), default: MODES.PUBLIC },
+    isPublic: { type: Boolean, default: true },
     settings: { type: settingSchema, default: {} },
     card: { type: cardSchema, default: null },
     resetToken: { type: String, select: false },

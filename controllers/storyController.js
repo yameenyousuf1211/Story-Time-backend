@@ -1,4 +1,4 @@
-const { generateResponse, parseBody, } = require('../utils');
+const { generateResponse, parseBody, asyncHandler, } = require('../utils');
 const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
 const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
@@ -48,26 +48,27 @@ exports.fetchAllStories = async (req, res, next) => {
 }
 
 // get user's stories
-exports.fetchUserStories = async (req, res, next) => {
+exports.fetchUserStories = asyncHandler(async (req, res, next) => {
     const user = req.query?.user || req.user.id;
     const type = req.query?.type || STORY_TYPES.TEXT;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    const query = getUserStoriesQuery(user, type);
-
-    try {
-        const storiesData = await getAllStories({ query, page, limit });
-        if (storiesData?.stories.length === 0) {
-            generateResponse(null, 'No any story found', res);
-            return;
-        }
-
-        generateResponse(storiesData, 'All stories retrieved successfully', res);
-    } catch (error) {
-        next(error);
+    let query;
+    if (req.query?.user) {
+        query = getUserStoriesQuery(user, type, false);
+    } else {
+        query = getUserStoriesQuery(user, type);
     }
-}
+
+    const storiesData = await getAllStories({ query, page, limit });
+    if (storiesData?.stories.length === 0) {
+        generateResponse(null, 'No any story found', res);
+        return;
+    }
+
+    generateResponse(storiesData, 'All stories retrieved successfully', res);
+});
 
 // get a story by Id
 exports.fetchStoryById = async (req, res, next) => {
@@ -241,7 +242,7 @@ exports.getCommentsOfStory = async (req, res, next) => {
         message: 'Please, provide storyId properly.'
     });
 
-    const query = { story: new Types.ObjectId(storyId), parent: null }; 
+    const query = { story: new Types.ObjectId(storyId), parent: null };
 
     try {
         const commentsData = await getAllComments({
@@ -254,7 +255,7 @@ exports.getCommentsOfStory = async (req, res, next) => {
                         { path: 'user', select: 'firstName lastName username profileImage' },
                         {
                             path: 'replies',
-                       
+
                             populate: [
                                 { path: 'user', select: 'firstName lastName username profileImage' },
                             ]

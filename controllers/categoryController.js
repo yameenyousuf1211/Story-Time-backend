@@ -97,3 +97,17 @@ exports.getRandomCategory = async (req, res, next) => {
     }
 };
 
+// fetch categories without pagination
+exports.getCategories = asyncHandler(async (req, res, next) => {
+    const { parent = null } = req.query;
+    const query = { parent, isDeleted: false };
+
+    const categoriesData = await findCategories(query);
+    if (categoriesData?.length === 0) {
+        generateResponse(null, 'No categories found', res);
+        return;
+    }
+
+    generateResponse(categoriesData, `${parent ? 'Sub-' : ''}Categories retrieved successfully`, res);
+
+});

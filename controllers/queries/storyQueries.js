@@ -45,13 +45,14 @@ exports.getStoriesQuery = (user) => {
 }
 
 // get user's stories
-exports.getUserStoriesQuery = (user, type) => {
+exports.getUserStoriesQuery = (user, type, isHidden = false) => {
     return [
         {
             $match: {
                 $and: [
                     { contributors: { $in: [new Types.ObjectId(user)] } },
                     { type },
+                    { isHidden }
                 ]
             }
         },

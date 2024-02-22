@@ -317,3 +317,32 @@ exports.tagFriendToggle = async (req, res, next) => {
         next(error);
     }
 }
+
+// toggle isHidden field of a story
+exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
+    const user = req.user.id;
+    const { storyId } = req.params;
+
+    if (!Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please, provide valid storyId.'
+    });
+
+    const story = await findStoryById(storyId);
+    if (!story) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Story not found'
+    });
+
+    // check if the current user is the creator of the story
+    if (!story.creator.equals(user)) return next({
+        statusCode: STATUS_CODES.UNAUTHORIZED,
+        message: 'Only the creator of the story can change the visibility.'
+    });
+
+    // toggle the key
+    story.isHidden = !story.isHidden;
+    await story.save();
+
+    generateResponse(story, 'Story visibility changed successfully', res);
+});   

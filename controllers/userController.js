@@ -450,6 +450,19 @@ exports.editAdminInfo = asyncHandler(async (req, res, next) => {
   generateResponse(user, 'Profile updated successfully', res);
 });
 
+// toggle user profile mode (public/private)  
+exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const user = await findUser({ _id: userId });
+
+  user.isPublic = !user.isPublic;
+  await user.save();
+
+  const message = user.isPublic ? 'Profile is now public' : 'Profile is now private';
+  generateResponse(user, message, res);
+});
+
 // create default admin account
 (async function createDefaultAdminAccount() {
   try {

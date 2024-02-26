@@ -109,5 +109,4 @@ exports.getCategories = asyncHandler(async (req, res, next) => {
     }
 
     generateResponse(categoriesData, `${parent ? 'Sub-' : ''}Categories retrieved successfully`, res);
-
 });

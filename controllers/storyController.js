@@ -325,7 +325,7 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
 
     if (!Types.ObjectId.isValid(storyId)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Please, provide valid storyId.'
+        message: 'invalid storyId'
     });
 
     const story = await findStoryById(storyId);

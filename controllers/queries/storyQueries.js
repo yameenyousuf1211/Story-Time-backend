@@ -45,24 +45,33 @@ exports.getStoriesQuery = (user) => {
 }
 
 // get user's stories
-exports.getUserStoriesQuery = (user, type, isHidden = false) => {
-    return [
+exports.getUserStoriesQuery = (user, type, isHidden) => {
+    const pipeline = [
         {
             $match: {
-                $and: [
-                    { contributors: { $in: [new Types.ObjectId(user)] } },
-                    { type },
-                    { isHidden }
-                ]
+                creator: new Types.ObjectId(user),
+                type,
+                ...(isHidden && { isHidden }) // Only include isHidden if it's true
             }
         },
-        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
+        {
+            $lookup: {
+                from: "categories",
+                localField: "subCategory",
+                foreignField: "_id",
+                as: "subCategory"
+            }
+        },
+        { $unwind: "$subCategory" },
         {
             $addFields: {
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
             }
         },
-        { $sort: { createdAt: -1 } }    // latest first
-    ]
+        { $sort: { createdAt: -1 } } // latest first
+    ];
+
+    return pipeline;
+
 }

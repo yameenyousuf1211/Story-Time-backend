@@ -34,7 +34,7 @@ class StoryAPI {
         router.put('/like/:storyId', authMiddleware([ROLES.USER]), likeStoryToggle);
         router.put('/dislike/:storyId', authMiddleware([ROLES.USER]), dislikeStoryToggle);
         router.put('/tag-friend', authMiddleware([ROLES.USER]), tagFriendToggle)
-        router.put('/hide-story/:storyId', authMiddleware([ROLES.USER]), toggleStoryVisibility);
+        router.put('/hide/:storyId', authMiddleware([ROLES.USER]), toggleStoryVisibility);
 
         router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
     }

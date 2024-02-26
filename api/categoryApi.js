@@ -15,7 +15,7 @@ class CategoryAPI {
 
         router.get('/', getAllCategories);
         router.get('/random', getRandomCategory)
-        router.get('/get-categories', authMiddleware(Object.values(ROLES)), getCategories);
+        router.get('/fetch-all', authMiddleware(Object.values(ROLES)), getCategories);
 
         router.delete('/delete/:categoryId', authMiddleware([ROLES.ADMIN]), deleteCategoryById)
     }

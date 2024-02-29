@@ -34,7 +34,11 @@ exports.getStoriesQuery = (user) => {
         },
         {
             $match: {
-                $or: [{ isFollowing: true }, { isTagged: true }],
+                $or: [
+                    { isFollowing: true },
+                    { isTagged: true },
+                    { creator: new Types.ObjectId(user) }
+                ],
             },
         },
         { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },

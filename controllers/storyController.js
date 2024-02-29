@@ -56,9 +56,9 @@ exports.fetchUserStories = asyncHandler(async (req, res, next) => {
 
     let query;
     if (req.query?.user) {
-        query = getUserStoriesQuery(user, type, true);
-    } else {
         query = getUserStoriesQuery(user, type, false);
+    } else {
+        query = getUserStoriesQuery(user, type, true);
     }
 
     const storiesData = await getAllStories({ query, page, limit });

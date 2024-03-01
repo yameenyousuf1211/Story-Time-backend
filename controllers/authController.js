@@ -15,7 +15,8 @@ const { registerUserValidation, loginUserValidation, sendCodeValidation, codeVal
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { addFollowing } = require('../models/followingModel');
 
 // register user
 exports.register = async (req, res, next) => {
@@ -54,6 +55,16 @@ exports.register = async (req, res, next) => {
 
         // create user in db
         let user = await createUser(body);
+
+        // follow storytime account with their email on signup
+        const storytime = await findUser({ email: process.env.STORYTIME_EMAIL });
+        if (storytime) {
+            const following = await addFollowing({
+                user: user._id,
+                following: storytime._id
+            });
+            await following.save();
+        }
 
         // generate access token and refresh token
         const accessToken = generateToken(user);

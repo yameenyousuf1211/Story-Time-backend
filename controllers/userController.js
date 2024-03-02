@@ -11,7 +11,7 @@ const { findStoryById } = require('../models/storyModel');
 const { createReport, findReportById, findReports } = require('../models/reportModel');
 
 // check username availability
-exports.checkAvailability = async (req, res, next) => {
+exports.checkAvailability = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
 
   // Joi validation
@@ -23,21 +23,17 @@ exports.checkAvailability = async (req, res, next) => {
 
   const key = body.username ? 'username' : body.email ? 'email' : 'completePhone';
 
-  try {
-    const user = await findUser({ [key]: body[key], role: ROLES.USER, isDeleted: false });
-    if (user) return next({
-      statusCode: STATUS_CODES.CONFLICT,
-      message: `${key} already exists`
-    });
+  const user = await findUser({ [key]: body[key], role: ROLES.USER, isDeleted: false });
+  if (user) return next({
+    statusCode: STATUS_CODES.CONFLICT,
+    message: `${key} already exists`
+  });
 
-    generateResponse(null, `${key} available`, res);
-  } catch (error) {
-    next(error);
-  }
-}
+  generateResponse(null, `${key} available`, res);
+});
 
 // get all users
-exports.getAllUsers = async (req, res, next) => {
+exports.getAllUsers = asyncHandler(async (req, res, next) => {
 
   // Joi validation
   const { error } = getAllUsersValidation.validate(req.query);
@@ -53,18 +49,14 @@ exports.getAllUsers = async (req, res, next) => {
 
   const query = getUsersQuery(search, user, story);
 
-  try {
-    const usersData = await getAllUsers({ query, page, limit });
-    if (usersData?.users.length === 0) {
-      generateResponse(null, 'No users found', res);
-      return;
-    }
-
-    generateResponse(usersData, 'All users retrieved successfully', res);
-  } catch (error) {
-    next(error);
+  const usersData = await getAllUsers({ query, page, limit });
+  if (usersData?.users.length === 0) {
+    generateResponse(null, 'No users found', res);
+    return;
   }
-}
+
+  generateResponse(usersData, 'All users retrieved successfully', res);
+});
 
 // get user by id
 exports.getUserProfile = asyncHandler(async (req, res, next) => {
@@ -81,8 +73,8 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
   generateResponse(userObj, 'Profile found!', res);
 });
 
-// follow/unfollow
-exports.followUnFollowToggle = async (req, res, next) => {
+// follow/unFollow
+exports.followUnFollowToggle = asyncHandler(async (req, res, next) => {
   const { following } = req.body;
   const user = req.user.id;
 
@@ -91,37 +83,33 @@ exports.followUnFollowToggle = async (req, res, next) => {
     message: 'Please, provide following properly.'
   });
 
-  try {
-    const userExist = await findUser({ _id: following });
-    if (!userExist) return next({
-      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-      message: 'User not found'
-    });
+  const userExist = await findUser({ _id: following });
+  if (!userExist) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'User not found'
+  });
 
-    const followingExist = await findFollowing({ user, following });
-    if (followingExist) {
-      const deletedObj = await deleteFollowing({ user, following });
-      if (deletedObj) {
-        // when unfollowing a user, decrement noOfFollowings and noOfFollowers of both users
-        await updateUser({ _id: user }, { $inc: { noOfFollowings: -1 } });
-        await updateUser({ _id: following }, { $inc: { noOfFollowers: -1 } });
-        generateResponse(null, 'Un-followed successfully', res);
-        return;
-      }
+  const followingExist = await findFollowing({ user, following });
+  if (followingExist) {
+    const deletedObj = await deleteFollowing({ user, following });
+    if (deletedObj) {
+      // when unfollowing a user, decrement noOfFollowings and noOfFollowers of both users
+      await updateUser({ _id: user }, { $inc: { noOfFollowings: -1 } });
+      await updateUser({ _id: following }, { $inc: { noOfFollowers: -1 } });
+      generateResponse(null, 'Un-followed successfully', res);
+      return;
     }
-
-    const followingObj = await addFollowing({ user, following });
-    await updateUser({ _id: user }, { $inc: { noOfFollowings: 1 } });
-    await updateUser({ _id: following }, { $inc: { noOfFollowers: 1 } });
-
-    generateResponse(followingObj, 'Follow successfully!', res);
-  } catch (error) {
-    next(error);
   }
-}
+
+  const followingObj = await addFollowing({ user, following });
+  await updateUser({ _id: user }, { $inc: { noOfFollowings: 1 } });
+  await updateUser({ _id: following }, { $inc: { noOfFollowers: 1 } });
+
+  generateResponse(followingObj, 'Follow successfully!', res);
+});
 
 // get all Friends
-exports.getAllFriends = async (req, res, next) => {
+exports.getAllFriends = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
   const { search = "" } = req.query;
   const page = req.query.page || 1;
@@ -129,21 +117,17 @@ exports.getAllFriends = async (req, res, next) => {
 
   const query = getFriendsQuery(search, user);
 
-  try {
-    const usersData = await getAllUsers({ query, page, limit });
-    if (usersData?.users.length === 0) {
-      generateResponse(null, 'No Friends found', res);
-      return;
-    }
-
-    generateResponse(usersData, 'All Friends retrieved successfully', res);
-  } catch (error) {
-    next(error);
+  const usersData = await getAllUsers({ query, page, limit });
+  if (usersData?.users.length === 0) {
+    generateResponse(null, 'No Friends found', res);
+    return;
   }
-}
+
+  generateResponse(usersData, 'All Friends retrieved successfully', res);
+});
 
 // update profile
-exports.updateProfile = async (req, res, next) => {
+exports.updateProfile = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
   const userId = req.user.id;
 
@@ -161,16 +145,12 @@ exports.updateProfile = async (req, res, next) => {
     body.coverImage = req.files['coverImage'] ? req.files['coverImage'][0].path : body.coverImage;
   }
 
-  try {
-    const user = await updateUser({ _id: userId }, { $set: body });
-    generateResponse(user, 'Profile updated successfully', res);
-  } catch (error) {
-    next(error);
-  }
-}
+  const user = await updateUser({ _id: userId }, { $set: body });
+  generateResponse(user, 'Profile updated successfully', res);
+});
 
 // notification toggle
-exports.notificationsToggle = async (req, res, next) => {
+exports.notificationsToggle = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
   const userId = req.user.id;
 
@@ -183,22 +163,18 @@ exports.notificationsToggle = async (req, res, next) => {
 
   const key = body.key;
 
-  try {
-    const user = await findUser({ _id: userId });
+  const user = await findUser({ _id: userId });
 
-    // toggle the value
-    user.settings[key] = !user.settings[key];
+  // toggle the value
+  user.settings[key] = !user.settings[key];
 
-    // save notification toggle status
-    await user.save();
-    generateResponse(user, `${key} toggled successfully`, res);
-  } catch (error) {
-    next(error);
-  }
-};
+  // save notification toggle status
+  await user.save();
+  generateResponse(user, `${key} toggled successfully`, res);
+});
 
 // Block User Toggle
-exports.blockToggle = async (req, res, next) => {
+exports.blockToggle = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const { blockId } = req.body;
 
@@ -207,43 +183,35 @@ exports.blockToggle = async (req, res, next) => {
     message: 'Please, provide valid blockId.'
   });
 
-  try {
-    const blockExist = await findBlockUser({ userId, blockId })
-    if (blockExist) {
-      const deletedObj = await unblockUser({ userId, blockId })
-      if (deletedObj) {
-        return generateResponse(blockExist, 'Unblock Successfully', res)
-      }
+  const blockExist = await findBlockUser({ userId, blockId })
+  if (blockExist) {
+    const deletedObj = await unblockUser({ userId, blockId })
+    if (deletedObj) {
+      return generateResponse(blockExist, 'Unblock Successfully', res)
     }
-
-    const blockObj = await blockUser({ userId, blockId })
-    generateResponse(blockObj, 'Blocked Successfully', res)
-  } catch (error) {
-    next(error)
   }
-}
+
+  const blockObj = await blockUser({ userId, blockId })
+  generateResponse(blockObj, 'Blocked Successfully', res)
+});
 
 // get block list
-exports.getBlockList = async (req, res, next) => {
+exports.getBlockList = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
   const query = getBlockedUsersQuery(user);
 
-  try {
-    const blockedUsersObj = await getBlockList({ query, page, limit });
-    if (blockedUsersObj?.blockUsers?.length === 0) {
-      return generateResponse(null, 'No block list found', res);
-    }
-
-    generateResponse(blockedUsersObj, 'Block users retrieved successfully!', res);
-  } catch (error) {
-    next(error);
+  const blockedUsersObj = await getBlockList({ query, page, limit });
+  if (blockedUsersObj?.blockUsers?.length === 0) {
+    return generateResponse(null, 'No block list found', res);
   }
-};
+
+  generateResponse(blockedUsersObj, 'Block users retrieved successfully!', res);
+});
 
 //report user
-exports.reportUser = async (req, res, next) => {
+exports.reportUser = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
   const body = parseBody(req.body);
 
@@ -254,91 +222,74 @@ exports.reportUser = async (req, res, next) => {
     message: error.details[0].message
   });
 
-  try {
-    const story = await findStoryById(body.story);
-    if (!story) return next({
-      statusCode: STATUS_CODES.NOT_FOUND,
-      message: 'Story not found',
-    });
+  const story = await findStoryById(body.story);
+  if (!story) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'Story not found',
+  });
 
-    // Create a report for the creator of the story
-    const report = await createReport({
-      user: user,
-      reportedUser: story.creator,
-      story: body.story,
-      text: body.text,
-    });
+  // Create a report for the creator of the story
+  const report = await createReport({
+    user: user,
+    reportedUser: story.creator,
+    story: body.story,
+    text: body.text,
+  });
 
-    const populatedReport = await findReportById(report._id)
-      .populate('user', 'firstName lastName username profileImage')
-      .populate('reportedUser', 'firstName lastName username profileImage');
+  const populatedReport = await findReportById(report._id)
+    .populate('user', 'firstName lastName username profileImage')
+    .populate('reportedUser', 'firstName lastName username profileImage');
 
-    generateResponse(populatedReport, 'Report submitted successfully!', res);
-  } catch (error) {
-    next(error);
-  }
-}
+  generateResponse(populatedReport, 'Report submitted successfully!', res);
+});
 
-exports.getAllReports = async (req, res, next) => {
+exports.getAllReports = asyncHandler(async (req, res, next) => {
   const page = parseInt(req.query?.page) || 1;
   const limit = parseInt(req.query?.limit) || 10;
 
   const query = {};
-  try {
 
-    const reportsList = await findReports({ query, page, limit });
-    if (reportsList?.reports.length === 0) {
-      generateResponse(null, 'No Reports found', res);
-      return;
-    }
-    generateResponse(reportsList, "Reports found Successfully", res);
-  } catch (error) {
-    next(error)
+  const reportsList = await findReports({ query, page, limit });
+  if (reportsList?.reports.length === 0) {
+    generateResponse(null, 'No Reports found', res);
+    return;
   }
-}
+  generateResponse(reportsList, "Reports found Successfully", res);
+});
 
 // delete user (soft delete)
-exports.deleteUser = async (req, res, next) => {
+exports.deleteUser = asyncHandler(async (req, res, next) => {
   let user;
 
   if (req.user.role === ROLES.ADMIN) user = req.query?.user;
   else user = req.user.id;
 
-  try {
-    const userObj = await findUser({ _id: user, isDeleted: false });
-    if (!userObj) return next({
-      statusCode: STATUS_CODES.NOT_FOUND,
-      message: 'User not found'
-    });
+  const userObj = await findUser({ _id: user, isDeleted: false });
+  if (!userObj) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'User not found'
+  });
 
-    userObj.isDeleted = true;
-    await userObj.save();
+  userObj.isDeleted = true;
+  await userObj.save();
 
-    generateResponse(userObj, 'User deleted successfully', res);
-  } catch (error) {
-    next(error);
-  }
-}
+  generateResponse(userObj, 'User deleted successfully', res);
+});
 
 // get card details
-exports.getCard = async (req, res, next) => {
+exports.getCard = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
 
-  try {
-    const existingUser = await findUser({ _id: user });
-
-    if (!existingUser.card) {
-      return generateResponse(null, 'No card found for the user', res);
-    }
-
-    generateResponse(existingUser.card, 'Card details retrieved successfully', res);
-  } catch (error) {
-    next(error)
+  const existingUser = await findUser({ _id: user });
+  if (!existingUser.card) {
+    return generateResponse(null, 'No card found for the user', res);
   }
-}
+
+  generateResponse(existingUser.card, 'Card details retrieved successfully', res);
+});
 
 // add or update card for payment
-exports.addOrUpdateCard = async (req, res, next) => {
+exports.addOrUpdateCard = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const body = parseBody(req.body);
 
@@ -349,43 +300,35 @@ exports.addOrUpdateCard = async (req, res, next) => {
     message: error.details[0].message
   });
 
-  try {
-    const existingUser = await findUser({ _id: userId });
+  const existingUser = await findUser({ _id: userId });
 
-    if (existingUser.card) {
-      // Update existing card
-      const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } });
-      generateResponse(updatedUser, 'Card Saved successfully', res);
-    } else {
-      // Add new card
-      const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } }, { new: true, upsert: true });
-      generateResponse(updatedUser, 'Card Added successfully', res);
-    }
-  } catch (error) {
-    next(error)
+  if (existingUser.card) {
+    // Update existing card
+    const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } });
+    generateResponse(updatedUser, 'Card Saved successfully', res);
+  } else {
+    // Add new card
+    const updatedUser = await addOrUpdateCard({ _id: userId }, { $set: { 'card': body } }, { new: true, upsert: true });
+    generateResponse(updatedUser, 'Card Added successfully', res);
   }
-
-}
+});
 
 // delete user card (hard delete)
-exports.deleteCard = async (req, res, next) => {
+exports.deleteCard = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
-  try {
-    const existingUser = await findUser({ _id: user });
-    if (!existingUser.card) {
-      return generateResponse(null, 'User Not Found', res);
-    }
 
-    existingUser.card = null;
-    await existingUser.save();
-    generateResponse(existingUser, 'Card deleted successfully', res);
-  } catch (error) {
-    next(error);
+  const existingUser = await findUser({ _id: user });
+  if (!existingUser.card) {
+    return generateResponse(null, 'User Not Found', res);
   }
-}
+
+  existingUser.card = null;
+  await existingUser.save();
+  generateResponse(existingUser, 'Card deleted successfully', res);
+});
 
 // get all users
-exports.getAllUsersForAdmin = async (req, res, next) => {
+exports.getAllUsersForAdmin = asyncHandler(async (req, res, next) => {
   const user = req.user.id;
   const { search = "", status } = req.query;
   const page = req.query.page || 1;
@@ -393,19 +336,16 @@ exports.getAllUsersForAdmin = async (req, res, next) => {
 
   const query = getAllUserQuery(search, user, status);
 
-  try {
-    const usersData = await getAllUsers({ query, page, limit });
-    if (usersData?.users.length === 0) {
-      generateResponse(null, 'No users found', res);
-      return;
-    }
-
-    generateResponse(usersData, 'All users retrieved successfully', res);
-  } catch (error) {
-    next(error);
+  const usersData = await getAllUsers({ query, page, limit });
+  if (usersData?.users.length === 0) {
+    generateResponse(null, 'No users found', res);
+    return;
   }
-};
 
+  generateResponse(usersData, 'All users retrieved successfully', res);
+});
+
+// toggle user status (active/inactive)
 exports.userStatusToggle = asyncHandler(async (req, res, next) => {
   const { userId } = req.query;
 
@@ -428,6 +368,7 @@ exports.userStatusToggle = asyncHandler(async (req, res, next) => {
   generateResponse(userObj, message, res);
 });
 
+// edit admin info
 exports.editAdminInfo = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
   const userId = req.user.id;
@@ -493,4 +434,3 @@ exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
     console.log(error);
   }
 })();
-

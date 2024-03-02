@@ -19,7 +19,7 @@ const jwt = require('jsonwebtoken');
 const { addFollowing } = require('../models/followingModel');
 
 // register user
-exports.register = async (req, res, next) => {
+exports.register = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi validation
@@ -31,56 +31,46 @@ exports.register = async (req, res, next) => {
 
     body.completePhone = body.phoneCode + body.phoneNo;
 
-    try {
-        const userWithEmail = await findUser({ email: body.email });
-        const userWithPhone = await findUser({ completePhone: body.completePhone });
+    const userWithEmail = await findUser({ email: body.email });
+    const userWithPhone = await findUser({ completePhone: body.completePhone });
 
-        if (userWithEmail && userWithPhone) return next({
-            statusCode: STATUS_CODES.CONFLICT,
-            message: 'Both email and phone already exist'
-        });
-        else if (userWithEmail) return next({
-            statusCode: STATUS_CODES.CONFLICT,
-            message: 'Email already exists'
-        });
-        else if (userWithPhone) return next({
-            statusCode: STATUS_CODES.CONFLICT,
-            message: 'Phone already exists'
-        });
-        body.decryptedPassword = body.password;
+    if (userWithEmail && userWithPhone) return next({
+        statusCode: STATUS_CODES.CONFLICT,
+        message: 'Both email and phone already exist'
+    });
+    else if (userWithEmail) return next({
+        statusCode: STATUS_CODES.CONFLICT,
+        message: 'Email already exists'
+    });
+    else if (userWithPhone) return next({
+        statusCode: STATUS_CODES.CONFLICT,
+        message: 'Phone already exists'
+    });
+    body.decryptedPassword = body.password;
 
-        // hash password
-        const hashedPassword = await hash(body.password, 10);
-        body.password = hashedPassword;
+    // hash password
+    const hashedPassword = await hash(body.password, 10);
+    body.password = hashedPassword;
 
-        // create user in db
-        let user = await createUser(body);
+    // create user in db
+    let user = await createUser(body);
 
-        // follow storytime account with their email on signup
-        const storytime = await findUser({ email: process.env.STORYTIME_EMAIL });
-        if (storytime) {
-            const following = await addFollowing({
-                user: user._id,
-                following: storytime._id
-            });
-            await following.save();
-        }
+    // follow storyTimeUserEmail account with their email on signup
+    const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
+    if (storyTimeUserEmail) await addFollowing({ user: user._id, following: storyTimeUserEmail._id });
 
-        // generate access token and refresh token
-        const accessToken = generateToken(user);
-        const refreshToken = generateRefreshToken(user);
+    // generate access token and refresh token
+    const accessToken = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-        req.session.accessToken = accessToken;
+    req.session.accessToken = accessToken;
 
-        // update user with refreshToken
-        user = await updateUser({ _id: user._id }, { $set: { refreshToken } });
-        generateResponse({ user, accessToken, refreshToken }, 'Register successful', res);
-    } catch (error) {
-        next(error);
-    }
-}
+    // update user with refreshToken
+    user = await updateUser({ _id: user._id }, { $set: { refreshToken } });
+    generateResponse({ user, accessToken, refreshToken }, 'Register successful', res);
+});
 
-exports.login = async (req, res, next) => {
+exports.login = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi validation
@@ -90,41 +80,37 @@ exports.login = async (req, res, next) => {
         message: error.details[0].message
     });
 
-    try {
-        // let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
-        let user = await findUser({ email: body?.email }).select('+password');
-        if (!user) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Email not found'
-        });
+    // let user = await findUser({ email: body?.email, role: { $ne: ROLES.ADMIN } }).select('+password');
+    let user = await findUser({ email: body?.email }).select('+password');
+    if (!user) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Email not found'
+    });
 
-        const isMatch = await compare(body.password, user.password);
-        if (!isMatch) return next({
-            statusCode: STATUS_CODES.UNAUTHORIZED,
-            message: 'Invalid password'
-        });
+    const isMatch = await compare(body.password, user.password);
+    if (!isMatch) return next({
+        statusCode: STATUS_CODES.UNAUTHORIZED,
+        message: 'Invalid password'
+    });
 
-        const accessToken = generateToken(user)
-        const refreshToken = generateRefreshToken(user)
+    const accessToken = generateToken(user)
+    const refreshToken = generateRefreshToken(user)
 
-        req.session.accessToken = accessToken;
+    req.session.accessToken = accessToken;
 
-        // update user fcmToken
-        user = await updateUser({ _id: user._id }, { $set: { fcmToken: body.fcmToken, refreshToken } });
-        generateResponse({ user, accessToken, refreshToken }, 'Login Successful', res);
-    } catch (error) {
-        next(error);
-    }
-}
+    // update user fcmToken
+    user = await updateUser({ _id: user._id }, { $set: { fcmToken: body.fcmToken, refreshToken } });
+    generateResponse({ user, accessToken, refreshToken }, 'Login Successful', res);
+});
 
 // logout user
-exports.logout = async (req, res, next) => {
+exports.logout = asyncHandler(async (req, res, next) => {
     req.session = null;
     generateResponse(null, 'Logout successful', res);
-}
+});
 
 // send verification code
-exports.sendVerificationCode = async (req, res, next) => {
+exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi Validation
@@ -137,37 +123,33 @@ exports.sendVerificationCode = async (req, res, next) => {
     const { email, phone: completePhone } = body;
     const query = { $or: [{ email }, { completePhone }] };
 
-    try {
-        const user = await findUser({ ...query, role: ROLES.USER }).select('completePhone email');
-        if (!user) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Invalid Information, Record Not Found!'
-        });
+    const user = await findUser({ ...query, role: ROLES.USER }).select('completePhone email');
+    if (!user) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Invalid Information, Record Not Found!'
+    });
 
-        // Delete all previous OTPs
-        await deleteOTPs(query);
+    // Delete all previous OTPs
+    await deleteOTPs(query);
 
-        const otpObj = await addOTP({
-            email: user.email,
-            completePhone: user.completePhone,
-            otp: generateRandomOTP(),
-        });
+    const otpObj = await addOTP({
+        email: user.email,
+        completePhone: user.completePhone,
+        otp: generateRandomOTP(),
+    });
 
-        // if (email) {
-        //     await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
-        // } else if (completePhone) {
-        //     console.log(`Your OTP Code is ${otpObj.otp}`);
-        //     // send SMS using twilio
-        // }
+    // if (email) {
+    //     await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
+    // } else if (completePhone) {
+    //     console.log(`Your OTP Code is ${otpObj.otp}`);
+    //     // send SMS using twilio
+    // }
 
-        generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
-    } catch (error) {
-        next(error);
-    }
-};
+    generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
+});
 
 // verify code
-exports.verifyCode = async (req, res, next) => {
+exports.verifyCode = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     //Joi Validation
@@ -177,36 +159,30 @@ exports.verifyCode = async (req, res, next) => {
         message: error.details[0].message
     });
 
-    try {
-        const otpObj = await getOTP({ otp: body.code })
-        if (!otpObj) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Invalid OTP'
-        })
+    const otpObj = await getOTP({ otp: body.code })
+    if (!otpObj) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Invalid OTP'
+    })
 
-        if (otpObj.isExpired()) return next({
-            statusCode: STATUS_CODES.BAD_REQUEST,
-            message: 'OTP expired'
-        });
+    if (otpObj.isExpired()) return next({
+        statusCode: STATUS_CODES.BAD_REQUEST,
+        message: 'OTP expired'
+    });
 
-        const user = await findUser({ $or: [{ email: otpObj.email, completePhone: otpObj.completePhone }] });
-        // throw error if user not found via email or phone
-        if (!user) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'User not found'
-        });
+    const user = await findUser({ $or: [{ email: otpObj.email, completePhone: otpObj.completePhone }] });
+    // throw error if user not found via email or phone
+    if (!user) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'User not found'
+    });
 
-        const accessToken = generateResetToken(user);
-        generateResponse({ accessToken }, 'Code is verified successfully', res);
-
-
-    } catch (error) {
-        next(error)
-    }
-}
+    const accessToken = generateResetToken(user);
+    generateResponse({ accessToken }, 'Code is verified successfully', res);
+});
 
 // reset password
-exports.resetPassword = async (req, res, next) => {
+exports.resetPassword = asyncHandler(async (req, res, next) => {
     const userId = req.user.id
     const body = parseBody(req.body);
 
@@ -217,17 +193,13 @@ exports.resetPassword = async (req, res, next) => {
         message: error.details[0].message
     });
 
-    try {
-        const hashedPassword = await hash(body.newPassword, 10);
-        const user = await updateUser({ _id: userId }, { $set: { password: hashedPassword } });
-        generateResponse(user, 'Password reset successfully', res);
-    } catch (error) {
-        next(error);
-    }
-}
+    const hashedPassword = await hash(body.newPassword, 10);
+    const user = await updateUser({ _id: userId }, { $set: { password: hashedPassword } });
+    generateResponse(user, 'Password reset successfully', res);
+});
 
 // get refresh token
-exports.getRefreshToken = async (req, res, next) => {
+exports.getRefreshToken = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi validation
@@ -237,24 +209,20 @@ exports.getRefreshToken = async (req, res, next) => {
         message: error.details[0].message
     });
 
-    try {
-        const user = await findUser({ refreshToken: body.refreshToken }).select('+refreshToken');
-        if (!user) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Invalid refresh token'
-        });
+    const user = await findUser({ refreshToken: body.refreshToken }).select('+refreshToken');
+    if (!user) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Invalid refresh token'
+    });
 
-        const accessToken = generateToken(user);
-        const refreshToken = generateRefreshToken(user);
-        req.session.accessToken = accessToken;
+    const accessToken = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
+    req.session.accessToken = accessToken;
 
-        // update refresh token in db
-        await updateUser({ _id: user._id }, { $set: { refreshToken } });
-        generateResponse({ accessToken, refreshToken }, 'Token refreshed', res);
-    } catch (error) {
-        next(error);
-    }
-}
+    // update refresh token in db
+    await updateUser({ _id: user._id }, { $set: { refreshToken } });
+    generateResponse({ accessToken, refreshToken }, 'Token refreshed', res);
+});
 
 // send reset link
 exports.sendResetLink = asyncHandler(async (req, res, next) => {

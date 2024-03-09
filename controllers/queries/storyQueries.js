@@ -23,6 +23,42 @@ exports.getStoriesQuery = (user) => {
             },
         },
         {
+            $lookup: {
+                from: 'blocks',
+                localField: 'contributors',
+                foreignField: 'blockId',
+                as: 'blocks',
+            },
+        },
+        {
+            $addFields: {
+                userBlocks: {
+                    $filter: {
+                        input: '$blocks',
+                        as: 'block',
+                        cond: { $eq: ['$$block.userId', new Types.ObjectId(user)] }
+                    }
+                }
+            }
+        },
+        {
+            $match: {
+                $expr: {
+                    $or: [
+                        {
+                            $not: {
+                                $gt: [{ $size: { $setIntersection: ['$contributors', '$userBlocks.blockId'] } }, 0]
+                            }
+                        },
+                        {
+                            $gt: [{ $size: { $setIntersection: ['$contributors', '$followings.following'] } }, 0]
+                        }
+                    ]
+                }
+            }
+        },
+        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
+        {
             $addFields: {
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
@@ -37,16 +73,17 @@ exports.getStoriesQuery = (user) => {
                 $or: [
                     { isFollowing: true },
                     { isTagged: true },
-                    { creator: new Types.ObjectId(user) }
+                    { creator: new Types.ObjectId(user) },
                 ],
+
             },
         },
-        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
         { $sort: { createdAt: -1 } },    // latest first
-        { $project: { followings: 0 } }
-    ]
-}
+        { $project: { followings: 0, blocks: 0, userBlocks: 0 } }
+
+    ];
+};
 
 // get user's stories
 exports.getUserStoriesQuery = (user, type, isHidden) => {

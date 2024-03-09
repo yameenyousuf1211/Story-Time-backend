@@ -10,7 +10,8 @@ const {
     getCommentsOfStory,
     addCommentOnStory,
     tagFriendToggle,
-    toggleStoryVisibility
+    toggleStoryVisibility,
+    shareStory
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -30,6 +31,7 @@ class StoryAPI {
 
         router.post('/', authMiddleware([ROLES.USER]), createStory);
         router.post('/add-comment', authMiddleware(Object.values(ROLES)), upload('comments').fields([{ name: "media", maxCount: 5 }]), addCommentOnStory);
+        router.post('/share/:storyId', authMiddleware([ROLES.USER]), shareStory);
 
         router.put('/like/:storyId', authMiddleware([ROLES.USER]), likeStoryToggle);
         router.put('/dislike/:storyId', authMiddleware([ROLES.USER]), dislikeStoryToggle);

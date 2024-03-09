@@ -46,7 +46,7 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
     //if (req?.files?.media?.length > 0) body.media = await s3Uploadv3(req.files?.media);
 
     if (body.chat) {
-        const chatObj = await findChat({ chat: body.chat });
+        const chatObj = await findChat({ _id: body.chat });
         if (!chatObj) return next({
             statusCode: STATUS_CODES.NOT_FOUND,
             message: 'Chat not found'

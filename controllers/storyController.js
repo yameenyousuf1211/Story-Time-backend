@@ -315,8 +315,9 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
 
     if (!Types.ObjectId.isValid(storyId)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Please provide valid storyId.'
+        message: 'invalid storyId'
     });
+
     const story = await findStoryById(storyId);
     if (!story) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
@@ -326,11 +327,12 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
     const newStory = await createStory({
         type: story.type,
         creator: story.creator,
-        contributors: story.contributors,
+        contributors: [...story.contributors],
         content: story.content,
         category: story.category,
         subCategory: story.subCategory,
         sharedBy: userId,
     });
+
     generateResponse(newStory, 'Story shared successfully', res);
 });

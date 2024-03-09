@@ -5,8 +5,6 @@ const { createStoryValidation, createCommentValidation } = require('../validatio
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
-const { findUser } = require('../models/userModel');
-const { findFollowing, findAllFollowing } = require('../models/followingModel');
 
 //Create Text Story
 exports.createStory = asyncHandler(async (req, res, next) => {

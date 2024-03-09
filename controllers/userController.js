@@ -192,6 +192,15 @@ exports.blockToggle = asyncHandler(async (req, res, next) => {
   }
 
   const blockObj = await blockUser({ userId, blockId })
+  // Check if userId is following blockId
+  const isFollowing = await findFollowing({ user: userId, following: blockId });
+
+  if (isFollowing) {
+    // If userId is following blockId, delete the following and update the counts
+    await deleteFollowing({ user: userId, following: blockId });
+    await updateUser({ _id: userId }, { $inc: { noOfFollowings: -1 } });
+    await updateUser({ _id: blockId }, { $inc: { noOfFollowers: -1 } });
+  }
   generateResponse(blockObj, 'Blocked Successfully', res)
 });
 

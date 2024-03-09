@@ -17,6 +17,7 @@ const storySchema = new Schema({
     tag: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     isDeleted: { type: Boolean, default: false },
     isHidden: { type: Boolean, default: false },
+    sharedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

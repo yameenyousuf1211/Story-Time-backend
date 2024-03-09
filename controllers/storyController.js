@@ -5,6 +5,8 @@ const { createStoryValidation, createCommentValidation } = require('../validatio
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
+const { findUser } = require('../models/userModel');
+const { findFollowing, findAllFollowing } = require('../models/followingModel');
 
 //Create Text Story
 exports.createStory = asyncHandler(async (req, res, next) => {
@@ -307,4 +309,30 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
     await story.save();
 
     generateResponse(story, 'Story visibility changed successfully', res);
-});   
+});
+
+exports.shareStory = asyncHandler(async (req, res, next) => {
+    const { storyId } = req.params;
+    const userId = req.user.id;
+
+    if (!Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please provide valid storyId.'
+    });
+    const story = await findStoryById(storyId);
+    if (!story) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Story not found'
+    });
+
+    const newStory = await createStory({
+        type: story.type,
+        creator: story.creator,
+        contributors: story.contributors,
+        content: story.content,
+        category: story.category,
+        subCategory: story.subCategory,
+        sharedBy: userId,
+    });
+    generateResponse(newStory, 'Story shared successfully', res);
+});

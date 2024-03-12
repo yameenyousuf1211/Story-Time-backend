@@ -56,9 +56,9 @@ exports.getStoriesQuery = (user) => {
             $match: {
                 $or: [
                     { isFollowing: true },
-                    { isSharedByFollowing: true },
                     { isTagged: true },
-                    { creator: new Types.ObjectId(user) }
+                    { isSharedByFollowing: true },
+                    { contributors: new Types.ObjectId(user) }
                 ],
             },
         },

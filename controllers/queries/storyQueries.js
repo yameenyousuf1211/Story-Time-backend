@@ -6,14 +6,14 @@ exports.getStoriesQuery = (user) => {
         {
             $lookup: {
                 from: 'followings',
-                let: { user: new Types.ObjectId(user), creatorId: '$creator' },
+                let: { user: new Types.ObjectId(user), contributorIds: '$contributors' },
                 pipeline: [
                     {
                         $match: {
                             $expr: {
                                 $and: [
                                     { $eq: ['$user', '$$user'] },
-                                    { $eq: ['$following', '$$creatorId'] },
+                                    { $in: ['$following', '$$contributorIds'] },
                                 ],
                             },
                         },
@@ -24,40 +24,23 @@ exports.getStoriesQuery = (user) => {
         },
         {
             $lookup: {
-                from: 'blocks',
-                localField: 'contributors',
-                foreignField: 'blockId',
-                as: 'blocks',
+                from: 'followings',
+                let: { user: new Types.ObjectId(user), sharedBy: '$sharedBy' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$user', '$$user'] },
+                                    { $eq: ['$following', '$$sharedBy'] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'sharedByFollowings',
             },
         },
-        {
-            $addFields: {
-                userBlocks: {
-                    $filter: {
-                        input: '$blocks',
-                        as: 'block',
-                        cond: { $eq: ['$$block.userId', new Types.ObjectId(user)] }
-                    }
-                }
-            }
-        },
-        {
-            $match: {
-                $expr: {
-                    $or: [
-                        {
-                            $not: {
-                                $gt: [{ $size: { $setIntersection: ['$contributors', '$userBlocks.blockId'] } }, 0]
-                            }
-                        },
-                        {
-                            $gt: [{ $size: { $setIntersection: ['$contributors', '$followings.following'] } }, 0]
-                        }
-                    ]
-                }
-            }
-        },
-        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
         {
             $addFields: {
                 likesCount: { $size: "$likes" },
@@ -65,6 +48,7 @@ exports.getStoriesQuery = (user) => {
                 likedByMe: { $in: [new Types.ObjectId(user), "$likes"] },
                 dislikesByMe: { $in: [new Types.ObjectId(user), "$dislikes"] },
                 isFollowing: { $cond: [{ $gt: [{ $size: '$followings' }, 0] }, true, false] },
+                isSharedByFollowing: { $cond: [{ $gt: [{ $size: '$sharedByFollowings' }, 0] }, true, false] },
                 isTagged: { $in: [new Types.ObjectId(user), "$tag"] },
             }
         },
@@ -72,19 +56,18 @@ exports.getStoriesQuery = (user) => {
             $match: {
                 $or: [
                     { isFollowing: true },
+                    { isSharedByFollowing: true },
                     { isTagged: true },
-                    { creator: new Types.ObjectId(user) },
+                    { creator: new Types.ObjectId(user) }
                 ],
-
             },
         },
+        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
         { $sort: { createdAt: -1 } },    // latest first
-        { $project: { followings: 0, blocks: 0, userBlocks: 0 } }
-
-    ];
-};
-
+        { $project: { followings: 0, sharedByFollowings: 0 } }
+    ]
+}
 // get user's stories
 exports.getUserStoriesQuery = (user, type, isHidden) => {
     const pipeline = [

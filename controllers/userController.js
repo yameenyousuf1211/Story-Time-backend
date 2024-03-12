@@ -434,6 +434,7 @@ exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
       email: process.env.ADMIN_EMAIL,
       password,
       firstName: 'Admin',
+      username: 'admin',
       completePhone: '+921111111111',
       role: ROLES.ADMIN,
     });

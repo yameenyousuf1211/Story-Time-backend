@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
-const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends, updateProfile, notificationsToggle, blockToggle, getBlockList, reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard, getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo, toggleUserProfileMode } = require('../controllers/userController');
+const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle, getAllFriends, updateProfile, notificationsToggle, blockToggle, getBlockList, reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard, getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo, toggleUserProfileMode, checkAllAvailability } = require('../controllers/userController');
 const { upload } = require('../utils');
 
 class UserAPI {
@@ -23,10 +23,11 @@ class UserAPI {
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
     router.post('/report-user', authMiddleware([ROLES.USER]), reportUser);
     router.post('/card', authMiddleware(Object.values(ROLES)), addOrUpdateCard)
+    router.post('/availability', authMiddleware(Object.values(ROLES)), checkAllAvailability),
 
-    router.put('/update-profile', authMiddleware(Object.values(ROLES)),
-      upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
-      updateProfile);
+      router.put('/update-profile', authMiddleware(Object.values(ROLES)),
+        upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
+        updateProfile);
     router.put('/notifications', authMiddleware(Object.values(ROLES)), notificationsToggle)
     router.put('/block', authMiddleware(Object.values(ROLES)), blockToggle)
     router.put('/update-status', authMiddleware([ROLES.ADMIN]), userStatusToggle)

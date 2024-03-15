@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = requi
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -31,6 +31,41 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
 
   generateResponse(null, `${key} available`, res);
 });
+
+exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
+  const body = parseBody(req.body);
+
+  // Joi validation
+  const { error } = checkAllAvailabilityValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  const checks = [
+    findUser({ username: body.username, role: ROLES.USER, isDeleted: false }),
+    findUser({ email: body.email, role: ROLES.USER, isDeleted: false }),
+    findUser({ completePhone: body.completePhone, role: ROLES.USER, isDeleted: false })
+  ];
+
+  const [username, email, phone] = await Promise.all(checks);
+
+  const conflicts = [
+    username && 'Username already exists',
+    email && 'Email already exists',
+    phone && 'Phone already exists'
+  ].filter(Boolean);
+
+  if (conflicts.length >= 1) {
+    return next({
+      statusCode: STATUS_CODES.CONFLICT,
+      message: conflicts.join('. ')
+    });
+  }
+
+  generateResponse(null, 'All available', res);
+});
+
 
 // get all users
 exports.getAllUsers = asyncHandler(async (req, res, next) => {

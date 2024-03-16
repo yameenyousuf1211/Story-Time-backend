@@ -43,9 +43,9 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
   });
 
   const checks = [
-    findUser({ username: body.username, role: ROLES.USER, isDeleted: false }),
-    findUser({ email: body.email, role: ROLES.USER, isDeleted: false }),
-    findUser({ completePhone: body.completePhone, role: ROLES.USER, isDeleted: false })
+    findUser({ username: body.username, role: ROLES.USER }),
+    findUser({ email: body.email, role: ROLES.USER }),
+    findUser({ completePhone: body.completePhone, role: ROLES.USER })
   ];
 
   const [username, email, phone] = await Promise.all(checks);

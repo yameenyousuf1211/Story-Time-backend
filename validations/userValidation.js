@@ -7,9 +7,9 @@ exports.checkAvailabilityValidation = Joi.object({
 }).or('username', 'email', 'completePhone').xor('username', 'email', 'completePhone');
 
 exports.checkAllAvailabilityValidation = Joi.object({
-  username: Joi.string().min(3).max(20),
-  email: Joi.string().email({ minDomainSegments: 2 }),
-  completePhone: Joi.string().regex(/^\+\d*$/).min(7).max(14),
+  username: Joi.string().min(3).max(20).required(),
+  email: Joi.string().email({ minDomainSegments: 2 }).required(),
+  completePhone: Joi.string().regex(/^\+\d*$/).min(7).max(14).required(),
 });
 
 exports.updateProfileValidation = Joi.object({

@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -42,19 +42,29 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
     message: error.details[0].message
   });
 
-  const checks = [
-    findUser({ username: body.username, role: ROLES.USER }),
-    findUser({ email: body.email, role: ROLES.USER }),
-    findUser({ completePhone: body.completePhone, role: ROLES.USER })
-  ];
+  const checks = [];
 
-  const [username, email, phone] = await Promise.all(checks);
+  if (body.username) {
+    checks.push(findUser({ username: body.username, role: ROLES.USER }));
+  }
+  if (body.email) {
+    checks.push(findUser({ email: body.email, role: ROLES.USER }));
+  }
+  if (body.completePhone) {
+    checks.push(findUser({ completePhone: body.completePhone, role: ROLES.USER }));
+  }
 
-  const conflicts = [
-    username && 'Username already exists',
-    email && 'Email already exists',
-    phone && 'Phone already exists'
-  ].filter(Boolean);
+  const results = await Promise.all(checks);
+
+  const conflicts = results.map((result, index) => {
+    if (result) {
+      switch (index) {
+        case 0: return 'Username already exists';
+        case 1: return 'Email already exists';
+        case 2: return 'Phone already exists';
+      }
+    }
+  }).filter(Boolean);
 
   if (conflicts.length >= 1) {
     return next({

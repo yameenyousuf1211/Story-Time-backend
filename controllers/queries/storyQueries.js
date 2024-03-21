@@ -64,7 +64,7 @@ exports.getUserStoriesQuery = (user, type, isHidden) => {
     const pipeline = [
         {
             $match: {
-                creator: new Types.ObjectId(user),
+                contributors: new Types.ObjectId(user),
                 type,
                 ...(!isHidden && { isHidden }) // Only include isHidden if it's true else ignore it
             }

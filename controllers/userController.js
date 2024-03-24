@@ -45,24 +45,20 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
   const checks = [];
 
   if (body.username) {
-    checks.push(findUser({ username: body.username, role: ROLES.USER }));
+    checks.push({ check: findUser({ username: body.username, role: ROLES.USER }), field: 'username' });
   }
   if (body.email) {
-    checks.push(findUser({ email: body.email, role: ROLES.USER }));
+    checks.push({ check: findUser({ email: body.email, role: ROLES.USER }), field: 'email' });
   }
   if (body.completePhone) {
-    checks.push(findUser({ completePhone: body.completePhone, role: ROLES.USER }));
+    checks.push({ check: findUser({ completePhone: body.completePhone, role: ROLES.USER }), field: 'phone' });
   }
 
-  const results = await Promise.all(checks);
+  const results = await Promise.all(checks.map(c => c.check));
 
   const conflicts = results.map((result, index) => {
     if (result) {
-      switch (index) {
-        case 0: return 'Username already exists';
-        case 1: return 'Email already exists';
-        case 2: return 'Phone already exists';
-      }
+      return `${checks[index].field} already exists`;
     }
   }).filter(Boolean);
 

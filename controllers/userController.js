@@ -42,31 +42,29 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
     message: error.details[0].message
   });
 
-  const checks = [];
+  const checkPromises = [];
 
-  if (body.username) {
-    checks.push({ check: findUser({ username: body.username, role: ROLES.USER }), field: 'username' });
-  }
-  if (body.email) {
-    checks.push({ check: findUser({ email: body.email, role: ROLES.USER }), field: 'email' });
-  }
-  if (body.completePhone) {
-    checks.push({ check: findUser({ completePhone: body.completePhone, role: ROLES.USER }), field: 'phone' });
-  }
+  if (body.username) checkPromises.push({ check: findUser({ username: body.username }), field: 'username' });
+  if (body.email) checkPromises.push({ check: findUser({ email: body.email }), field: 'email' });
+  if (body.completePhone) checkPromises.push({ check: findUser({ completePhone: body.completePhone }), field: 'phone' });
 
-  const results = await Promise.all(checks.map(c => c.check));
+  if (checkPromises.length === 0) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please provide at least one field to check'
+  });
+
+  const results = await Promise.all(checkPromises);
+
+  const response = [];
 
   const conflicts = results.map((result, index) => {
     if (result) {
-      return `${checks[index].field} already exists`;
+      response.push({ [checkPromises[index].field]: `${checkPromises[index].field} already exists` });
     }
-  }).filter(Boolean);
+  })
 
   if (conflicts.length >= 1) {
-    return next({
-      statusCode: STATUS_CODES.CONFLICT,
-      message: conflicts.join('. ')
-    });
+    return generateResponse(response, 'Conflicts found', res);
   }
 
   generateResponse(null, 'All available', res);

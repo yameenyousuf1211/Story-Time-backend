@@ -75,8 +75,8 @@ exports.fetchStoryById = asyncHandler(async (req, res, next) => {
     const story = await findStoryById(storyId).populate('creator subCategory').lean();
     story.likesCount = story.likes.length;
     story.dislikesCount = story.dislikes.length;
-    story.likedByMe = story.likes.includes(new Types.ObjectId(req.user.id));
-    story.dislikesByMe = story.dislikes.includes(new Types.ObjectId(req.user.id));
+    story.likedByMe = story.likes.map(id => id.toString()).includes(req.user.id);
+    story.dislikesByMe = story.dislikes.map(id => id.toString()).includes(req.user.id);
 
     if (!story) return next({
         statusCode: STATUS_CODES.NOT_FOUND,

@@ -9,6 +9,7 @@ const categorySchema = new Schema({
     image: { type: String },
     parent: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
     isDeleted: { type: Boolean, default: false },
+    hexCode: { type: String, default: "" },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

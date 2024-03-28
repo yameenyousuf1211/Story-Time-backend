@@ -1,7 +1,7 @@
 const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse, getRandomIndexFromArray, asyncHandler } = require('../utils/index');
-const { createCategory, getAllCategories, findCategory, findCategories } = require('../models/categoryModel');
-const { createCategoryValidation } = require('../validations/categoryValidation');
+const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById } = require('../models/categoryModel');
+const { createCategoryValidation, updateCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
 
 exports.createCategory = asyncHandler(async (req, res, next) => {
@@ -97,4 +97,30 @@ exports.getCategories = asyncHandler(async (req, res, next) => {
     }
 
     generateResponse(categoriesData, `${parent ? 'Sub-' : ''}Categories retrieved successfully`, res);
+});
+
+// function to update category by id
+exports.updateCategory = asyncHandler(async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    if (!Types.ObjectId.isValid(body.categoryId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'invalid category id'
+    });
+    const { error } = updateCategoryValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message,
+    });
+
+    const category = await findCategory({ _id: body.categoryId });
+    if (!category) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Category not found'
+    });
+    if (req.file) body.image = req.file.path;
+
+    const updateCategory = await updateCategoryById(body.categoryId, body);
+
+    generateResponse(updateCategory, 'Category updated successfully', res);
 });

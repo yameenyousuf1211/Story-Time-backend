@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { createCategory, getAllCategories, getRandomCategory, deleteCategoryById, getCategories } = require('../controllers/categoryController');
+const { createCategory, getAllCategories, getRandomCategory, deleteCategoryById, getCategories, updateCategory } = require('../controllers/categoryController');
 const { upload } = require('../utils');
 const authMiddleware = require('../middlewares/auth');
 const { ROLES } = require('../utils/constants');
@@ -18,6 +18,8 @@ class CategoryAPI {
         router.get('/fetch-all', authMiddleware(Object.values(ROLES)), getCategories);
 
         router.delete('/delete/:categoryId', authMiddleware([ROLES.ADMIN]), deleteCategoryById)
+
+        router.put('/update/:categoryId', authMiddleware(Object.values(ROLES)), upload('categories').single('image'), updateCategory);
     }
 
     getRouter() {

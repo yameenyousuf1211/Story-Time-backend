@@ -101,9 +101,10 @@ exports.getCategories = asyncHandler(async (req, res, next) => {
 
 // function to update category by id
 exports.updateCategory = asyncHandler(async (req, res, next) => {
+    const { categoryId } = req.params;
     const body = parseBody(req.body);
 
-    if (!Types.ObjectId.isValid(body.categoryId)) return next({
+    if (!Types.ObjectId.isValid(categoryId)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: 'invalid category id'
     });
@@ -113,14 +114,14 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
         message: error.details[0].message,
     });
 
-    const category = await findCategory({ _id: body.categoryId });
+    const category = await findCategory({ _id: categoryId });
     if (!category) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Category not found'
     });
     if (req.file) body.image = req.file.path;
 
-    const updateCategory = await updateCategoryById(body.categoryId, body);
+    const updateCategory = await updateCategoryById(categoryId, body);
 
     generateResponse(updateCategory, 'Category updated successfully', res);
 });

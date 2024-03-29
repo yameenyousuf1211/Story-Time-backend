@@ -31,7 +31,9 @@ app.use(cookieSession({
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 }));
 
-app.use(cors({ origin: "*", credentials: true }));
+app.use(cors({
+    origin: ["http://localhost:3000"], credentials: true
+}));
 
 app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project` }));
 

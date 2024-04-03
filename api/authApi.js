@@ -28,7 +28,7 @@ class AuthAPI {
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);
         router.put('/refresh-token', getRefreshToken);
-        router.put('/forget-password', authMiddleware([ROLES.ADMIN]), sendResetLink);
+        router.put('/forget-password', sendResetLink);
         router.put('/verify-reset-token', authMiddleware([ROLES.ADMIN]), verifyResetToken);
 
     }

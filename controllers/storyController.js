@@ -296,10 +296,10 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
         message: 'Story not found'
     });
 
-    // check if the current user is the creator of the story
-    if (!story.creator.equals(user)) return next({
+    // check if the current user is the contributor of the story
+    if (!story.contributors.some(contributor => contributor.equals(user))) return next({
         statusCode: STATUS_CODES.UNAUTHORIZED,
-        message: 'Only the creator of the story can change the visibility.'
+        message: 'Only the contributor of the story can change the visibility.'
     });
 
     // toggle the key

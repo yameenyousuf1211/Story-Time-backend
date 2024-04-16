@@ -44,12 +44,22 @@ exports.getStoriesQuery = (user) => {
         },
         {
             $match: {
-                $or: [
-                    { isFollowing: true }, // if user is following the contributor or the sharedBy
-                    { sharedBy: new Types.ObjectId(user) },
-                    { contributors: new Types.ObjectId(user) },
-                    { tag: new Types.ObjectId(user) },
-                ],
+                $and: [
+                    {
+                        $or: [
+                            { isFollowing: true }, // if user is following the contributor or the sharedBy
+                            { sharedBy: new Types.ObjectId(user) },
+                            { contributors: new Types.ObjectId(user) },
+                            { tag: new Types.ObjectId(user) },
+                        ],
+                    },
+                    {
+                        $or: [
+                            { isHidden: false },
+                            { $and: [{ isHidden: true }, { contributors: new Types.ObjectId(user) }] }
+                        ]
+                    }
+                ]
             },
         },
         { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },

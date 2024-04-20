@@ -297,7 +297,7 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
     });
 
     // check if the current user is the contributor of the story
-    if (!story.contributors.some(contributor => contributor.equals(user))) return next({
+    if (story.contributors.find(contributor => contributor.toString() != user)) return next({ // array.find returns the element, not the index
         statusCode: STATUS_CODES.UNAUTHORIZED,
         message: 'Only the contributor of the story can change the visibility.'
     });

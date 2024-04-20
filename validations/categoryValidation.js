@@ -7,9 +7,9 @@ exports.createCategoryValidation = Joi.object({
 });
 
 exports.updateCategoryValidation = Joi.object({
-  name: Joi.string().required(),
-  hexCode: Joi.string().allow(null, '').regex(/^#[0-9a-fA-F]{6}$/).messages({
-    'string.pattern.base': 'hexCode is not valid.',
+  name: Joi.string(),
+  hexCode: Joi.string().regex(/^#[0-9a-fA-F]{6}$/).messages({
+    'string.pattern.base': 'Invalid hex code',
   }),
 });
 

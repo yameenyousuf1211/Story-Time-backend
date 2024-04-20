@@ -22,7 +22,7 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
 
     body.image = req.file.path;
 
-    const isCategoryExist = await findCategory({ name: body.name, isDeleted: false });
+    const isCategoryExist = await findCategory({ name: body.name });
     if (isCategoryExist) return next({
         statusCode: STATUS_CODES.CONFLICT,
         message: 'Category already exists',

@@ -24,19 +24,19 @@ exports.registerUserValidation = Joi.object({
     }),
     fcmToken: Joi.string().required(),
     role: Joi.string().valid(...Object.values(ROLES)).required(),
-    firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(3).max(30).required().messages({
+    firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(1).max(30).required().messages({
         "string.pattern.base": "First name is not valid.",
         "string.min": "First name must be at least {#limit} characters long.",
         "string.max": "First name must be at most {#limit} characters long.",
         "any.required": "First name is required.",
     }),
-    lastName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(3).max(30).required().messages({
+    lastName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(1).max(30).required().messages({
         "string.pattern.base": "Last name is not valid.",
         "string.min": "Last name must be at least {#limit} characters long.",
         "string.max": "Last name must be at most {#limit} characters long.",
         "any.required": "Last name is required.",
     }),
-    username: Joi.string().min(3).max(20).required(),
+    username: Joi.string().min(1).max(20).required(),
     zipCode: Joi.string().required(),
     city: Joi.string().required(),
     state: Joi.string().required(),

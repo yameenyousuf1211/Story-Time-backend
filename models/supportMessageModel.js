@@ -25,6 +25,7 @@ exports.findMessages = async ({ query, page, limit }) => {
         query,
         page,
         limit,
+        sort: { createdAt: 1 },
         populate: {
             path: 'user',
             select: 'firstName lastName username profileImage'

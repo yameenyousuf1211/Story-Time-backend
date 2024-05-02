@@ -76,18 +76,13 @@ exports.getUserStoriesQuery = (user, type, isHidden) => {
             $match: {
                 contributors: new Types.ObjectId(user),
                 type,
-                ...(isHidden && { isHidden: { $nin: [new Types.ObjectId(user)] } }) // Only include isHidden if it's true else ignore it
+                ...(isHidden && { hiddenBy: { $nin: [new Types.ObjectId(user)] } })
             }
         },
-        {
-            $lookup: {
-                from: "categories",
-                localField: "subCategory",
-                foreignField: "_id",
-                as: "subCategory"
-            }
-        },
+
+        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },
         { $unwind: "$subCategory" },
+
         {
             $addFields: {
                 likesCount: { $size: "$likes" },

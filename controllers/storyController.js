@@ -303,12 +303,12 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
     });
 
     // toggle the visibility for the current user
-    if (story.isHidden.includes(user)) {
+    if (story.hiddenBy.includes(user)) {
         // If the story is already hidden from the user, unhide it
-        story.isHidden = story.isHidden.filter(id => id.toString() !== user);
+        story.hiddenBy = story.hiddenBy.filter(id => id.toString() !== user);
     } else {
         // If the story is not hidden from the user, hide it
-        story.isHidden.push(user);
+        story.hiddenBy.push(user);
     }
     await story.save();
 

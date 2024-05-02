@@ -48,9 +48,9 @@ exports.fetchUserStories = asyncHandler(async (req, res, next) => {
 
     let query;
     if (req.query?.user) {
-        query = getUserStoriesQuery(user, type, false);
-    } else {
         query = getUserStoriesQuery(user, type, true);
+    } else {
+        query = getUserStoriesQuery(user, type, false);
     }
 
     const storiesData = await getAllStories({ query, page, limit });
@@ -302,8 +302,14 @@ exports.toggleStoryVisibility = asyncHandler(async (req, res, next) => {
         message: 'Only the contributor of the story can change the visibility.'
     });
 
-    // toggle the key
-    story.isHidden = !story.isHidden;
+    // toggle the visibility for the current user
+    if (story.isHidden.includes(user)) {
+        // If the story is already hidden from the user, unhide it
+        story.isHidden = story.isHidden.filter(id => id.toString() !== user);
+    } else {
+        // If the story is not hidden from the user, hide it
+        story.isHidden.push(user);
+    }
     await story.save();
 
     generateResponse(story, 'Story visibility changed successfully', res);

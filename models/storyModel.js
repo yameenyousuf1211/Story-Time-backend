@@ -16,7 +16,7 @@ const storySchema = new Schema({
     commentsCount: { type: Number, default: 0 },
     tag: { type: [{ type: Schema.Types.ObjectId, ref: 'User', }], default: [] },
     isDeleted: { type: Boolean, default: false },
-    isHidden: { type: Boolean, default: false },
+    isHidden: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     sharedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true, versionKey: false });
 

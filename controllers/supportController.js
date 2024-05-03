@@ -5,15 +5,28 @@ const { findMessageById, createMessage, findMessages } = require('../models/supp
 const { sendMessageValidation } = require('../validations/supportChatValidation');
 const { Types } = require('mongoose');
 const { sendMessageIO, closeTicketIO } = require('../service/supportService');
+const { getUsers } = require('../models/userModel');
 
 // get chat list
 exports.getChatList = asyncHandler(async (req, res, next) => {
     const user = req.user.id;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
+    const search = req.query.search || '';
 
     let query = {};
     if (req.user.role !== ROLES.ADMIN) query = { user };
+
+    if (search) {
+        const users = await getUsers({
+            '$or': [
+                { 'firstName': { '$regex': search, '$options': 'i' } },
+                { 'lastName': { '$regex': search, '$options': 'i' } }
+            ]
+        });
+
+        query['user'] = { '$in': users.map(user => user._id) };
+    }
 
     const supportChatsData = await findChats({ query, page, limit });
     if (supportChatsData?.supportChats?.length === 0) {

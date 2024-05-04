@@ -42,8 +42,8 @@ new API(app).registerGroups();
 app.use(notFound);
 app.use(errorHandler);
 
-server.listen(PORT, HOST, () => {
-    console.log(`Server running at http://${HOST}:${PORT}/`);
+server.listen(PORT, () => {
+    console.log(`Server running on PORT ${PORT}`);
 });
 
 // sockets for chat module

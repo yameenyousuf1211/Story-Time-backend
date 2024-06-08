@@ -3,6 +3,7 @@ const { parseBody, generateResponse, getRandomIndexFromArray, asyncHandler } = r
 const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById } = require('../models/categoryModel');
 const { createCategoryValidation, updateCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
+const { categoryQuery } = require('./queries/categoryQueries');
 
 exports.createCategory = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
@@ -36,8 +37,9 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
 exports.getAllCategories = asyncHandler(async (req, res, next) => {
     const page = parseInt(req.query?.page) || 1;
     const limit = parseInt(req.query?.limit) || 10;
-    const { parent = null } = req.query;
-    const query = { parent, isDeleted: false };
+    const { parent = null, search = null } = req.query;
+
+    const query = categoryQuery(parent, search);
 
     const categoriesData = await getAllCategories({ query, page, limit });
     if (categoriesData?.categories.length === 0) {

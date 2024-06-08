@@ -56,11 +56,24 @@ userSchema.plugin(aggregatePaginate);
 // compile model from schema
 const UserModel = model('User', userSchema);
 
+const guestCountSchema = new Schema({
+    count: { type: Number, default: 0 }
+}, { versionKey: false, _id: false });
+
+const GuestCountModel = model('GuestCount', guestCountSchema);
+
+exports.createOrUpdateGuestCount = (obj) => GuestCountModel.findOneAndUpdate({}, obj, { new: true, upsert: true });
+
+exports.getGuestCount = () => GuestCountModel.findOne();
+
 // create new user
 exports.createUser = (obj) => UserModel.create(obj);
 
 // find user by query
 exports.findUser = (query) => UserModel.findOne({ ...query, isDeleted: false });
+
+//get count of total number of users
+exports.getUserCount = (query) => UserModel.countDocuments({ ...query });
 
 // update user
 exports.updateUser = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true });

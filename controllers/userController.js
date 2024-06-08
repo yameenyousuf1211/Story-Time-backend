@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -449,6 +449,26 @@ exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
 
   const message = user.isPublic ? 'Profile is now public' : 'Profile is now private';
   generateResponse(user, message, res);
+});
+
+// update guest count
+exports.updateGuestCount = asyncHandler(async (req, res, next) => {
+  const guestCount = await createOrUpdateGuestCount({ $inc: { count: 1 } });
+  generateResponse(guestCount, 'Guest count updated successfully', res);
+});
+
+// get total guest and user count
+exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
+  const [totalUsers, guestCountDoc] = await Promise.all([
+    getUserCount({}),
+    getGuestCount({})
+  ]);
+  const totalGuests = guestCountDoc ? guestCountDoc.count : 0;
+  const response = {
+    totalUsers,
+    totalGuests
+  };
+  generateResponse(response, 'Total Guest and User Count', res);
 });
 
 // create default admin account

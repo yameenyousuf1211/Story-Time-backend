@@ -14,4 +14,10 @@ exports.sendMessageIO = (chat, message) => {
 // close chat
 exports.closeTicketIO = (chat, chatObj) => {
     socket?.emit(`close-ticket-${chat}`, chatObj);
+
+    // socket emit functions with additional logging
+}
+exports.sendUnreadCountIO = (chat, count) => {
+    socket?.emit(`unread-count-${chat}`, { chatId: chat, unreadMessages: count });
+    console.log(`unread-count-${chat}`);
 }

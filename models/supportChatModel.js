@@ -8,6 +8,7 @@ const supportChatSchema = new Schema({
     user: { type: Types.ObjectId, ref: "User" },
     lastMessage: { type: Types.ObjectId, ref: "SupportMessage" },
     status: { type: String, enum: Object.values(SUPPORT_CHAT_STATUS), default: SUPPORT_CHAT_STATUS.PENDING },
+    unreadMessages: { type: Number, default: 0 },
 }, { timestamps: true, versionKey: false });
 
 supportChatSchema.plugin(mongoosePaginate);

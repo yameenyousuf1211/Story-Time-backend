@@ -8,6 +8,7 @@ const supportMessageSchema = new Schema({
     user: { type: Types.ObjectId, ref: "User" },
     text: { type: String, required: true },
     media: [{ type: String }],
+    isRead: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 
 supportMessageSchema.plugin(mongoosePaginate);

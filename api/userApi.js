@@ -23,7 +23,7 @@ class UserAPI {
     router.get('/report-list', authMiddleware([ROLES.ADMIN]), getAllReports)
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
     router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
-    router.get('/guest-and-user-count', getGuestAndUserCount);
+    router.get('/user-count', getGuestAndUserCount);
 
     router.post('/check-availability', checkAvailability); // checking uniqueness of email, phone, or username (1 at a time)
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);

@@ -426,7 +426,7 @@ exports.editAdminInfo = asyncHandler(async (req, res, next) => {
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: error.details[0].message
   });
-  const userWithEmail = await findUser({ email: body.email, role: ROLES.ADMIN });
+  const userWithEmail = await findUser({ email: body.email });
 
   if (userWithEmail) return next({
     statusCode: STATUS_CODES.CONFLICT,
@@ -465,14 +465,14 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [totalUsers, guestCountDoc] = await Promise.all([
+  const [userCount, guestCounts] = await Promise.all([
     getUserCount({}),
     getGuestCount({})
   ]);
-  const totalGuests = guestCountDoc ? guestCountDoc.count : 0;
+  const guestCount = guestCounts ? guestCounts.count : 0;
   const response = {
-    totalUsers,
-    totalGuests
+    userCount,
+    guestCount
   };
   generateResponse(response, 'Total Guest and User Count', res);
 });

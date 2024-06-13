@@ -15,7 +15,8 @@ exports.getChatList = asyncHandler(async (req, res, next) => {
     const search = req.query.search || '';
 
     let query = {};
-    if (req.user.role !== ROLES.ADMIN) query = { user };
+    if (req.user.role !== ROLES.ADMIN) query['user'] = new Types.ObjectId(user);
+
 
     const aggregateQuery = await getChatsQuery(query, search);
 

@@ -10,7 +10,15 @@ exports.getChatsQuery = async (query, search) => {
         });
 
         const userIDs = users.map(user => user._id);
-        query['user'] = { '$in': userIDs };
+
+        // If the query already has a user filter, combine it with the search results
+        if (query['user']) {
+            query['user'] = {
+                '$in': userIDs.filter(id => id.equals(query['user']))
+            };
+        } else {
+            query['user'] = { '$in': userIDs };
+        }
     }
 
     return [
@@ -33,6 +41,19 @@ exports.getChatsQuery = async (query, search) => {
             },
         },
         {
+            $lookup: {
+                from: 'supportmessages',
+                let: { chatId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $eq: ['$chat', '$$chatId'] } } },
+                    { $sort: { createdAt: -1 } },
+                    { $limit: 1 },
+                ],
+                as: 'lastMessage',
+            },
+        },
+        { $unwind: { path: '$lastMessage', preserveNullAndEmptyArrays: true } },
+        {
             $addFields: {
                 unreadMessages: {
                     $size: {
@@ -48,6 +69,7 @@ exports.getChatsQuery = async (query, search) => {
         {
             $project: {
                 user: {
+                    _id: 1,
                     firstName: 1,
                     lastName: 1,
                     username: 1,

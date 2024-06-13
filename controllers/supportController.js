@@ -1,11 +1,11 @@
-const { findChats, findChat, createChat, updateChat } = require('../models/supportChatModel');
+const { findChat, createChat, updateChat, getAllChats } = require('../models/supportChatModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils');
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require('../utils/constants');
-const { findMessageById, createMessage, findMessages, getMessages, updateMessages } = require('../models/supportMessageModel');
+const { findMessageById, createMessage, findMessages, getMessages, updateMessages, countUnreadMessages } = require('../models/supportMessageModel');
 const { sendMessageValidation } = require('../validations/supportChatValidation');
 const { Types } = require('mongoose');
-const { sendMessageIO, closeTicketIO, sendUnreadCountIO } = require('../service/supportService');
-const { getUsers } = require('../models/userModel');
+const { sendMessageIO, closeTicketIO, updateUnreadMessagesIO } = require('../service/supportService');
+const { getChatsQuery } = require('./queries/supportChatQueries');
 
 // get chat list
 exports.getChatList = asyncHandler(async (req, res, next) => {
@@ -17,18 +17,9 @@ exports.getChatList = asyncHandler(async (req, res, next) => {
     let query = {};
     if (req.user.role !== ROLES.ADMIN) query = { user };
 
-    if (search) {
-        const users = await getUsers({
-            '$or': [
-                { 'firstName': { '$regex': search, '$options': 'i' } },
-                { 'lastName': { '$regex': search, '$options': 'i' } }
-            ]
-        });
+    const aggregateQuery = await getChatsQuery(query, search);
 
-        query['user'] = { '$in': users.map(user => user._id) };
-    }
-
-    const supportChatsData = await findChats({ query, page, limit });
+    const supportChatsData = await getAllChats({ query: aggregateQuery, page, limit });
     if (supportChatsData?.supportChats?.length === 0) {
         generateResponse(null, "No chats found", res);
         return;
@@ -64,14 +55,14 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
         });
 
         // Increment unread messages count
-        await updateChat({ _id: body.chat }, { $inc: { unreadMessages: 1 } });
+        await updateChat({ _id: chatObj._id }, { lastMessage: body._id });
 
     } else {
         chatObj = await createChat({ user: body.user });
         body.chat = chatObj._id;
 
-        // Since this is a new chat, unreadMessages should start at 1
-        await updateChat({ _id: body.chat }, { unreadMessages: 1 });
+        //update chat
+        await updateChat({ _id: chatObj._id }, { lastMessage: body._id });
     }
 
     let message = await createMessage(body);
@@ -84,12 +75,14 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
     // update last message in support chat
     await updateChat({ _id: body.chat }, { lastMessage: message._id });
 
-    // Emit unread messages count
-    sendUnreadCountIO(body.chat, chatObj.unreadMessages + 1);
+    // Count unread messages
+    const unreadMessagesCount = await countUnreadMessages({ chat: body.chat, isRead: false });
+
+    // Emit the updated unread messages count and last message
+    updateUnreadMessagesIO(body.chat, unreadMessagesCount, message);
 
     generateResponse(message, "User sent message successfully", res);
 });
-
 
 // close chat
 exports.closeChat = asyncHandler(async (req, res, next) => {
@@ -126,41 +119,21 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
         message: 'Invalid chat ID'
     });
 
-    const messagesData = await findMessages({ query: { chat: chatId }, page, limit, });
+    const messagesData = await findMessages({ query: { chat: chatId }, page, limit });
 
     if (messagesData?.supportMessages?.length === 0) {
         generateResponse(null, "No messages found", res);
         return;
     }
 
+    // Mark all messages in this chat as read
+    await updateMessages({ chat: chatId, isRead: false }, { isRead: true });
+
+    // Count unread messages
+    const unreadMessagesCount = await countUnreadMessages({ chat: chatId, isRead: false });
+
+    // Emit the updated unread messages count
+    updateUnreadMessagesIO(chatId, unreadMessagesCount);
+
     generateResponse(messagesData, "Messages fetched successfully", res);
-});
-
-exports.markMessagesAsRead = asyncHandler(async (req, res, next) => {
-    const { chatId } = req.params;
-    const userId = req.user.id;
-
-    if (!Types.ObjectId.isValid(chatId)) return next({
-        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Invalid chat ID'
-    });
-    console.log('chatId', chatId);
-
-
-    // Find unread messages in the chat
-    const unreadMessages = await getMessages({ chat: chatId, user: { $ne: userId }, isRead: false });
-    console.log('unreadMessages', unreadMessages.length);
-
-    if (unreadMessages?.length > 0) {
-        // Mark messages as read
-        await updateMessages({ chat: chatId, user: { $ne: userId }, isRead: false }, { isRead: true });
-
-        // Decrement unread message count
-        await updateChat({ _id: chatId }, { $inc: { unreadMessages: -unreadMessages.length } });
-
-        // Emit the updated unread message count
-        sendUnreadCountIO(chatId, 0);
-    }
-
-    generateResponse(null, "Messages marked as read", res);
 });

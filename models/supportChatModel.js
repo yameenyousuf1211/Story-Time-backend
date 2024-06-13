@@ -1,14 +1,13 @@
 const { Schema, model, Types } = require("mongoose");
 const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
-const { getMongoosePaginatedData } = require("../utils");
+const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require("../utils");
 const { SUPPORT_CHAT_STATUS } = require("../utils/constants");
 
 const supportChatSchema = new Schema({
     user: { type: Types.ObjectId, ref: "User" },
     lastMessage: { type: Types.ObjectId, ref: "SupportMessage" },
     status: { type: String, enum: Object.values(SUPPORT_CHAT_STATUS), default: SUPPORT_CHAT_STATUS.PENDING },
-    unreadMessages: { type: Number, default: 0 },
 }, { timestamps: true, versionKey: false });
 
 supportChatSchema.plugin(mongoosePaginate);
@@ -41,3 +40,14 @@ exports.findChats = async ({ query, page, limit }) => {
 
 // find chat by query
 exports.findChat = (query) => SupportChatModel.findOne(query);
+
+exports.getAllChats = async ({ query, page, limit }) => {
+    const { data, pagination } = await getMongooseAggregatePaginatedData({
+        model: SupportChatModel,
+        query,
+        page,
+        limit,
+    });
+
+    return { supportChats: data, pagination };
+};

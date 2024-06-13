@@ -3,8 +3,7 @@ const {
     getChatList,
     closeChat,
     sendMessage,
-    getChatMessages,
-    markMessagesAsRead
+    getChatMessages
 } = require('../controllers/supportController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -27,7 +26,6 @@ class SupportAPI {
             upload('chat').fields([{ name: "media", maxCount: 5 }]), sendMessage);
 
         router.put('/close-ticket', authMiddleware(Object.values(ROLES)), closeChat);
-        router.put('/message-read/:chatId', authMiddleware(Object.values(ROLES)), markMessagesAsRead);
     }
 
     getRouter() {

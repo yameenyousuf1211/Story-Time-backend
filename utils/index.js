@@ -1,6 +1,7 @@
 const multer = require('multer');
 const fs = require('fs');
 const { sign } = require('jsonwebtoken');
+const { default: mongoose } = require('mongoose');
 
 exports.generateResponse = (data, message, res, code = 200) => {
     return res.status(code).json({
@@ -152,4 +153,8 @@ exports.generateResetLink = (resetToken) => {
 // async handler
 exports.asyncHandler = (requestHandler) => {
     return (req, res, next) => Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
+}
+
+exports.getMongoId = (id = null) => {
+    return new mongoose.Types.ObjectId(id);
 }

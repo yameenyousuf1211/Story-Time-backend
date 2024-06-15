@@ -1,26 +1,21 @@
-const { findChat, createChat, updateChat, getAllChats } = require('../models/supportChatModel');
+const { findChat, updateChat } = require('../models/supportChatModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils');
-const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require('../utils/constants');
-const { findMessageById, createMessage, findMessages, getMessages, updateMessages, countUnreadMessages } = require('../models/supportMessageModel');
+const { STATUS_CODES, SUPPORT_CHAT_STATUS } = require('../utils/constants');
+const { findMessageById, createMessage, findMessages, getAllMessagesAggregate, readMessages } = require('../models/supportMessageModel');
 const { sendMessageValidation } = require('../validations/supportChatValidation');
 const { Types } = require('mongoose');
-const { sendMessageIO, closeTicketIO, updateUnreadMessagesIO } = require('../service/supportService');
+const { emitSocketEvent } = require('../socket');
 const { getChatsQuery } = require('./queries/supportChatQueries');
 
 // get chat list
 exports.getChatList = asyncHandler(async (req, res, next) => {
-    const user = req.user.id;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
     const search = req.query.search || '';
 
-    let query = {};
-    if (req.user.role !== ROLES.ADMIN) query['user'] = new Types.ObjectId(user);
+    const query = await getChatsQuery(req.user.id, search);
 
-
-    const aggregateQuery = await getChatsQuery(query, search);
-
-    const supportChatsData = await getAllChats({ query: aggregateQuery, page, limit });
+    const supportChatsData = await getAllMessagesAggregate({ query, page, limit })
     if (supportChatsData?.supportChats?.length === 0) {
         generateResponse(null, "No chats found", res);
         return;
@@ -39,55 +34,31 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
         message: error.details[0].message
     });
 
-    if (req.user.role !== ROLES.ADMIN) {
-        body.user = req.user.id;
-    } else {
-        body.user = null;
-    }
-
     if (req.files?.media?.length > 0) body.media = req.files.media.map(file => file.path);
 
-    let chatObj;
-    if (body.chat) {
-        chatObj = await findChat({ _id: body.chat });
-        if (!chatObj) return next({
-            statusCode: STATUS_CODES.NOT_FOUND,
-            message: 'Chat not found'
-        });
+    let message = await createMessage({
+        chat: body.chat,
+        sender: req.user.id,
+        receiver: req.body.receiver,
+        text: body.text,
+        media: body.media
+    });
 
-        // Increment unread messages count
-        await updateChat({ _id: chatObj._id }, { lastMessage: body._id });
-
-    } else {
-        chatObj = await createChat({ user: body.user });
-        body.chat = chatObj._id;
-
-        //update chat
-        await updateChat({ _id: chatObj._id }, { lastMessage: body._id });
-    }
-
-    let message = await createMessage(body);
-    message = await findMessageById(message._id)
-        .populate('user', 'firstName lastName username profileImage');
-
-    // send message socket
-    sendMessageIO(body.chat, message);
-
-    // update last message in support chat
+    // update chat
     await updateChat({ _id: body.chat }, { lastMessage: message._id });
 
-    // Count unread messages
-    const unreadMessagesCount = await countUnreadMessages({ chat: body.chat, isRead: false });
+    message = await findMessageById(message._id).populate('receiver', 'firstName lastName username profileImage');
 
-    // Emit the updated unread messages count and last message
-    updateUnreadMessagesIO(body.chat, unreadMessagesCount, message);
+    // send message socket
+    emitSocketEvent(req, req.body.receiver, `send-message-${body.chat}`, message);
 
     generateResponse(message, "User sent message successfully", res);
 });
 
 // close chat
 exports.closeChat = asyncHandler(async (req, res, next) => {
-    const { chat } = parseBody(req.body);
+    // user is 2nd user except login user
+    const { chat, user } = parseBody(req.body);
 
     if (!chat || !Types.ObjectId.isValid(chat)) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
@@ -103,15 +74,14 @@ exports.closeChat = asyncHandler(async (req, res, next) => {
     await supportChat.save();
 
     // close ticket socket
-    closeTicketIO(supportChat._id, supportChat);
+    emitSocketEvent(req, user, `close-ticket-${chat}`, supportChat);
 
     generateResponse(supportChat, "Chat closed successfully", res);
-    next(error);
 });
 
 // get chat messages
 exports.getChatMessages = asyncHandler(async (req, res, next) => {
-    const { chatId } = req.params;
+    const { chat } = req.params;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
@@ -120,21 +90,15 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
         message: 'Invalid chat ID'
     });
 
-    const messagesData = await findMessages({ query: { chat: chatId }, page, limit });
+    const messagesData = await findMessages({ query: { chat }, page, limit });
 
-    if (messagesData?.supportMessages?.length === 0) {
+    if (messagesData?.data?.length === 0) {
         generateResponse(null, "No messages found", res);
         return;
     }
 
-    // Mark all messages in this chat as read
-    await updateMessages({ chat: chatId, isRead: false }, { isRead: true });
-
-    // Count unread messages
-    const unreadMessagesCount = await countUnreadMessages({ chat: chatId, isRead: false });
-
-    // Emit the updated unread messages count
-    updateUnreadMessagesIO(chatId, unreadMessagesCount);
+    // mark all messages as read
+    await readMessages({ chat, receiver: req.user.id, isRead: false });
 
     generateResponse(messagesData, "Messages fetched successfully", res);
 });

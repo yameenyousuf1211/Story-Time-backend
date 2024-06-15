@@ -1,13 +1,14 @@
 const { Schema, model, Types } = require("mongoose");
 const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
-const { getMongoosePaginatedData } = require("../utils");
+const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require("../utils");
 
 const supportMessageSchema = new Schema({
     chat: { type: Types.ObjectId, ref: "SupportChat" },
-    user: { type: Types.ObjectId, ref: "User" },
+    sender: { type: Types.ObjectId, ref: "User" },
+    receiver: { type: Types.ObjectId, ref: "User" },
     text: { type: String, required: true },
-    media: [{ type: String }],
+    media: { type: [String], default: [] },
     isRead: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 
@@ -33,7 +34,19 @@ exports.findMessages = async ({ query, page, limit }) => {
         },
     });
 
-    return { supportMessages: data, pagination };
+    return { data, pagination };
+}
+
+// find messages by query with pagination
+exports.getAllMessagesAggregate = async ({ query, page, limit }) => {
+    const { data, pagination } = await getMongooseAggregatePaginatedData({
+        model: SupportMessageModel,
+        query,
+        page,
+        limit,
+    });
+
+    return { data, pagination };
 }
 
 // get messages without pagination
@@ -43,9 +56,11 @@ exports.getMessages = (query) => SupportMessageModel.find(query);
 exports.findMessageById = (messageId) => SupportMessageModel.findById(messageId);
 
 // update message by query
-exports.updateMessages = (query, obj) => SupportMessageModel.updateMany(query, obj, { new: true });
+exports.updateMessages = (query, obj) => SupportMessageModel.updateMany(query, obj);
 
 // delete message by user
 exports.updateMessageById = (messageId, obj) => SupportMessageModel.findByIdAndUpdate(messageId, obj, { new: true });
 
 exports.countUnreadMessages = (query) => SupportMessageModel.countDocuments(query);
+
+exports.readMessages = (query) => SupportMessageModel.updateMany(query, { $set: { isRead: true } });

@@ -5,8 +5,8 @@ const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require(
 const { SUPPORT_CHAT_STATUS } = require("../utils/constants");
 
 const supportChatSchema = new Schema({
-    user: { type: Types.ObjectId, ref: "User" },
-    lastMessage: { type: Types.ObjectId, ref: "SupportMessage" },
+    users: { type: [Types.ObjectId], ref: "User", default: [] },
+    lastMessage: { type: Types.ObjectId, ref: "SupportMessage", default: null },
     status: { type: String, enum: Object.values(SUPPORT_CHAT_STATUS), default: SUPPORT_CHAT_STATUS.PENDING },
 }, { timestamps: true, versionKey: false });
 
@@ -29,7 +29,7 @@ exports.findChats = async ({ query, page, limit }) => {
         page,
         limit,
         populate: [
-            { path: 'user', select: 'firstName lastName username profileImage' },
+            { path: 'users', select: 'firstName lastName username profileImage' },
             { path: 'lastMessage' },
         ],
         sort: { updatedAt: -1 },

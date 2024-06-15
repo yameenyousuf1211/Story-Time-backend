@@ -1,85 +1,41 @@
-const { getUsers } = require("../../models/userModel");
+const { getMongoId } = require("../../utils");
 
-exports.getChatsQuery = async (query, search) => {
-    if (search) {
-        const users = await getUsers({
-            '$or': [
-                { 'firstName': { '$regex': search, '$options': 'i' } },
-                { 'lastName': { '$regex': search, '$options': 'i' } }
-            ]
-        });
-
-        const userIDs = users.map(user => user._id);
-
-        // If the query already has a user filter, combine it with the search results
-        if (query['user']) {
-            query['user'] = {
-                '$in': userIDs.filter(id => id.equals(query['user']))
-            };
-        } else {
-            query['user'] = { '$in': userIDs };
-        }
-    }
-
+exports.getChatsQuery = async (user, search = "") => {
     return [
-        { $match: query },
+        { $match: { $or: [{ receiver: getMongoId(user) }, { sender: getMongoId(user) }] } },
         {
-            $lookup: {
-                from: 'users',
-                localField: 'user',
-                foreignField: '_id',
-                as: 'user',
-            },
-        },
-        { $unwind: '$user' },
-        {
-            $lookup: {
-                from: 'supportmessages',
-                localField: '_id',
-                foreignField: 'chat',
-                as: 'messages',
-            },
-        },
-        {
-            $lookup: {
-                from: 'supportmessages',
-                let: { chatId: '$_id' },
-                pipeline: [
-                    { $match: { $expr: { $eq: ['$chat', '$$chatId'] } } },
-                    { $sort: { createdAt: -1 } },
-                    { $limit: 1 },
-                ],
-                as: 'lastMessage',
-            },
-        },
-        { $unwind: { path: '$lastMessage', preserveNullAndEmptyArrays: true } },
-        {
-            $addFields: {
+            $group: {
+                _id: "$chat",
                 unreadMessages: {
-                    $size: {
-                        $filter: {
-                            input: '$messages',
-                            as: 'message',
-                            cond: { $eq: ['$$message.isRead', false] },
-                        },
-                    },
-                },
+                    $sum: {
+                        $cond: [{ $and: [{ $eq: ["$receiver", getMongoId(user)] }, { $eq: ["$isRead", false] }] }, 1, 0]
+                    }
+                }
             },
         },
+        // look up chat
+        { $lookup: { from: "supportchat", localField: "_id", foreignField: "_id", as: "chat" } }, { $unwind: "$chat" },
+
+        // lookup users under chat
         {
-            $project: {
-                user: {
-                    _id: 1,
-                    firstName: 1,
-                    lastName: 1,
-                    username: 1,
-                    profileImage: 1,
-                },
-                lastMessage: 1,
-                status: 1,
-                unreadMessages: 1,
+            $lookup: {
+                from: "users",
+                localField: "chat.users",
+                foreignField: "_id",
+                as: "users",
             },
         },
-        { $sort: { updatedAt: -1 } },
+
+        // match users using $regex search
+        {
+            $match: {
+                $or: [
+                    { "users.firstName": { $regex: search, $options: "i" } },
+                    { "users.lastName": { $regex: search, $options: "i" } },
+                ],
+            },
+        },
+        // sort by chat.updatedAt
+        { $sort: { "chat.updatedAt": -1 } },
     ];
 };

@@ -14,13 +14,25 @@ const DB_CONNECT = require('./config/dbConnect');
 const cookieSession = require('cookie-session');
 const { notFound, errorHandler } = require('./middlewares/errorHandling');
 const { log } = require('./middlewares/log');
-const socketio = require("socket.io");
+const { Server } = require("socket.io");
+const { initializeSocketIO } = require('./socket');
 const PORT = process.env.PORT || 3021;
-const HOST = process.env.HOST || 'localhost';
 const app = express();
 DB_CONNECT();
 
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
+
+// initialize socket.io
+const io = new Server(httpServer, {
+    pingTimeout: 60000,
+    cors: {
+        origin: "*",
+        credentials: true,
+    },
+});
+
+// mount io to app
+app.set("io", io);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
@@ -32,24 +44,19 @@ app.use(cookieSession({
 }));
 
 app.use(cors({
-    origin: ["http://localhost:3000","https://story-time4.vercel.app"], credentials: true
+    origin: ["http://localhost:3000", "https://story-time4.vercel.app"], credentials: true
 }));
 
 app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project` }));
 
 app.use(log);
 new API(app).registerGroups();
+
+initializeSocketIO(io);
+
 app.use(notFound);
 app.use(errorHandler);
 
-server.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);
 });
-
-// sockets for chat module
-const io = socketio(server).sockets;
-
-// Import supportService and pass io to initialize it
-const supportService = require('./service/supportService');
-supportService.socketIO(io);
-

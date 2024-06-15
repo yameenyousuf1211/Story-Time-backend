@@ -3,7 +3,7 @@ const {
     getChatList,
     closeChat,
     sendMessage,
-    getChatMessages
+    getChatMessages,
 } = require('../controllers/supportController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -19,7 +19,7 @@ class SupportAPI {
     setupRoutes() {
 
         router.get('/chat-list', authMiddleware(Object.values(ROLES)), getChatList);
-        router.get('/:chatId', authMiddleware(Object.values(ROLES)), getChatMessages);
+        router.get('/:chat', authMiddleware(Object.values(ROLES)), getChatMessages);
 
         router.post('/send-message',
             authMiddleware(Object.values(ROLES)),

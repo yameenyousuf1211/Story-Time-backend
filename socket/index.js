@@ -30,6 +30,6 @@ exports.initializeSocketIO = (io) => {
     });
 };
 
-exports.emitSocketEvent = (req, roomId, event, payload) => {
-    req.app.get("io").in(roomId).emit(event, payload);
+exports.emitSocketEvent = (req, event, payload) => {
+    req.app.get("io").emit(event, payload);
 };

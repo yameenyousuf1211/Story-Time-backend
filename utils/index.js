@@ -158,3 +158,29 @@ exports.asyncHandler = (requestHandler) => {
 exports.getMongoId = (id = null) => {
     return new mongoose.Types.ObjectId(id);
 }
+
+exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
+    return [
+        {
+            $lookup: {
+                from: "users",
+                localField,
+                foreignField: "_id",
+                as,
+                pipeline: [{
+                    $project: {
+                        _id: 1,
+                        firstName: 1,
+                        lastName: 1,
+                        username: 1,
+                        photo: 1,
+                        isActive: 1,
+                        isDeleted: 1,
+                        ...projectMore
+                    },
+                }],
+            },
+        },
+        { $unwind: `$${as}` },
+    ];
+};

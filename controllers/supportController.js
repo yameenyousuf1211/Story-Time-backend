@@ -47,10 +47,10 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
     // update chat
     await updateChat({ _id: body.chat }, { lastMessage: message._id });
 
-    message = await findMessageById(message._id).populate('receiver', 'firstName lastName username profileImage');
+    message = await findMessageById(message._id).populate('receiver', 'firstName lastName username photo');
 
     // send message socket
-    emitSocketEvent(req, req.body.receiver, `send-message-${body.chat}`, message);
+    emitSocketEvent(req, `send-message-${body.chat}`, message);
 
     generateResponse(message, "User sent message successfully", res);
 });
@@ -74,7 +74,7 @@ exports.closeChat = asyncHandler(async (req, res, next) => {
     await supportChat.save();
 
     // close ticket socket
-    emitSocketEvent(req, user, `close-ticket-${chat}`, supportChat);
+    emitSocketEvent(req, `close-ticket-${chat}`, supportChat);
 
     generateResponse(supportChat, "Chat closed successfully", res);
 });

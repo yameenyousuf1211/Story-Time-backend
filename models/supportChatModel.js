@@ -5,7 +5,7 @@ const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require(
 const { SUPPORT_CHAT_STATUS } = require("../utils/constants");
 
 const supportChatSchema = new Schema({
-    users: { type: [Types.ObjectId], ref: "User", default: [] },
+    user: { type: Types.ObjectId, ref: "User" },
     lastMessage: { type: Types.ObjectId, ref: "SupportMessage", default: null },
     status: { type: String, enum: Object.values(SUPPORT_CHAT_STATUS), default: SUPPORT_CHAT_STATUS.PENDING },
 }, { timestamps: true, versionKey: false });

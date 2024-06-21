@@ -13,7 +13,7 @@ exports.getChatList = asyncHandler(async (req, res, next) => {
     const limit = req.query.limit || 10;
     const search = req.query.search || '';
 
-    const query = await getChatsQuery(req.user.id, search);
+    const query = await getChatsQuery(req.user.id, search, req.user.role);
 
     const supportChatsData = await getAllMessagesAggregate({ query, page, limit })
     if (supportChatsData?.supportChats?.length === 0) {
@@ -36,8 +36,15 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
 
     if (req.files?.media?.length > 0) body.media = req.files.media.map(file => file.path);
 
+    const chatObj = await findChat({ _id: body.chat });
+    if (!chatObj) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: "Chat not found"
+    });
+
     let message = await createMessage({
         chat: body.chat,
+        user: chatObj.user,
         isAdmin: req.user.role === ROLES.ADMIN,
         text: body.text,
         media: body.media

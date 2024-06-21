@@ -93,10 +93,21 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    if (!Types.ObjectId.isValid(chatId)) return next({
-        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Invalid chat ID'
+    if (!Types.ObjectId.isValid(chat)) return next({
+        statusCode: STATUS_CODES.BAD_REQUEST,
+        message: "Invalid chat id"
     });
+
+    const chatObj = await findChat({ _id: chat });
+    if (!chatObj) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: "Chat not found"
+    });
+
+    const updateQuery = (req.user.role === ROLES.ADMIN) ? { chat, isAdmin: true, isRead: false } : { chat, isAdmin: false, isRead: false };
+
+    // mark all messages as read
+    await readMessages(updateQuery);
 
     const messagesData = await findMessages({ query: { chat }, page, limit });
 
@@ -104,9 +115,6 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
         generateResponse(null, "No messages found", res);
         return;
     }
-
-    // mark all messages as read
-    await readMessages({ chat, receiver: req.user.id, isRead: false });
 
     generateResponse(messagesData, "Messages fetched successfully", res);
 });

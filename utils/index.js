@@ -179,7 +179,7 @@ exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
                         firstName: 1,
                         lastName: 1,
                         username: 1,
-                        photo: 1,
+                        profileImage: 1,
                         isActive: 1,
                         isDeleted: 1,
                         ...projectMore

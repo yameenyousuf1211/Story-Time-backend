@@ -1,14 +1,20 @@
 const { getMongoId, lookupUser } = require("../../utils");
+const { ROLES } = require("../../utils/constants");
 
-exports.getChatsQuery = async (userId, search = "") => {
+exports.getChatsQuery = async (userId, search = "", role) => {
     return [
-        { $match: { $or: [{ receiver: getMongoId(userId) }, { sender: getMongoId(userId) }] } },
+        { $match: (role === ROLES.ADMIN) ? { chat: { $ne: null } } : { user: getMongoId(userId) } },
         {
             $group: {
                 _id: "$chat",
+                user: { $first: "$user" },
                 unreadMessages: {
                     $sum: {
-                        $cond: [{ $and: [{ $eq: ["$receiver", getMongoId(userId)] }, { $eq: ["$isRead", false] }] }, 1, 0]
+                        $cond: {
+                            if: { $eq: ["$isAdmin", true] },
+                            then: { $cond: { if: { $eq: ["$isRead", false] }, then: 1, else: 0 } },
+                            else: 0,
+                        }
                     }
                 }
             },
@@ -16,40 +22,18 @@ exports.getChatsQuery = async (userId, search = "") => {
         // look up chat
         { $lookup: { from: "supportchats", localField: "_id", foreignField: "_id", as: "chat" } }, { $unwind: "$chat" },
 
-        ...lookupUser("chat.users.0", "user1"),
-        ...lookupUser("chat.users.1", "user2"),
+        ...lookupUser("user"),
 
-        // Match users using $regex search only if the user is not the current user
-        {
+        (role === ROLES.ADMIN && {
             $match: {
                 $or: [
-                    {
-                        $and: [
-                            { "chat.users.0": { $ne: getMongoId(userId) } },
-                            { "user1.firstName": { $regex: search, $options: "i" } },
-                        ]
-                    },
-                    {
-                        $and: [
-                            { "chat.users.0": { $ne: getMongoId(userId) } },
-                            { "user1.lastName": { $regex: search, $options: "i" } },
-                        ]
-                    },
-                    {
-                        $and: [
-                            { "chat.users.1": { $ne: getMongoId(userId) } },
-                            { "user2.firstName": { $regex: search, $options: "i" } },
-                        ]
-                    },
-                    {
-                        $and: [
-                            { "chat.users.1": { $ne: getMongoId(userId) } },
-                            { "user2.lastName": { $regex: search, $options: "i" } },
-                        ]
-                    },
+                    { "user.firstName": { $regex: search, $options: "i" } },
+                    { "user.lastName": { $regex: search, $options: "i" } },
+                    { "user.username": { $regex: search, $options: "i" } },
                 ],
-            },
-        },
+            }
+        }),
+
         // sort by chat.updatedAt
         { $sort: { "chat.updatedAt": -1 } },
     ];

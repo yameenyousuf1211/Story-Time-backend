@@ -2,7 +2,7 @@ const { getMongoId, lookupUser } = require("../../utils");
 const { ROLES } = require("../../utils/constants");
 
 exports.getChatsQuery = async (userId, search = "", role) => {
-    return [
+    const pipeline = [
         { $match: (role === ROLES.ADMIN) ? { chat: { $ne: null } } : { user: getMongoId(userId) } },
         {
             $group: {
@@ -17,14 +17,19 @@ exports.getChatsQuery = async (userId, search = "", role) => {
                         }
                     }
                 }
-            },
+            }
         },
         // look up chat
-        { $lookup: { from: "supportchats", localField: "_id", foreignField: "_id", as: "chat" } }, { $unwind: "$chat" },
-
+        { $lookup: { from: "supportchats", localField: "_id", foreignField: "_id", as: "chat" } },
+        { $unwind: "$chat" },
         ...lookupUser("user"),
+        // sort by chat.updatedAt
+        { $sort: { "chat.updatedAt": -1 } },
+    ];
 
-        (role === ROLES.ADMIN && {
+
+    if (role === ROLES.ADMIN) {
+        pipeline.push({
             $match: {
                 $or: [
                     { "user.firstName": { $regex: search, $options: "i" } },
@@ -32,9 +37,8 @@ exports.getChatsQuery = async (userId, search = "", role) => {
                     { "user.username": { $regex: search, $options: "i" } },
                 ],
             }
-        }),
+        });
+    }
 
-        // sort by chat.updatedAt
-        { $sort: { "chat.updatedAt": -1 } },
-    ];
+    return pipeline;
 };

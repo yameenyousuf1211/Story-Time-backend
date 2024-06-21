@@ -5,8 +5,7 @@ const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require(
 
 const supportMessageSchema = new Schema({
     chat: { type: Types.ObjectId, ref: "SupportChat" },
-    sender: { type: Types.ObjectId, ref: "User" },
-    receiver: { type: Types.ObjectId, ref: "User" },
+    isAdmin: { type: Boolean, default: false },
     text: { type: String, required: true },
     media: { type: [String], default: [] },
     isRead: { type: Boolean, default: false },

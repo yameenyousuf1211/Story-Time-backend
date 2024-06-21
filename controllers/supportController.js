@@ -1,6 +1,6 @@
 const { findChat, updateChat } = require('../models/supportChatModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils');
-const { STATUS_CODES, SUPPORT_CHAT_STATUS } = require('../utils/constants');
+const { STATUS_CODES, SUPPORT_CHAT_STATUS, ROLES } = require('../utils/constants');
 const { findMessageById, createMessage, findMessages, getAllMessagesAggregate, readMessages } = require('../models/supportMessageModel');
 const { sendMessageValidation } = require('../validations/supportChatValidation');
 const { Types } = require('mongoose');
@@ -38,8 +38,7 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
 
     let message = await createMessage({
         chat: body.chat,
-        sender: req.user.id,
-        receiver: req.body.receiver,
+        isAdmin: req.user.role === ROLES.ADMIN,
         text: body.text,
         media: body.media
     });
@@ -47,7 +46,14 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
     // update chat
     await updateChat({ _id: body.chat }, { lastMessage: message._id });
 
-    message = await findMessageById(message._id).populate('receiver', 'firstName lastName username photo');
+    message = await findMessageById(message._id)
+        .populate({
+            path: 'chat',
+            populate: {
+                path: 'user',
+                select: 'firstName lastName username photo'
+            }
+        });
 
     // send message socket
     emitSocketEvent(req, `send-message-${body.chat}`, message);

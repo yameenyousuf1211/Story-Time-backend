@@ -2,8 +2,8 @@ const { createChat } = require("../models/supportChatModel");
 
 // listener for new chat
 const createChatEvent = (socket) => {
-    socket.on("create-chat", async (users) => {
-        const chat = await createChat({ users: users });
+    socket.on("create-chat", async (user) => {
+        const chat = await createChat({ user });
         socket.emit("create-chat", chat);
     });
 }

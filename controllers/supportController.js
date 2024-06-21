@@ -71,12 +71,7 @@ exports.sendMessage = asyncHandler(async (req, res, next) => {
 // close chat
 exports.closeChat = asyncHandler(async (req, res, next) => {
     // user is 2nd user except login user
-    const { chat, user } = parseBody(req.body);
-
-    if (!chat || !Types.ObjectId.isValid(chat)) return next({
-        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Please, provide chat id properly.'
-    });
+    const { chat } = parseBody(req.body);
 
     const supportChat = await findChat({ _id: chat });
     if (!supportChat) return next({

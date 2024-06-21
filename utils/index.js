@@ -2,6 +2,12 @@ const multer = require('multer');
 const fs = require('fs');
 const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
+const firebase = require("firebase-admin");
+const path = require("path");
+const pathToServiceAccount = path.resolve('./utils/firebase.json');
+const serviceAccount = require(pathToServiceAccount);
+
+// const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
 
 exports.generateResponse = (data, message, res, code = 200) => {
     return res.status(code).json({
@@ -183,4 +189,21 @@ exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
         },
         { $unwind: `$${as}` },
     ];
+};
+
+// send firebase notification
+exports.sendFirebaseNotification = async ({ title, body, token }) => {
+    const message = {
+        notification: { title, body },
+        token,
+    };
+
+    try {
+        const response = await firebaseApp.messaging().send(message);
+        console.log("Successfully sent message:", response);
+        return response;
+    } catch (error) {
+        console.error("Error sending message:", error);
+        return error;
+    }
 };

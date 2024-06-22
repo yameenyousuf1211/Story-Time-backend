@@ -2,8 +2,10 @@ const { getMongoId, lookupUser } = require("../../utils");
 const { ROLES } = require("../../utils/constants");
 
 exports.getChatsQuery = async (userId, search = "", role) => {
+    const matchStage = (role === ROLES.ADMIN) ? { chat: { $ne: null } } : { user: getMongoId(userId) };
+
     const pipeline = [
-        { $match: (role === ROLES.ADMIN) ? { chat: { $ne: null } } : { user: getMongoId(userId) } },
+        { $match: matchStage },
         {
             $group: {
                 _id: "$chat",
@@ -19,43 +21,44 @@ exports.getChatsQuery = async (userId, search = "", role) => {
                 }
             }
         },
-        // look up chat
         { $lookup: { from: "supportchats", localField: "_id", foreignField: "_id", as: "chat" } },
         { $unwind: "$chat" },
-        // Look up last message
         { $lookup: { from: "supportmessages", localField: "chat.lastMessage", foreignField: "_id", as: "lastMessage" } },
         { $unwind: { path: "$lastMessage", preserveNullAndEmptyArrays: true } },
-        // Merge last message text into chat
-        {
-            $addFields: {
-                "chat.lastMessage": "$lastMessage.text"
-            }
-        },
+        { $addFields: { "chat.lastMessage": "$lastMessage.text" } },
         ...lookupUser("user"),
-        // sort by chat.updatedAt
-        { $sort: { "chat.updatedAt": -1 } },
-        // Project necessary fields
+        { $sort: { "chat.updatedAt": -1 } }
+    ];
+
+    // Add message filtering based on search term
+    if (search) {
+        pipeline.push(
+            { $lookup: { from: "supportmessages", localField: "_id", foreignField: "chat", as: "filteredMessages" } },
+            {
+                $match: { "filteredMessages.text": { $regex: search, $options: "i" } }
+            }
+        );
+    }
+    // Final projection stage
+    pipeline.push(
         {
             $project: {
                 _id: 1,
                 user: 1,
                 unreadMessages: 1,
-                chat: 1
+                chat: {
+                    _id: "$chat._id",
+                    user: "$chat.user",
+                    status: "$chat.status",
+                    createdAt: "$chat.createdAt",
+                    updatedAt: "$chat.updatedAt",
+                    lastMessage: "$chat.lastMessage",
+                    unreadMessages: "$chat.unreadMessages"
+                },
             }
         }
-    ];
-
-    if (role === ROLES.ADMIN) {
-        pipeline.push({
-            $match: {
-                $or: [
-                    { "user.firstName": { $regex: search, $options: "i" } },
-                    { "user.lastName": { $regex: search, $options: "i" } },
-                    { "user.username": { $regex: search, $options: "i" } },
-                ],
-            }
-        });
-    }
+    );
 
     return pipeline;
 };
+

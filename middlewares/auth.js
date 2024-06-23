@@ -3,41 +3,48 @@ const { STATUS_CODES } = require('../utils/constants');
 const { findUser } = require('../models/userModel');
 
 module.exports = (roles) => {
-    return (req, res, next) => {
-        const accessToken = req.header('accessToken') || req.session.accessToken;
-        if (!accessToken) return next({
-            statusCode: STATUS_CODES.UNAUTHORIZED,
-            message: 'Authorization failed!'
-        });
+    return async (req, res, next) => {
+        const token = req.header('accessToken') || req.header('resetToken') || req.session.accessToken;
 
-        verify(accessToken, process.env.JWT_SECRET, function (err, decoded) {
-            if (err) return next({
+        if (!token) {
+            return next({
                 statusCode: STATUS_CODES.UNAUTHORIZED,
-                message: 'token expired'
+                message: 'Authorization failed!'
             });
+        }
 
+        try {
+            const decoded = verify(token, process.env.JWT_SECRET);
             req.user = { ...decoded };
 
-            findUser({ _id: req.user.id }).then(user => {
-                // throw error if user is not active
-                if (!user.isActive) return next({
+            // If it's a reset token, skip role and user activity checks
+            if (req.header('resetToken')) {
+                return next();
+            }
+
+            // Check user activity and roles for access tokens
+            const user = await findUser({ _id: req.user.id });
+
+            if (!user || !user.isActive) {
+                return next({
                     statusCode: STATUS_CODES.FORBIDDEN,
                     message: 'Your profile is inactive, please contact admin'
                 });
+            }
 
-                if (!roles.includes(req.user.role)) return next({
+            if (!roles.includes(req.user.role)) {
+                return next({
                     statusCode: STATUS_CODES.UNAUTHORIZED,
                     message: 'Unauthorized access!'
                 });
+            }
 
-                // next function called
-                next();
-            }).catch(err => {
-                return next({
-                    statusCode: STATUS_CODES.UNAUTHORIZED,
-                    message: 'Invalid token!'
-                });
+            next();
+        } catch (err) {
+            return next({
+                statusCode: STATUS_CODES.UNAUTHORIZED,
+                message: 'Token expired or invalid'
             });
-        });
+        }
     }
 }

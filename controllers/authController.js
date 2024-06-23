@@ -261,25 +261,3 @@ exports.sendResetLink = asyncHandler(async (req, res, next) => {
 
     generateResponse(null, 'Reset link sent successfully.', res);
 });
-
-// verify reset token
-exports.verifyResetToken = asyncHandler(async (req, res, next) => {
-    const body = parseBody(req.body);
-
-    //Joi Validation
-    const { error } = resetTokenValidation.validate(body);
-    if (error) return next({
-        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: error.details[0].message
-    });
-
-    // Verify the token
-    jwt.verify(body.resetToken, process.env.JWT_SECRET, function (err, decoded) {
-        if (err) return next({
-            statusCode: STATUS_CODES.UNAUTHORIZED,
-            message: 'reset token has expired'
-        });
-
-        generateResponse(null, 'Reset Token is Valid', res);
-    });
-});

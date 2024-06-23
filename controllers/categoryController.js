@@ -67,6 +67,13 @@ exports.deleteCategoryById = asyncHandler(async (req, res, next) => {
     });
 
     category.isDeleted = true;
+    const subCategories = await findCategories({ parent: categoryId });
+    if (subCategories?.length > 0) {
+        subCategories.forEach(async (subCategory) => {
+            subCategory.isDeleted = true;
+            await subCategory.save();
+        });
+    }
     await category.save();
 
     generateResponse(category, 'Category deleted successfully', res);

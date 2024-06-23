@@ -2,7 +2,8 @@ const { getMongoId, lookupUser } = require("../../utils");
 const { ROLES } = require("../../utils/constants");
 
 exports.getChatsQuery = async (userId, search = "", role) => {
-    const matchStage = (role === ROLES.ADMIN) ? { chat: { $ne: null } } : { user: getMongoId(userId) };
+    const isAdmin = role === ROLES.ADMIN;
+    const matchStage = isAdmin ? { chat: { $ne: null } } : { user: getMongoId(userId) };
 
     return [
         {
@@ -17,11 +18,16 @@ exports.getChatsQuery = async (userId, search = "", role) => {
                 user: { $first: "$user" },
                 unreadMessages: {
                     $sum: {
-                        $cond: {
-                            if: { $eq: ["$isAdmin", true] },
-                            then: { $cond: { if: { $eq: ["$isRead", false] }, then: 1, else: 0 } },
-                            else: 0,
-                        }
+                        $cond: [
+                            {
+                                $and: [
+                                    { $eq: ["$isRead", false] },
+                                    { $ne: [isAdmin, "$isAdmin"] }
+                                ]
+                            },
+                            1,
+                            0
+                        ]
                     }
                 }
             }

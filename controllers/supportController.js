@@ -90,8 +90,8 @@ exports.closeChat = asyncHandler(async (req, res, next) => {
 // get chat messages
 exports.getChatMessages = asyncHandler(async (req, res, next) => {
     const { chat } = req.params;
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
     if (!Types.ObjectId.isValid(chat)) return next({
         statusCode: STATUS_CODES.BAD_REQUEST,
@@ -104,10 +104,11 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
         message: "Chat not found"
     });
 
-    const updateQuery = (req.user.role === ROLES.ADMIN) ? { chat, isAdmin: true, isRead: false } : { chat, isAdmin: false, isRead: false };
+    const adminUpdateQuery = { chat, isAdmin: true, isRead: false };
+    const userUpdateQuery = { chat, isAdmin: false, isRead: false };
 
-    // mark all messages as read
-    await readMessages(updateQuery);
+    await readMessages(adminUpdateQuery);
+    await readMessages(userUpdateQuery);
 
     const messagesData = await findMessages({ query: { chat }, page, limit });
 

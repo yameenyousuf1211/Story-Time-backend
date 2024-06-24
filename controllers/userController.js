@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation, updateUserSubscriptionValidation } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -475,6 +475,35 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
     guestCount
   };
   generateResponse(response, 'Total Guest and User Count', res);
+});
+
+//update user subscription
+exports.updateUserSubscription = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const body = parseBody(req.body);
+
+  // Joi validation
+  const { error } = updateUserSubscriptionValidation.validate(body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  const user = await updateUser({ _id: userId }, { $set: { 'subscription': body } });
+  user.isSubscribed = true;
+  generateResponse(user, 'Subscription updated successfully', res);
+});
+
+//get user subscription
+exports.getUserSubscription = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const user = await findUser({ _id: userId });
+  if (!user.subscription) {
+    return generateResponse(null, 'No subscription found for the user', res);
+  }
+  const subscription = user.subscription;
+  generateResponse(subscription, 'Subscription details retrieved successfully', res);
 });
 
 // create default admin account

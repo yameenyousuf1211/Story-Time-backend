@@ -6,7 +6,9 @@ const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle,
   reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard,
   getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo,
   toggleUserProfileMode, checkAllAvailability, updateGuestCount,
-  getGuestAndUserCount } = require('../controllers/userController');
+  getGuestAndUserCount,
+  updateUserSubscription,
+  getUserSubscription } = require('../controllers/userController');
 const { upload } = require('../utils');
 
 class UserAPI {
@@ -24,6 +26,7 @@ class UserAPI {
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
     router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
     router.get('/user-count', getGuestAndUserCount);
+    router.get('/get-subscription', authMiddleware(Object.values(ROLES)), getUserSubscription);
 
     router.post('/check-availability', checkAvailability); // checking uniqueness of email, phone, or username (1 at a time)
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
@@ -40,6 +43,7 @@ class UserAPI {
     router.put('/update-status', authMiddleware([ROLES.ADMIN]), userStatusToggle);
     router.put('/admin-info', authMiddleware([ROLES.ADMIN]), editAdminInfo);
     router.put('/profile-mode', authMiddleware([ROLES.USER]), toggleUserProfileMode);
+    router.put('/subscription', authMiddleware(Object.values(ROLES)), updateUserSubscription);
 
     router.delete('/delete-account', authMiddleware(Object.values(ROLES)), deleteUser);
     router.delete('/delete-card', authMiddleware(Object.values(ROLES)), deleteCard);

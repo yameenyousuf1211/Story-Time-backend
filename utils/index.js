@@ -21,6 +21,7 @@ const serviceAccount = {
 
 if (process.env.FIREBASE_PRIVATE_KEY) firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
 
+// Response generation utility
 exports.generateResponse = (data, message, res, code = 200) => {
     return res.status(code).json({
         statusCode: code,
@@ -29,13 +30,10 @@ exports.generateResponse = (data, message, res, code = 200) => {
     });
 }
 
-exports.parseBody = (body) => {
-    let obj;
-    if (typeof body === "object") obj = body;
-    else obj = JSON.parse(body);
-    return obj;
-}
+// Body parsing utility
+exports.parseBody = (body) => typeof body === 'object' ? body : JSON.parse(body);
 
+// OTP generation utility
 exports.generateRandomOTP = () => {
     return Math.floor(100000 + Math.random() * 900000);
 }
@@ -134,7 +132,7 @@ const generateFilename = (req, file, cb) => {
 // filter image
 const filterImage = (req, file, cb) => {
     // check mime type
-    if (!file.mimetype.match(/image\/(jpg|JPG|webp|jpeg|JPEG|png|PNG|gif|GIF|jfif|JFIF)/)) {
+    if (!file.mimetype.match(/image\/(jpg|jpeg|png|gif|webp|jfif)/i)) {
         req.fileValidationError = 'Only image files are allowed!';
         return cb(null, false);
     }
@@ -146,9 +144,9 @@ exports.upload = (folderName) => {
     return multer({
         storage: multer.diskStorage({
             destination: function (req, file, cb) {
-                const path = `uploads/${folderName}/`;
-                fs.mkdirSync(path, { recursive: true })
-                cb(null, path);
+                const uploadPath = `uploads/${folderName}/`;
+                fs.mkdirSync(uploadPath, { recursive: true })
+                cb(null, uploadPath);
             },
 
             // By default, multer removes file extensions so let's add them back
@@ -173,10 +171,12 @@ exports.asyncHandler = (requestHandler) => {
     return (req, res, next) => Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
 }
 
+// MongoDB ID generation utility
 exports.getMongoId = (id = null) => {
     return new mongoose.Types.ObjectId(id);
 }
 
+// Mongoose lookup utility for user
 exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
     return [
         {

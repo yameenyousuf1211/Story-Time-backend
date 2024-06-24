@@ -4,14 +4,11 @@ const { findUser } = require('../models/userModel');
 
 module.exports = (roles) => {
     return async (req, res, next) => {
-        const token = req.header('accessToken') || req.header('resetToken') || req.session.accessToken;
-
-        if (!token) {
-            return next({
-                statusCode: STATUS_CODES.UNAUTHORIZED,
-                message: 'Authorization failed!'
-            });
-        }
+        const token = req.headers.authorization?.split(' ')[1] || req.header('accessToken') || req.header('resetToken') || req.session.accessToken;
+        if (!token) return next({
+            statusCode: STATUS_CODES.UNAUTHORIZED,
+            message: 'Authorization failed!'
+        });
 
         try {
             const decoded = verify(token, process.env.JWT_SECRET);
@@ -25,25 +22,21 @@ module.exports = (roles) => {
             // Check user activity and roles for access tokens
             const user = await findUser({ _id: req.user.id });
 
-            if (!user || !user.isActive) {
-                return next({
-                    statusCode: STATUS_CODES.FORBIDDEN,
-                    message: 'Your profile is inactive, please contact admin'
-                });
-            }
+            if (!user || !user.isActive) return next({
+                statusCode: STATUS_CODES.FORBIDDEN,
+                message: 'Your profile is inactive, please contact admin'
+            });
 
-            if (!roles.includes(req.user.role)) {
-                return next({
-                    statusCode: STATUS_CODES.UNAUTHORIZED,
-                    message: 'Unauthorized access!'
-                });
-            }
+            if (!roles.includes(req.user.role)) return next({
+                statusCode: STATUS_CODES.UNAUTHORIZED,
+                message: 'Unauthorized access!'
+            });
 
             next();
         } catch (err) {
             return next({
                 statusCode: STATUS_CODES.UNAUTHORIZED,
-                message: 'Token expired or invalid'
+                message: 'Token invalid'
             });
         }
     }

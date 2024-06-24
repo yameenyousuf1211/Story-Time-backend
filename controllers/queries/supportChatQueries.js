@@ -22,7 +22,7 @@ exports.getChatsQuery = async (userId, search = "", role) => {
                             {
                                 $and: [
                                     { $eq: ["$isRead", false] },
-                                    { $ne: [isAdmin, "$isAdmin"] }
+                                    { $ne: ["$isAdmin", isAdmin] }
                                 ]
                             },
                             1,

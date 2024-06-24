@@ -5,17 +5,12 @@ const {
     generateResetToken,
     generateResetLink,
     asyncHandler } = require('../utils');
-const {
-    createUser,
-    findUser,
-    updateUser,
-} = require('../models/userModel');
+const { createUser, findUser, updateUser } = require('../models/userModel');
 const { STATUS_CODES, ROLES } = require('../utils/constants');
-const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation, sendCodeEmailValidation, sendCodePhoneValidation, resetTokenValidation } = require('../validations/authValidation');
+const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation } = require('../validations/authValidation');
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
-const jwt = require('jsonwebtoken');
 const { addFollowing } = require('../models/followingModel');
 
 // register user

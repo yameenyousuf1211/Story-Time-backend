@@ -1,6 +1,6 @@
 const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse, getRandomIndexFromArray, asyncHandler } = require('../utils/index');
-const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById } = require('../models/categoryModel');
+const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById, updateCategories } = require('../models/categoryModel');
 const { createCategoryValidation, updateCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
 const { categoryQuery } = require('./queries/categoryQueries');
@@ -67,14 +67,10 @@ exports.deleteCategoryById = asyncHandler(async (req, res, next) => {
     });
 
     category.isDeleted = true;
-    const subCategories = await findCategories({ parent: categoryId });
-    if (subCategories?.length > 0) {
-        subCategories.forEach(async (subCategory) => {
-            subCategory.isDeleted = true;
-            await subCategory.save();
-        });
-    }
     await category.save();
+
+    // soft delete all sub-categories
+    await updateCategories({ parent: categoryId }, { $set: { isDeleted: true } });
 
     generateResponse(category, 'Category deleted successfully', res);
 });

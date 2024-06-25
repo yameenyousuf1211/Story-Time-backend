@@ -6,12 +6,14 @@ const {
     generateResetLink,
     asyncHandler } = require('../utils');
 const { createUser, findUser, updateUser } = require('../models/userModel');
-const { STATUS_CODES, ROLES } = require('../utils/constants');
+const { STATUS_CODES, ROLES, AUTH_PROVIDERS } = require('../utils/constants');
 const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation } = require('../validations/authValidation');
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
 const { addFollowing } = require('../models/followingModel');
+const { OAuth2Client } = require('google-auth-library');
+const { sign } = require('jsonwebtoken');
 
 // register user
 exports.register = asyncHandler(async (req, res, next) => {
@@ -253,3 +255,143 @@ exports.sendResetLink = asyncHandler(async (req, res, next) => {
 
     generateResponse(null, 'Reset link sent successfully.', res);
 });
+
+exports.validateSocialId = asyncHandler(async (req, res) => {
+    const { socialId, authProvider } = req.query;
+    if (!Object.values(AUTH_PROVIDERS).includes(authProvider)) {
+        generateResponse(false, 'Invalid auth provider', res);
+        return;
+    }
+    const user = await findUser({ socialId, authProvider });
+    generateResponse(user ? true : false, 'User found', res);
+});
+
+exports.loginWithGoogle = asyncHandler(async (req, res) => {
+    const client = new OAuth2Client({ clientId: "1009585093082-pkfolthtmpbn1fa9numiqd74s24pkrt0.apps.googleusercontent.com" })
+
+    let name, email, socialId = '';
+    const { idToken, fcmToken, sub, username, completePhone, city, zipCode, state } = parseBody(req);
+
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: "1009585093082-pkfolthtmpbn1fa9numiqd74s24pkrt0.apps.googleusercontent.com",
+    });
+
+    const payload = ticket.getPayload();
+    [name, email, socialId] = [payload.name, payload.email, payload.socialId];
+
+    console.log("payload", payload);
+    console.log("name, email", name, email);
+
+    if (payload.aud != "1009585093082-pkfolthtmpbn1fa9numiqd74s24pkrt0.apps.googleusercontent.com" || payload.sub != sub) {
+        generateResponse(false, "Invalid Token Identity", null, res);
+        return;
+    }
+
+    const user = await findOne({ email });
+    // if user does not exist then create user
+    if (!user) {
+        const tokenObj = {
+            name,
+            email,
+            socialId
+        }
+        const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+
+        const userObj = {
+            _id: tokenObj.id,
+            name: tokenObj.name,
+            email: tokenObj.email,
+            fcmToken,
+            token,
+            isVerified: true,
+            isActive: true,
+            username: username || "",
+            completePhone: completePhone || "",
+            city: city || "",
+            zipCode: zipCode || "",
+            state: state || "",
+        };
+
+        const newUser = await createUser(userObj);
+        return generateResponse(true, "Login successfully", newUser, res);
+    };
+
+    if (!user.isActive) {
+        generateResponse(false, "Your account is deactivated, please contact admin", null, res);
+        return;
+    }
+
+    // if user exists then login
+    const tokenObj = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        socialId: user.socialId,
+        role: user.role,
+    }
+
+    const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+    const updatedUser = await updateUser(user._id, { token, fcmToken });
+
+    return generateResponse(true, "Login successfully", updatedUser, res);
+});
+
+// facebook login
+exports.loginWithFacebook = async (req, res) => {
+    const { accessToken, fcmToken } = req.body;
+
+    const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,email,name&access_token=${accessToken}`);
+    // console.log("data >>", data);
+    const [name, email] = [data.name, data.email];
+
+    try {
+        const user = await getUserObj({ email });
+        // if user does not exist then create user
+        if (!user) {
+            const tokenObj = {
+                id: generateId(),
+                name,
+                email,
+                role: role || "USER",
+            }
+            const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+
+            const userObj = {
+                _id: tokenObj.id,
+                name: tokenObj.name,
+                email: tokenObj.email,
+                role: tokenObj.role,
+                fcmToken,
+                token,
+                isVerified: true,
+                isActive: true,
+            };
+
+            const newUser = await createUser(userObj);
+            return generateResponse(true, "Login successfully", newUser, res);
+        };
+
+        if (!user.isActive) {
+            generateResponse(false, "Your account is deactivated, please contact admin", null, res);
+            return;
+        }
+
+        // if user exists then login
+        const tokenObj = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        }
+
+        const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+        const updatedUser = await editUser(user._id, { token, fcmToken });
+
+        return generateResponse(true, "Login successfully", updatedUser, res);
+    } catch (error) {
+        console.log(error);
+        generateResponse(false, "Something went wrong", null, res);
+    }
+};
+

@@ -38,3 +38,9 @@ exports.SUPPORT_CHAT_STATUS = Object.freeze({
   CLOSED: 'closed',
   PENDING: 'pending'
 });
+
+exports.AUTH_PROVIDERS = Object.freeze({
+  GOOGLE: 'google',
+  FACEBOOK: 'facebook',
+  APPLE: 'apple',
+});

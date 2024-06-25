@@ -6,7 +6,6 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 // Guideline Schema
 const guidelineSchema = new Schema({
   type: { type: String, enum: Object.values(GUIDELINE), required: true },
-  title: { type: String },
   content: { type: String, required: true },
 }, { timestamps: true, versionKey: false });
 
@@ -16,14 +15,30 @@ guidelineSchema.plugin(mongoosePaginate);
 const GuidelineModel = model('Guideline', guidelineSchema);
 
 // Guideline Logs Schema
-const GuidelineslogSchema = new Schema({
-  guidelineId: { type: Types.ObjectId, ref: 'Guideline' },
+const GuidelinesLogSchema = new Schema({
   type: { type: String, enum: Object.values(GUIDELINE) },
-}, { timestamps: true, versionKey: false });
+  createdAt: { type: Date, default: Date.now },
+}, { versionKey: false });
 
-const GuidelineslogModel = model('GuidelineLog', GuidelineslogSchema);
+// pagination plugins
+GuidelinesLogSchema.plugin(mongoosePaginate);
 
-exports.createGuidelineLog = (obj) => GuidelineslogModel.create(obj);
+const GuidelinesLogModel = model('GuidelineLog', GuidelinesLogSchema);
+
+// create new guideline log
+exports.createGuidelineLog = (obj) => GuidelinesLogModel.create(obj);
+
+// get all guideline logs
+exports.getAllGuidelinesLogs = async ({ query, page, limit }) => {
+  const { data, pagination } = await getMongoosePaginatedData({
+    model: GuidelinesLogModel,
+    query,
+    page,
+    limit,
+  });
+
+  return { data, pagination };
+};
 
 // create new guideline
 exports.createGuideline = (obj) => GuidelineModel.create(obj);

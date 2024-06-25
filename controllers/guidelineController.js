@@ -1,4 +1,4 @@
-const { createGuideline, deleteGuidelineById, findGuideline, createOrUpdateGuideline, getAllGuidelines, createGuidelineLog } = require("../models/guidelineModel");
+const { createGuideline, deleteGuidelineById, findGuideline, createOrUpdateGuideline, getAllGuidelines, createGuidelineLog, getAllGuidelinesLogs } = require("../models/guidelineModel");
 const { parseBody, generateResponse, asyncHandler } = require("../utils");
 const { addGuidelineValidation, getGuidelineValidation } = require("../validations/guidelineValidation");
 const { STATUS_CODES, GUIDELINE } = require("../utils/constants");
@@ -27,7 +27,9 @@ exports.addGuidelines = asyncHandler(async (req, res, next) => {
         successMessage = `${body.type} created`;
         type = body.type;
     }
-    await createGuidelineLog({ guidelineId: result._id, type: type });
+
+    // create guideline updates log
+    await createGuidelineLog({ type: type });
 
     generateResponse(result, successMessage, res);
 });
@@ -85,4 +87,17 @@ exports.getFAQById = asyncHandler(async (req, res, next) => {
     });
 
     generateResponse(faq, "FAQ found", res);
+});
+
+// get all guidelines logs
+exports.getAllGuidelinesLogs = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 10;
+
+    const logs = await getAllGuidelinesLogs({ query: {}, page, limit });
+    if (logs?.data?.length === 0) {
+        return generateResponse(null, 'No logs found', res);
+    }
+
+    generateResponse(logs, 'Logs found', res);
 });

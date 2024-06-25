@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 const { GUIDELINE } = require('../utils/constants');
 const { getMongoosePaginatedData } = require('../utils');
 const mongoosePaginate = require('mongoose-paginate-v2');
@@ -14,6 +14,16 @@ const guidelineSchema = new Schema({
 guidelineSchema.plugin(mongoosePaginate);
 
 const GuidelineModel = model('Guideline', guidelineSchema);
+
+// Guideline Logs Schema
+const GuidelineslogSchema = new Schema({
+  guidelineId: { type: Types.ObjectId, ref: 'Guideline' },
+  type: { type: String, enum: Object.values(GUIDELINE) },
+}, { timestamps: true, versionKey: false });
+
+const GuidelineslogModel = model('GuidelineLog', GuidelineslogSchema);
+
+exports.createGuidelineLog = (obj) => GuidelineslogModel.create(obj);
 
 // create new guideline
 exports.createGuideline = (obj) => GuidelineModel.create(obj);

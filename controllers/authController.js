@@ -133,12 +133,9 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
         otp: generateRandomOTP(),
     });
 
-    // if (email) {
-    //     await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
-    // } else if (completePhone) {
-    //     console.log(`Your OTP Code is ${otpObj.otp}`);
-    //     // send SMS using twilio
-    // }
+    if (email) {
+        await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
+    }
 
     generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
 });

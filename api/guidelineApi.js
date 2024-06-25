@@ -16,7 +16,7 @@ class GuidelineAPI {
 
     setupRoutes() {
         router.get("/", authMiddleware(Object.values(ROLES)), getGuidelines);
-        router.get('/get-faq/:faqId', authMiddleware(Object.values(ROLES)), getFAQById )
+        router.get('/faq/:faqId', authMiddleware([ROLES.ADMIN]), getFAQById)
         router.post("/", authMiddleware([ROLES.ADMIN]), addGuidelines);
         router.delete("/:guidelineId", authMiddleware([ROLES.ADMIN]), deleteGuideline);
     }

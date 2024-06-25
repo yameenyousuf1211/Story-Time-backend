@@ -68,11 +68,17 @@ exports.deleteGuideline = asyncHandler(async (req, res, next) => {
     generateResponse(guidelineObj, "Deleted successfully", res);
 });
 
-//get FAQ's by id
+// get FAQ's by id
 exports.getFAQById = asyncHandler(async (req, res, next) => {
     const { faqId } = req.params;
 
-    const faq = await findGuideline({ _id: faqId, type: GUIDELINE.FAQS });
+    // check if ID is valid
+    if (!Types.ObjectId.isValid(faqId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'invalid FAQ ID',
+    });
+
+    const faq = await findGuideline({ _id: faqId });
     if (!faq) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'FAQ not found',

@@ -65,3 +65,16 @@ exports.deleteGuideline = asyncHandler(async (req, res, next) => {
     await deleteGuidelineById(guidelineId);
     generateResponse(guidelineObj, "Deleted successfully", res);
 });
+
+//get FAQ's by id
+exports.getFAQById = asyncHandler(async (req, res, next) => {
+    const { faqId } = req.params;
+
+    const faq = await findGuideline({ _id: faqId, type: GUIDELINE.FAQS });
+    if (!faq) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'FAQ not found',
+    });
+
+    generateResponse(faq, "FAQ found", res);
+});

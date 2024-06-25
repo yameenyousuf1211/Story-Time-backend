@@ -27,10 +27,10 @@ exports.MODES = Object.freeze({
 });
 
 exports.GUIDELINE = Object.freeze({
-  PRIVACY_POLICY: 'PrivacyPolicy',
-  TERMS_AND_CONDITIONS: 'TermsAndConditions',
+  PRIVACY_POLICY: 'Privacy Policy',
+  TERMS_AND_CONDITIONS: 'Terms & Conditions',
   FAQS: 'FAQs',
-  ABOUT_US: 'AboutUs'
+  ABOUT_US: 'About Us'
 });
 
 exports.SUPPORT_CHAT_STATUS = Object.freeze({

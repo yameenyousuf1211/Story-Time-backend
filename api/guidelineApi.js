@@ -4,6 +4,7 @@ const {
     deleteGuideline,
     addGuidelines,
     getFAQById,
+    getAllGuidelinesLogs,
 } = require("../controllers/guidelineController");
 const authMiddleware = require("../middlewares/auth");
 const { ROLES } = require("../utils/constants");
@@ -16,6 +17,7 @@ class GuidelineAPI {
 
     setupRoutes() {
         router.get("/", authMiddleware(Object.values(ROLES)), getGuidelines);
+        router.get('/logs', authMiddleware([ROLES.ADMIN]), getAllGuidelinesLogs);
         router.get('/faq/:faqId', authMiddleware([ROLES.ADMIN]), getFAQById)
         router.post("/", authMiddleware([ROLES.ADMIN]), addGuidelines);
         router.delete("/:guidelineId", authMiddleware([ROLES.ADMIN]), deleteGuideline);

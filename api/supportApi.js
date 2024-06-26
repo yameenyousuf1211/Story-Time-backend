@@ -17,6 +17,7 @@ class SupportAPI {
     }
 
     setupRoutes() {
+        const router = this.router;
 
         router.get('/chat-list', authMiddleware(Object.values(ROLES)), getChatList);
         router.get('/:chat', authMiddleware(Object.values(ROLES)), getChatMessages);

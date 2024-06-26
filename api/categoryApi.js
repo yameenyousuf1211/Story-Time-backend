@@ -11,15 +11,14 @@ class CategoryAPI {
     }
 
     setupRoutes() {
-        router.post('/', authMiddleware(Object.values(ROLES)), upload('categories').single('image'), createCategory);
+        const router = this.router;
 
         router.get('/', getAllCategories);
         router.get('/random', getRandomCategory)
         router.get('/fetch-all', authMiddleware(Object.values(ROLES)), getCategories);
-
-        router.delete('/delete/:categoryId', authMiddleware([ROLES.ADMIN]), deleteCategoryById)
-
+        router.post('/', authMiddleware(Object.values(ROLES)), upload('categories').single('image'), createCategory);
         router.put('/update/:categoryId', authMiddleware(Object.values(ROLES)), upload('categories').single('image'), updateCategory);
+        router.delete('/delete/:categoryId', authMiddleware([ROLES.ADMIN]), deleteCategoryById)
     }
 
     getRouter() {

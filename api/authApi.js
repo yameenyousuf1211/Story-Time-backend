@@ -8,10 +8,8 @@ const {
     verifyCode,
     resetPassword,
     sendResetLink,
-    verifyResetToken,
     validateSocialId,
     socialLogin,
-    loginWithFacebook,
     registerWithGoogle,
     registerWithFacebook,
 } = require('../controllers/authController');
@@ -25,6 +23,8 @@ class AuthAPI {
     }
 
     setupRoutes() {
+        const router = this.router;
+
         router.post('/register', register);
         router.post('/login', login);
         router.post('/logout', authMiddleware(Object.values(ROLES)), logout);
@@ -39,7 +39,6 @@ class AuthAPI {
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);
         router.put('/refresh-token', getRefreshToken);
         router.put('/forget-password', sendResetLink);
-
     }
 
     getRouter() {

@@ -304,6 +304,8 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
 
 // google login
 exports.loginWithGoogle = asyncHandler(async (req, res, next) => {
+    const body = parseBody(req.body);
+
     // Joi validation
     const { error } = googleLoginValidation.validate(body);
     if (error) return next({
@@ -323,6 +325,34 @@ exports.loginWithGoogle = asyncHandler(async (req, res, next) => {
     // update fcmToken & refreshToken
     const updatedUser = await updateUser({ _id: user._id }, { $set: { fcmToken: body.fcmToken, refreshToken } });
     generateResponse({ user: updatedUser, accessToken, refreshToken }, 'Login successfully', res);
+});
+
+// register with facebook
+exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    // Joi validation
+    const { error } = socialAuthValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message
+    });
+
+    if (!body.email) body.email = null;
+    body.completePhone = body.phoneCode + body.phoneNo;
+    body.authProvider = AUTH_PROVIDERS.FACEBOOK;
+
+    const generateUserId = getMongoId();
+    const refreshToken = generateRefreshToken({ _id: generateUserId });
+
+    const user = await createUser({
+        _id: generateUserId,
+        ...body,
+        refreshToken,
+    });
+
+    const accessToken = generateToken(user);
+    generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
 });
 
 // facebook login (work to do)

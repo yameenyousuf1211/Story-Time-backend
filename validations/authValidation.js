@@ -86,7 +86,7 @@ exports.refreshTokenValidation = Joi.object({
 // social auth validation
 exports.socialAuthValidation = Joi.object({
     socialAuthId: Joi.string().required(),
-    email: Joi.string().email(),
+    email: Joi.string(),
     // phone code like +92
     phoneCode: Joi.string().regex(/^\+\d*$/).min(2).max(4).required().messages({
         'string.pattern.base': 'phone code is not valid.',

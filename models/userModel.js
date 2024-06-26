@@ -21,6 +21,8 @@ const cardSchema = new Schema({
 
 // user schema
 const userSchema = new Schema({
+    socialAuthId: { type: String, default: null },
+    authProvider: { type: String, default: null },
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
     username: { type: String, default: "" },
@@ -28,13 +30,13 @@ const userSchema = new Schema({
     phoneCode: { type: String, default: null }, // phoneCode like +92
     phoneNo: { type: String, default: null },
     completePhone: { type: String, select: false },
-    email: { type: String, lowercase: true },
+    email: { type: String, lowercase: true, default: null },
     profileImage: { type: String },
     coverImage: { type: String },
     city: { type: String },
     zipCode: { type: String },
     state: { type: String },
-    password: { type: String, select: false },
+    password: { type: String, select: false, default: null },
     decryptedPassword: { type: String, select: false },
     fcmToken: { type: String, select: false },
     isActive: { type: Boolean, default: true },

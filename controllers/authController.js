@@ -327,59 +327,59 @@ exports.loginWithGoogle = asyncHandler(async (req, res, next) => {
 
 // facebook login (work to do)
 exports.loginWithFacebook = asyncHandler(async (req, res, next) => {
-    const { accessToken, fcmToken } = req.body;
+    // const { accessToken, fcmToken } = req.body;
 
-    const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,email,name&access_token=${accessToken}`);
-    // console.log("data >>", data);
-    const [name, email] = [data.name, data.email];
+    // const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,email,name&access_token=${accessToken}`);
+    // // console.log("data >>", data);
+    // const [name, email] = [data.name, data.email];
 
-    try {
-        const user = await getUserObj({ email });
-        // if user does not exist then create user
-        if (!user) {
-            const tokenObj = {
-                id: generateId(),
-                name,
-                email,
-                role: role || "USER",
-            }
-            const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+    // try {
+    //     const user = await getUserObj({ email });
+    //     // if user does not exist then create user
+    //     if (!user) {
+    //         const tokenObj = {
+    //             id: generateId(),
+    //             name,
+    //             email,
+    //             role: role || "USER",
+    //         }
+    //         const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
 
-            const userObj = {
-                _id: tokenObj.id,
-                name: tokenObj.name,
-                email: tokenObj.email,
-                role: tokenObj.role,
-                fcmToken,
-                token,
-                isVerified: true,
-                isActive: true,
-            };
+    //         const userObj = {
+    //             _id: tokenObj.id,
+    //             name: tokenObj.name,
+    //             email: tokenObj.email,
+    //             role: tokenObj.role,
+    //             fcmToken,
+    //             token,
+    //             isVerified: true,
+    //             isActive: true,
+    //         };
 
-            const newUser = await createUser(userObj);
-            return generateResponse(true, "Login successfully", newUser, res);
-        };
+    //         const newUser = await createUser(userObj);
+    //         return generateResponse(true, "Login successfully", newUser, res);
+    //     };
 
-        if (!user.isActive) {
-            generateResponse(false, "Your account is deactivated, please contact admin", null, res);
-            return;
-        }
+    //     if (!user.isActive) {
+    //         generateResponse(false, "Your account is deactivated, please contact admin", null, res);
+    //         return;
+    //     }
 
-        // if user exists then login
-        const tokenObj = {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        }
+    //     // if user exists then login
+    //     const tokenObj = {
+    //         id: user._id,
+    //         name: user.name,
+    //         email: user.email,
+    //         role: user.role,
+    //     }
 
-        const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
-        const updatedUser = await editUser(user._id, { token, fcmToken });
+    //     const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
+    //     const updatedUser = await editUser(user._id, { token, fcmToken });
 
-        return generateResponse(true, "Login successfully", updatedUser, res);
-    } catch (error) {
-        console.log(error);
-        generateResponse(false, "Something went wrong", null, res);
-    }
+    //     return generateResponse(true, "Login successfully", updatedUser, res);
+    // } catch (error) {
+    //     console.log(error);
+    //     generateResponse(false, "Something went wrong", null, res);
+    // }
 });
 

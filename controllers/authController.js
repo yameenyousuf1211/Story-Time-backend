@@ -287,6 +287,7 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
 
     if (!body.email) body.email = null;
     body.completePhone = body.phoneCode + body.phoneNo;
+    body.authProvider = AUTH_PROVIDERS.GOOGLE;
 
     const generateUserId = getMongoId();
     const refreshToken = generateRefreshToken({ _id: generateUserId });
@@ -302,7 +303,7 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
 });
 
 // google login
-exports.loginWithGoogle = asyncHandler(async (req, res) => {
+exports.loginWithGoogle = asyncHandler(async (req, res, next) => {
     // Joi validation
     const { error } = googleLoginValidation.validate(body);
     if (error) return next({
@@ -324,8 +325,8 @@ exports.loginWithGoogle = asyncHandler(async (req, res) => {
     generateResponse({ user: updatedUser, accessToken, refreshToken }, 'Login successfully', res);
 });
 
-// facebook login
-exports.loginWithFacebook = asyncHandler(async (req, res) => {
+// facebook login (work to do)
+exports.loginWithFacebook = asyncHandler(async (req, res, next) => {
     const { accessToken, fcmToken } = req.body;
 
     const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,email,name&access_token=${accessToken}`);

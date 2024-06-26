@@ -24,6 +24,8 @@ class StoryAPI {
     }
 
     setupRoutes() {
+        const router = this.router;
+
         router.get('/', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchAllStories);
         router.get('/user', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchUserStories);
         router.get("/:storyId", authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchStoryById);

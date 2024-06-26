@@ -8,6 +8,8 @@ class RootAPI {
     }
 
     setupRoutes() {
+        const router = this.router;
+
         router.get('/', DefaultHandler);
         router.get('/countries', getCountries);
 

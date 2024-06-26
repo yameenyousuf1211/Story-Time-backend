@@ -16,6 +16,8 @@ class UserAPI {
   }
 
   setupRoutes() {
+    const router = this.router;
+
     router.get('/', authMiddleware(Object.values(ROLES)), getAllUsers);
     router.get('/profile', authMiddleware(Object.values(ROLES)), getUserProfile);
     router.get('/friends', authMiddleware([ROLES.USER]), getAllFriends)

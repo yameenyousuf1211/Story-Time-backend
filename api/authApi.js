@@ -10,9 +10,10 @@ const {
     sendResetLink,
     verifyResetToken,
     validateSocialId,
-    loginWithGoogle,
+    socialLogin,
     loginWithFacebook,
     registerWithGoogle,
+    registerWithFacebook,
 } = require('../controllers/authController');
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
@@ -30,11 +31,9 @@ class AuthAPI {
         router.post('/send-code', sendVerificationCode);
         router.post('/validate-social-id', validateSocialId);
 
+        router.post('/social-login', socialLogin);
         router.post('/register/google', registerWithGoogle);
-        router.post('/login/google', loginWithGoogle);
-
-        // router.post('/regiser/facebook', registerWithFacebook);
-        router.post('/login/facebook', loginWithFacebook);
+        router.post('/regiser/facebook', registerWithFacebook);
 
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);

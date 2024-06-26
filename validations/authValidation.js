@@ -125,7 +125,7 @@ exports.socialAuthValidation = Joi.object({
 });
 
 // google login validation
-exports.googleLoginValidation = Joi.object({
+exports.socialLoginValidation = Joi.object({
     socialAuthId: Joi.string().required(),
     fcmToken: Joi.string().required(),
 });

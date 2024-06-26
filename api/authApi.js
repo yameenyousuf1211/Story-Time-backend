@@ -33,7 +33,8 @@ class AuthAPI {
         router.post('/register/google', registerWithGoogle);
         router.post('/login/google', loginWithGoogle);
 
-        router.post('/facebook', loginWithFacebook);
+        // router.post('/regiser/facebook', registerWithFacebook);
+        router.post('/login/facebook', loginWithFacebook);
 
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);

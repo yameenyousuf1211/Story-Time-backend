@@ -8,13 +8,14 @@ const {
     getMongoId } = require('../utils');
 const { createUser, findUser, updateUser } = require('../models/userModel');
 const { STATUS_CODES, ROLES, AUTH_PROVIDERS } = require('../utils/constants');
-const { registerUserValidation, loginUserValidation, sendCodeValidation, codeValidation, resetPasswordValidation, refreshTokenValidation, socialAuthValidation, googleLoginValidation } = require('../validations/authValidation');
+const {
+    registerUserValidation, loginUserValidation, sendCodeValidation,
+    codeValidation, resetPasswordValidation, refreshTokenValidation,
+    socialAuthValidation, socialLoginValidation } = require('../validations/authValidation');
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
 const { addFollowing } = require('../models/followingModel');
-const { OAuth2Client } = require('google-auth-library');
-const { sign } = require('jsonwebtoken');
 
 // register user
 exports.register = asyncHandler(async (req, res, next) => {
@@ -274,6 +275,31 @@ exports.validateSocialId = asyncHandler(async (req, res, next) => {
     generateResponse(user, 'User exists', res);
 });
 
+// social auth login
+exports.socialLogin = asyncHandler(async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    // Joi validation
+    const { error } = socialLoginValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message
+    });
+
+    const user = await findUser({ socialAuthId: body.socialAuthId });
+    if (!user.isActive) {
+        generateResponse(null, 'Your account is deactivated, please contact admin', res);
+        return;
+    }
+
+    const accessToken = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // update fcmToken & refreshToken
+    const updatedUser = await updateUser({ _id: user._id }, { $set: { fcmToken: body.fcmToken, refreshToken } });
+    generateResponse({ user: updatedUser, accessToken, refreshToken }, 'Login successfully', res);
+});
+
 // register with google
 exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
@@ -300,31 +326,6 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
 
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
-});
-
-// google login
-exports.loginWithGoogle = asyncHandler(async (req, res, next) => {
-    const body = parseBody(req.body);
-
-    // Joi validation
-    const { error } = googleLoginValidation.validate(body);
-    if (error) return next({
-        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: error.details[0].message
-    });
-
-    const user = await findUser({ socialAuthId: body.socialAuthId });
-    if (!user.isActive) {
-        generateResponse(null, 'Your account is deactivated, please contact admin', res);
-        return;
-    }
-
-    const accessToken = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // update fcmToken & refreshToken
-    const updatedUser = await updateUser({ _id: user._id }, { $set: { fcmToken: body.fcmToken, refreshToken } });
-    generateResponse({ user: updatedUser, accessToken, refreshToken }, 'Login successfully', res);
 });
 
 // register with facebook
@@ -354,62 +355,3 @@ exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
 });
-
-// facebook login (work to do)
-exports.loginWithFacebook = asyncHandler(async (req, res, next) => {
-    // const { accessToken, fcmToken } = req.body;
-
-    // const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,email,name&access_token=${accessToken}`);
-    // // console.log("data >>", data);
-    // const [name, email] = [data.name, data.email];
-
-    // try {
-    //     const user = await getUserObj({ email });
-    //     // if user does not exist then create user
-    //     if (!user) {
-    //         const tokenObj = {
-    //             id: generateId(),
-    //             name,
-    //             email,
-    //             role: role || "USER",
-    //         }
-    //         const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
-
-    //         const userObj = {
-    //             _id: tokenObj.id,
-    //             name: tokenObj.name,
-    //             email: tokenObj.email,
-    //             role: tokenObj.role,
-    //             fcmToken,
-    //             token,
-    //             isVerified: true,
-    //             isActive: true,
-    //         };
-
-    //         const newUser = await createUser(userObj);
-    //         return generateResponse(true, "Login successfully", newUser, res);
-    //     };
-
-    //     if (!user.isActive) {
-    //         generateResponse(false, "Your account is deactivated, please contact admin", null, res);
-    //         return;
-    //     }
-
-    //     // if user exists then login
-    //     const tokenObj = {
-    //         id: user._id,
-    //         name: user.name,
-    //         email: user.email,
-    //         role: user.role,
-    //     }
-
-    //     const token = sign({ user: tokenObj }, config.app["jwtsecret"], { expiresIn: "1y" });
-    //     const updatedUser = await editUser(user._id, { token, fcmToken });
-
-    //     return generateResponse(true, "Login successfully", updatedUser, res);
-    // } catch (error) {
-    //     console.log(error);
-    //     generateResponse(false, "Something went wrong", null, res);
-    // }
-});
-

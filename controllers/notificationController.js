@@ -1,6 +1,6 @@
 const { createAndSendNotifications, getAllNotifications } = require('../models/notificationModel.js');
 const { getUsers } = require('../models/userModel');
-const { generateResponse, parseBody, asyncHandler } = require('../utils');
+const { generateResponse, parseBody, asyncHandler, sendFirebaseNotification } = require('../utils');
 const { STATUS_CODES } = require('../utils/constants');
 const { sendNotificationsByAdminValidation } = require('../validations/notificationValidation.js');
 
@@ -45,4 +45,12 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
     }
 
     generateResponse(notificationsData, 'Notifications found successfully', res);
+});
+
+// send test notification
+exports.sendTestNotification = asyncHandler(async (req, res, next) => {
+    const { token } = parseBody(req.body);
+
+    await sendFirebaseNotification({ token, title: 'Test Notification', body: 'This is a test notification' })
+    generateResponse(null, 'Test notification sent successfully', res);
 });

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { getAllNotifications, sendNotificationByAdmin } = require('../controllers/notificationController');
+const { getAllNotifications, sendNotificationByAdmin, sendTestNotification } = require('../controllers/notificationController');
 const authMiddleware = require('../middlewares/auth');
 const { ROLES } = require('../utils/constants');
 
@@ -14,6 +14,7 @@ class NotificationAPI {
 
         router.get('/', authMiddleware([ROLES.ADMIN]), getAllNotifications);
         router.post('/', authMiddleware([ROLES.ADMIN]), sendNotificationByAdmin);
+        router.post('/test', sendTestNotification);
     }
 
     getRouter() {

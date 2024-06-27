@@ -90,12 +90,28 @@ exports.getFAQById = asyncHandler(async (req, res, next) => {
     generateResponse(faq, "FAQ found", res);
 });
 
-// get all guidelines logs
+// get all guidelines logs created today
 exports.getAllGuidelinesLogs = asyncHandler(async (req, res) => {
     const page = parseInt(req.query?.page) || 1;
     const limit = parseInt(req.query?.limit) || 10;
 
-    const logs = await getAllGuidelinesLogs({ query: {}, page, limit });
+    // Calculate today's date at 00:00:00
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Calculate today's date at 23:59:59
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Update the query to fetch logs created today
+    const query = {
+        createdAt: {
+            $gte: todayStart,
+            $lte: todayEnd
+        }
+    };
+
+    const logs = await getAllGuidelinesLogs({ query, page, limit });
     if (logs?.data?.length === 0) {
         return generateResponse(null, 'No logs found', res);
     }

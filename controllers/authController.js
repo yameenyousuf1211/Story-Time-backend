@@ -355,3 +355,31 @@ exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
 });
+
+// register with apple
+exports.registerWithApple = asyncHandler(async (req, res, next) => {
+    const body = parseBody(req.body);
+
+    // Joi validation
+    const { error } = socialAuthValidation.validate(body);
+    if (error) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: error.details[0].message
+    });
+
+    if (!body.email) body.email = null;
+    body.completePhone = body.phoneCode + body.phoneNo;
+    body.authProvider = AUTH_PROVIDERS.APPLE;
+
+    const generateUserId = getMongoId();
+    const refreshToken = generateRefreshToken({ _id: generateUserId });
+
+    const user = await createUser({
+        _id: generateUserId,
+        ...body,
+        refreshToken,
+    });
+
+    const accessToken = generateToken(user);
+    generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
+});

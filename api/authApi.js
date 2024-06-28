@@ -12,6 +12,7 @@ const {
     socialLogin,
     registerWithGoogle,
     registerWithFacebook,
+    registerWithApple
 } = require('../controllers/authController');
 const authMiddleware = require('../middlewares/auth')
 const { ROLES } = require('../utils/constants');
@@ -34,6 +35,7 @@ class AuthAPI {
         router.post('/social-login', socialLogin);
         router.post('/register/google', registerWithGoogle);
         router.post('/regiser/facebook', registerWithFacebook);
+        router.post('/regiser/apple', registerWithApple);
 
         router.put('/verify-code', verifyCode);
         router.put('/reset-password', authMiddleware(Object.values(ROLES)), resetPassword);

@@ -4,6 +4,7 @@ const {
     closeChat,
     sendMessage,
     getChatMessages,
+    uploadMedia,
 } = require('../controllers/supportController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
@@ -25,6 +26,8 @@ class SupportAPI {
         router.post('/send-message',
             authMiddleware(Object.values(ROLES)),
             upload('chat').fields([{ name: "media", maxCount: 5 }]), sendMessage);
+
+        router.post('/upload-media', upload('chat').fields([{ name: "media", maxCount: 5 }]), uploadMedia);
 
         router.put('/close-ticket', authMiddleware(Object.values(ROLES)), closeChat);
     }

@@ -2,6 +2,7 @@ const { createGuideline, deleteGuidelineById, findGuideline, createOrUpdateGuide
 const { parseBody, generateResponse, asyncHandler } = require("../utils");
 const { addGuidelineValidation, getGuidelineValidation } = require("../validations/guidelineValidation");
 const { STATUS_CODES, GUIDELINE } = require("../utils/constants");
+const { Types } = require("mongoose");
 
 // add guidelines 
 exports.addGuidelines = asyncHandler(async (req, res, next) => {

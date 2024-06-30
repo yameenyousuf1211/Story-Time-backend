@@ -9,6 +9,7 @@ const { hash } = require('bcrypt');
 const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../models/blockModel');
 const { findStoryById } = require('../models/storyModel');
 const { createReport, findReportById, findReports } = require('../models/reportModel');
+const { s3Uploadv3 } = require('../utils/s3Upload');
 
 // check username availability
 exports.checkAvailability = asyncHandler(async (req, res, next) => {
@@ -178,10 +179,9 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
 
   body.completePhone = body.phoneCode + body.phoneNo;
 
-  if (req.files) {
-    body.profileImage = req.files['profileImage'] ? req.files['profileImage'][0].path : body.profileImage;
-    body.coverImage = req.files['coverImage'] ? req.files['coverImage'][0].path : body.coverImage;
-  }
+  // upload images to s3
+  if (req?.files?.profileImage?.length > 0) [body.profileImage] = await s3Uploadv3(req.files?.profileImage);
+  if (req?.files?.coverImage?.length > 0) [body.coverImage] = await s3Uploadv3(req.files?.coverImage);
 
   const user = await updateUser({ _id: userId }, { $set: body });
   generateResponse(user, 'Profile updated successfully', res);

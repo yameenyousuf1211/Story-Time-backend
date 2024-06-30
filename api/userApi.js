@@ -7,7 +7,7 @@ const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle,
   getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo,
   toggleUserProfileMode, checkAllAvailability, updateGuestCount,
   getGuestAndUserCount } = require('../controllers/userController');
-const { upload } = require('../utils');
+const { upload } = require("../utils/s3Upload");
 
 class UserAPI {
   constructor() {
@@ -35,7 +35,7 @@ class UserAPI {
     router.post('/update-guest-count', updateGuestCount);
 
     router.put('/update-profile', authMiddleware(Object.values(ROLES)),
-      upload('users').fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
+      upload.fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),
       updateProfile);
     router.put('/notifications', authMiddleware(Object.values(ROLES)), notificationsToggle);
     router.put('/block', authMiddleware(Object.values(ROLES)), blockToggle);

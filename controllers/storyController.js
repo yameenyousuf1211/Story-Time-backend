@@ -5,6 +5,7 @@ const { createStoryValidation, createCommentValidation } = require('../validatio
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
+const { s3Uploadv3 } = require('../utils/s3Upload');
 
 //Create Text Story
 exports.createStory = asyncHandler(async (req, res, next) => {
@@ -163,7 +164,8 @@ exports.addCommentOnStory = asyncHandler(async (req, res, next) => {
 
     body.user = req.user.id;
 
-    if (req.files?.media?.length > 0) body.media = req.files.media.map(file => file.path);
+    // upload media to s3
+    if (req.files?.media?.length > 0) body.media = await s3Uploadv3(req.files.media);
 
     let comment = await createComment(body);
 

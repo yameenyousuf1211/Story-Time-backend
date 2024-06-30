@@ -14,7 +14,8 @@ const {
     shareStory
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
-const { upload } = require('../utils');
+// const { upload } = require('../utils');
+const { upload } = require("../utils/s3Upload");
 const { ROLES } = require('../utils/constants');
 
 class StoryAPI {
@@ -32,7 +33,7 @@ class StoryAPI {
         router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
 
         router.post('/', authMiddleware([ROLES.USER]), createStory);
-        router.post('/add-comment', authMiddleware(Object.values(ROLES)), upload('comments').fields([{ name: "media", maxCount: 5 }]), addCommentOnStory);
+        router.post('/add-comment', authMiddleware(Object.values(ROLES)), upload.fields([{ name: "media", maxCount: 5 }]), addCommentOnStory);
         router.post('/share/:storyId', authMiddleware([ROLES.USER]), shareStory);
 
         router.put('/like/:storyId', authMiddleware([ROLES.USER]), likeStoryToggle);

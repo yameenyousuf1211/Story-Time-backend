@@ -4,6 +4,7 @@ const { createCategory, getAllCategories, findCategory, findCategories, updateCa
 const { createCategoryValidation, updateCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
 const { categoryQuery } = require('./queries/categoryQueries');
+const { s3Uploadv3 } = require('../utils/s3Upload');
 
 exports.createCategory = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
@@ -15,20 +16,20 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
         message: error.details[0].message,
     });
 
-    // check if image is uploaded, throw error
-    if (!req.file) return next({
+    if (!req?.files?.image) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-        message: 'Please upload image',
+        message: 'category image is required!'
     });
 
-    body.image = req.file.path;
-
+    // check if category already exists
     const isCategoryExist = await findCategory({ name: body.name });
     if (isCategoryExist) return next({
         statusCode: STATUS_CODES.CONFLICT,
         message: 'Category already exists',
     });
 
+    // upload image to s3
+    [body.image] = await s3Uploadv3(req.files.image);
     const newCategory = await createCategory(body);
     generateResponse(newCategory, 'Category created successfully', res);
 });
@@ -113,20 +114,22 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: 'invalid category id'
     });
+
     const { error } = updateCategoryValidation.validate(body);
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message,
     });
 
+    // check if category already exists
     const category = await findCategory({ _id: categoryId });
     if (!category) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Category not found'
     });
-    if (req.file) body.image = req.file.path;
 
+    // upload image to s3 if image is present
+    if (req?.files?.image?.length > 0) [body.image] = await s3Uploadv3(req?.files?.image);
     const updateCategory = await updateCategoryById(categoryId, body);
-
     generateResponse(updateCategory, 'Category updated successfully', res);
 });

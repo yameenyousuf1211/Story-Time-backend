@@ -5,7 +5,7 @@ const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
 
-console.log('serviceAccount', serviceAccount);
+// console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
 
 // Response generation utility

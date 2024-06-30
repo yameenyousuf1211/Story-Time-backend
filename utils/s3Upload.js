@@ -43,7 +43,7 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
     let buf;
     const params = files.map((file) => {
       if (base64) {
-         buf = Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+        buf = Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64')
       }
       key = `uploads/${uuid()}-${base64 ? '.png' : file.originalname}`;
       return {

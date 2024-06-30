@@ -14,7 +14,6 @@ const {
     shareStory
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
-// const { upload } = require('../utils');
 const { upload } = require("../utils/s3Upload");
 const { ROLES } = require('../utils/constants');
 

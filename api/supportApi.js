@@ -8,7 +8,6 @@ const {
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require('../utils');
 const { ROLES } = require('../utils/constants');
-//const { upload } = require("../utils/s3Upload");
 
 class SupportAPI {
     constructor() {

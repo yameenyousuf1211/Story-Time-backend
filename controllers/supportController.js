@@ -6,6 +6,7 @@ const { sendMessageValidation } = require('../validations/supportChatValidation'
 const { Types } = require('mongoose');
 const { emitSocketEvent } = require('../socket');
 const { getChatsQuery } = require('./queries/supportChatQueries');
+const { s3Uploadv3 } = require('../utils/s3Upload');
 
 // get chat list
 exports.getChatList = asyncHandler(async (req, res, next) => {
@@ -118,4 +119,9 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
     }
 
     generateResponse(messagesData, "Messages fetched successfully", res);
+});
+
+exports.uploadMedia = asyncHandler(async (req, res, next) => {
+    if (req?.files?.media?.length > 0) media = await s3Uploadv3(req.files?.media);
+    generateResponse({ media }, 'Media uploaded successfully', res);
 });

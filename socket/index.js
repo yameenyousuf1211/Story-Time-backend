@@ -18,10 +18,8 @@ const createChatEvent = (socket) => {
 }
 
 const getChatListEvent = (socket) => {
-    socket.on("get-chat-list", async (eventData) => {
+    socket.on("get-chat-list", async ({ page = 1, limit = 10, search = '' }) => {
         try {
-            const { page = 1, limit = 10, search = '' } = eventData.data || {};
-
             const userId = socket.user.id;
             const role = socket.user.role;
 
@@ -29,7 +27,7 @@ const getChatListEvent = (socket) => {
 
             const supportChatsData = await getAllMessagesAggregate({ query, page, limit });
 
-            if (supportChatsData?.supportChats?.length === 0) {
+            if (supportChatsData?.data?.length === 0) {
                 socket.emit("get-chat-list", { message: "No chats found" });
                 return;
             }
@@ -43,26 +41,24 @@ const getChatListEvent = (socket) => {
 };
 
 const getChatMessagesEvent = (socket) => {
-    socket.on("get-chat-messages", async (eventData) => {
+    socket.on("get-chat-messages", async ({ chat, page = 1, limit = 10 }) => {
         try {
-            const { chat, page = 1, limit = 10 } = eventData.data || {};
-
             if (!Types.ObjectId.isValid(chat)) {
-                socket.emit("get-chat-messages", { error: "Invalid chat id" });
+                socket.emit("socket-error", { statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY, message: "Invalid chat id" });
                 return;
             }
 
             const chatObj = await findChat({ _id: chat });
             if (!chatObj) {
-                socket.emit("get-chat-messages", { error: "Chat not found" });
+                socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
                 return;
             }
 
-            const adminUpdateQuery = { chat, isAdmin: true, isRead: false };
-            const userUpdateQuery = { chat, isAdmin: false, isRead: false };
+            const role = socket.user.role;
+            const query = { chat, isAdmin: role != ROLES.ADMIN };
 
-            await readMessages(adminUpdateQuery);
-            await readMessages(userUpdateQuery);
+            // read all messages sent by other
+            await readMessages(query);
 
             const messagesData = await findMessages({ query: { chat }, page, limit });
 
@@ -71,7 +67,7 @@ const getChatMessagesEvent = (socket) => {
                 return;
             }
 
-            socket.emit("get-chat-messages", { message: "Messages fetched successfully", data: messagesData });
+            socket.emit(`get-chat-messages-${chat}`, { message: "Messages fetched successfully", data: messagesData });
         } catch (error) {
             console.error('Error in getChatMessagesEvent:', error);
             socket.emit("socket-error", error?.message || "Something went wrong while fetching chat messages.");
@@ -80,44 +76,42 @@ const getChatMessagesEvent = (socket) => {
 };
 
 const sendMessageEvent = (socket) => {
-    socket.on("send-message", async (eventData) => {
+    socket.on("send-message", async ({ chat, text, media = null }) => {
         try {
-            console.log('sendMessageEvent data:', eventData);
-            const data = eventData.data || eventData;
+            console.log('sendMessageEvent :', chat, text, media);
 
-            const { error } = sendMessageValidation.validate(data);
+            const { error } = sendMessageValidation.validate({ chat, text });
             if (error) {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY, message: error.details[0].message });
                 return;
             }
 
-            const chatObj = await findChat({ _id: data.chat });
+            const chatObj = await findChat({ _id: chat });
             if (!chatObj) {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
                 return;
             }
 
             let message = await createMessage({
-                chat: data.chat,
+                chat,
                 user: chatObj.user,
                 isAdmin: socket.user.role === ROLES.ADMIN,
-                text: data.text,
-                media: data.media
+                text,
+                media
             });
 
-            await updateChat({ _id: data.chat }, { lastMessage: message._id });
+            await updateChat({ _id: chat }, { $set: { lastMessage: message._id } });
 
             message = await findMessageById(message._id)
                 .populate({
                     path: 'chat',
                     populate: {
                         path: 'user',
-                        select: 'firstName lastName username photo'
+                        select: 'firstName lastName username profileImage'
                     }
                 });
 
-            socket.to(data.chat).emit("send-message", message);
-            socket.emit("send-message", message);
+            socket.emit(`send-message-${chat}`, message);
 
         } catch (error) {
             console.error('Error in sendMessageEvent:', error);
@@ -130,32 +124,20 @@ exports.initializeSocketIO = (io) => {
     return io.on("connection", async (socket) => {
         try {
             // parse the cookies from the handshake headers (This is only possible if client has `withCredentials: true`)
-            const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-            let token = cookies?.accessToken;
-            console.log('Token from cookies:', token);
-
-            if (!token) {
-                token = socket.handshake.auth?.token;
-                console.log('Token from handshake.auth:', token);
-            }
+            // const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
+            const token = socket.handshake.headers?.['access-token'];
+            console.log('socket.handshake.headers?.access-token >> ', token);
 
             if (!token) {
                 throw new ApiError(401, "Unauthorized handshake. Token is missing");
             }
 
             const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decodedToken.id; // Note: changed from _id to id based on your token structure
-            const role = decodedToken.role;
-            const user = await getUserById(decodedToken?._id).select(
-                "-password -refreshToken -email "
-            );
-            if (!user) {
-                throw new ApiError(401, "Unauthorized handshake. User not found");
-            }
-            socket.user = { id: userId, role };
-            console.log('Socket connected');
 
-            socket.join(userId);
+            // mount the user object on the socket
+            socket.user = decodedToken;
+
+            console.log('Socket connected');
 
             createChatEvent(socket);
             getChatListEvent(socket);

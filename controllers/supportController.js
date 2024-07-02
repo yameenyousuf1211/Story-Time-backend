@@ -122,6 +122,7 @@ exports.getChatMessages = asyncHandler(async (req, res, next) => {
 });
 
 exports.uploadMedia = asyncHandler(async (req, res, next) => {
-    if (req?.files?.media?.length > 0) media = await s3Uploadv3(req.files?.media);
-    generateResponse({ media }, 'Media uploaded successfully', res);
+    let media;
+    if (req?.files?.media?.length > 0) media = await s3Uploadv3(req.files.media);
+    generateResponse(media, 'Media uploaded successfully', res);
 });

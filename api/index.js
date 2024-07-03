@@ -5,7 +5,6 @@ const CategoryAPI = require('./categoryApi');
 const UserAPI = require('./userApi');
 const StoryAPI = require('./storyApi');
 const GuidelineAPI = require('./guidelineApi');
-const SupportAPI = require('./supportApi');
 const NotificationAPI = require('./notificationApi');
 
 class API {
@@ -22,7 +21,6 @@ class API {
         this.routeGroups.push(new UserAPI());
         this.routeGroups.push(new StoryAPI());
         this.routeGroups.push(new GuidelineAPI());
-        this.routeGroups.push(new SupportAPI());
         this.routeGroups.push(new NotificationAPI());
     }
 

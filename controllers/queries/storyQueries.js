@@ -55,8 +55,7 @@ exports.getStoriesQuery = (user) => {
                     },
                     {
                         $or: [
-                            { isHidden: false },
-                            { $and: [{ isHidden: true }, { contributors: new Types.ObjectId(user) }] }
+                            { hiddenBy: { $nin: [new Types.ObjectId(user)] } }
                         ]
                     }
                 ]

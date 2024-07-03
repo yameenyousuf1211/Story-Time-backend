@@ -1,12 +1,10 @@
 const { createChat, findChat, updateChat } = require("../models/supportChatModel");
 const jwt = require('jsonwebtoken');
-const cookie = require('cookie');
-const { getUserById } = require("../models/userModel");
 const { getChatsQuery } = require("../controllers/queries/supportChatQueries");
 const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById } = require("../models/supportMessageModel");
 const { ApiError } = require("../utils/apiError");
 const { Types } = require("mongoose");
-const { STATUS_CODES, ROLES } = require("../utils/constants");
+const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants");
 const { sendMessageValidation } = require("../validations/supportChatValidation");
 
 // listener for new chat
@@ -119,6 +117,24 @@ const sendMessageEvent = (socket) => {
     });
 };
 
+const closeChatEvent = (socket) => {
+    socket.on("close-chat", async ({ chat }) => {
+        try {
+            const supportChat = await findChat({ _id: chat });
+            if (!supportChat) {
+                socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
+                return;
+            }
+            await updateChat({ _id: chat }, { $set: { status: SUPPORT_CHAT_STATUS.CLOSED } });
+
+            socket.emit(`close-chat-${chat}`, { message: "Chat closed successfully" });
+        } catch (error) {
+            console.error('Error in closeChatEvent:', error);
+            socket.emit("socket-error", { message: error.message || "Something went wrong while closing the chat." });
+        }
+    });
+};
+
 exports.initializeSocketIO = (io) => {
     return io.on("connection", async (socket) => {
         try {
@@ -141,6 +157,7 @@ exports.initializeSocketIO = (io) => {
             getChatListEvent(socket);
             getChatMessagesEvent(socket);
             sendMessageEvent(socket);
+            closeChatEvent(socket);
 
             socket.on("disconnect", async () => {
                 console.log("User has disconnected");

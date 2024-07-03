@@ -8,7 +8,7 @@ const supportMessageSchema = new Schema({
     user: { type: Types.ObjectId, ref: "User" },
     isAdmin: { type: Boolean, default: false },
     text: { type: String, required: true },
-    media: { type: [String], default: [] },
+    media: { type: [String], default: null },
     isRead: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 

@@ -106,3 +106,5 @@ exports.deleteCard = (query) => UserModel.deleteOne(query);
 
 // get all without pagination
 exports.getUsers = (query) => UserModel.find({ ...query, isDeleted: false });
+
+exports.getUserById = (id) => UserModel.find(id);

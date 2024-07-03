@@ -47,3 +47,9 @@ exports.getCitiesByState = asyncHandler(async (req, res, next) => {
 
     generateResponse(cities, 'Cities fetched successfully', res);
 });
+
+exports.uploadMedia = asyncHandler(async (req, res, next) => {
+    let media;
+    if (req?.files?.media?.length > 0) media = await s3Uploadv3(req.files.media);
+    generateResponse(media, 'Media uploaded successfully', res);
+});

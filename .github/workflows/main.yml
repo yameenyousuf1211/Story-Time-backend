@@ -16,8 +16,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "16"
-          
-    - run: echo '${{secrets.FIREBASE_JSON}}' > firebase.json
 
       - name: Deploy NodeJS App
         uses: appleboy/ssh-action@v0.1.7

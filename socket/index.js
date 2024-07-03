@@ -1,10 +1,13 @@
-const { createChat } = require("../models/supportChatModel");
+const { createChat, findChat, updateChat } = require("../models/supportChatModel");
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 const { getUserById } = require("../models/userModel");
 const { getChatsQuery } = require("../controllers/queries/supportChatQueries");
-const { getAllMessagesAggregate } = require("../models/supportMessageModel");
+const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById } = require("../models/supportMessageModel");
 const { ApiError } = require("../utils/apiError");
+const { Types } = require("mongoose");
+const { STATUS_CODES, ROLES } = require("../utils/constants");
+const { sendMessageValidation } = require("../validations/supportChatValidation");
 
 // listener for new chat
 const createChatEvent = (socket) => {
@@ -35,6 +38,90 @@ const getChatListEvent = (socket) => {
         } catch (error) {
             console.error('Error in getChatListEvent:', error);
             socket.emit("socket-error", error?.message || "Something went wrong while fetching the chat list.");
+        }
+    });
+};
+
+const getChatMessagesEvent = (socket) => {
+    socket.on("get-chat-messages", async (eventData) => {
+        try {
+            const { chat, page = 1, limit = 10 } = eventData.data || {};
+
+            if (!Types.ObjectId.isValid(chat)) {
+                socket.emit("get-chat-messages", { error: "Invalid chat id" });
+                return;
+            }
+
+            const chatObj = await findChat({ _id: chat });
+            if (!chatObj) {
+                socket.emit("get-chat-messages", { error: "Chat not found" });
+                return;
+            }
+
+            const adminUpdateQuery = { chat, isAdmin: true, isRead: false };
+            const userUpdateQuery = { chat, isAdmin: false, isRead: false };
+
+            await readMessages(adminUpdateQuery);
+            await readMessages(userUpdateQuery);
+
+            const messagesData = await findMessages({ query: { chat }, page, limit });
+
+            if (messagesData?.data?.length === 0) {
+                socket.emit("get-chat-messages", { message: "No messages found" });
+                return;
+            }
+
+            socket.emit("get-chat-messages", { message: "Messages fetched successfully", data: messagesData });
+        } catch (error) {
+            console.error('Error in getChatMessagesEvent:', error);
+            socket.emit("socket-error", error?.message || "Something went wrong while fetching chat messages.");
+        }
+    });
+};
+
+const sendMessageEvent = (socket) => {
+    socket.on("send-message", async (eventData) => {
+        try {
+            console.log('sendMessageEvent data:', eventData);
+            const data = eventData.data || eventData;
+
+            const { error } = sendMessageValidation.validate(data);
+            if (error) {
+                socket.emit("socket-error", { statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY, message: error.details[0].message });
+                return;
+            }
+
+            const chatObj = await findChat({ _id: data.chat });
+            if (!chatObj) {
+                socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
+                return;
+            }
+
+            let message = await createMessage({
+                chat: data.chat,
+                user: chatObj.user,
+                isAdmin: socket.user.role === ROLES.ADMIN,
+                text: data.text,
+                media: data.media
+            });
+
+            await updateChat({ _id: data.chat }, { lastMessage: message._id });
+
+            message = await findMessageById(message._id)
+                .populate({
+                    path: 'chat',
+                    populate: {
+                        path: 'user',
+                        select: 'firstName lastName username photo'
+                    }
+                });
+
+            socket.to(data.chat).emit("send-message", message);
+            socket.emit("send-message", message);
+
+        } catch (error) {
+            console.error('Error in sendMessageEvent:', error);
+            socket.emit("socket-error", { message: error.message || "Something went wrong while sending the message." });
         }
     });
 };
@@ -71,6 +158,8 @@ exports.initializeSocketIO = (io) => {
             // Common events that needs to be mounted on the initialization
             createChatEvent(socket);
             getChatListEvent(socket);
+            getChatMessagesEvent(socket);
+            sendMessageEvent(socket);
 
             socket.on("disconnect", async () => {
                 console.log("User has disconnected");

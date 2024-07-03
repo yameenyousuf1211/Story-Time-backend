@@ -120,11 +120,12 @@ const sendMessageEvent = (socket) => {
 const closeChatEvent = (socket) => {
     socket.on("close-chat", async ({ chat }) => {
         try {
-            const supportChat = await findChat({ _id: chat });
+            const supportChat = await findChat({ _id: chat, status: { $ne: SUPPORT_CHAT_STATUS.CLOSED } });
             if (!supportChat) {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
                 return;
             }
+            
             await updateChat({ _id: chat }, { $set: { status: SUPPORT_CHAT_STATUS.CLOSED } });
 
             socket.emit(`close-chat-${chat}`, { message: "Chat closed successfully" });

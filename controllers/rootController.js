@@ -1,6 +1,7 @@
 const { generateResponse, asyncHandler } = require('../utils');
 const { STATUS_CODES } = require('../utils/constants');
 const countryStateCity = require('country-state-city');
+const { s3Uploadv3 } = require('../utils/s3Upload');
 
 exports.DefaultHandler = asyncHandler(async (req, res, next) => {
     generateResponse(null, `${process.env.APP_NAME} API - Health check passed`, res);
@@ -49,7 +50,11 @@ exports.getCitiesByState = asyncHandler(async (req, res, next) => {
 });
 
 exports.uploadMedia = asyncHandler(async (req, res, next) => {
-    let media;
-    if (req?.files?.media?.length > 0) media = await s3Uploadv3(req.files.media);
+    if (!req?.files?.media) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'Please, provide media files.'
+    });
+
+    const media = await s3Uploadv3(req.files.media);
     generateResponse(media, 'Media uploaded successfully', res);
 });

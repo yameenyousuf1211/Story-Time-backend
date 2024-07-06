@@ -59,7 +59,7 @@ const getChatMessagesEvent = (socket) => {
             await readMessages(query);
 
             const unreadCount = await countMessages(query);
-            socket.emit(`messages-read-${chat}`, unreadCount);
+            socket.emit(`unread-count-${chat}`, { unreadCount });
 
             const messagesData = await findMessages({ query: { chat }, page, limit });
 

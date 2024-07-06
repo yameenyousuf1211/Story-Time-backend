@@ -38,7 +38,7 @@ const getChatListEvent = (socket) => {
     });
 };
 
-const getChatMessagesEvent = (socket, io) => {
+const getChatMessagesEvent = (socket) => {
     socket.on("get-chat-messages", async ({ chat, page = 1, limit = 10 }) => {
         try {
             if (!Types.ObjectId.isValid(chat)) {
@@ -59,7 +59,7 @@ const getChatMessagesEvent = (socket, io) => {
             await readMessages(query);
 
             const unreadCount = await countMessages(query);
-            io.emit(`messages-read-${chat}`, unreadCount);
+            socket.emit(`messages-read-${chat}`, unreadCount);
 
             const messagesData = await findMessages({ query: { chat }, page, limit });
 
@@ -159,7 +159,7 @@ exports.initializeSocketIO = (io) => {
             // Common events that needs to be mounted on the initialization
             createChatEvent(socket);
             getChatListEvent(socket);
-            getChatMessagesEvent(socket, io);
+            getChatMessagesEvent(socket);
             sendMessageEvent(socket);
             closeChatEvent(socket);
 

@@ -1,7 +1,7 @@
 const { createChat, findChat, updateChat } = require("../models/supportChatModel");
 const jwt = require('jsonwebtoken');
 const { getChatsQuery } = require("../controllers/queries/supportChatQueries");
-const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById } = require("../models/supportMessageModel");
+const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById, countMessages } = require("../models/supportMessageModel");
 const { ApiError } = require("../utils/apiError");
 const { Types } = require("mongoose");
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants");
@@ -38,7 +38,7 @@ const getChatListEvent = (socket) => {
     });
 };
 
-const getChatMessagesEvent = (socket) => {
+const getChatMessagesEvent = (socket, io) => {
     socket.on("get-chat-messages", async ({ chat, page = 1, limit = 10 }) => {
         try {
             if (!Types.ObjectId.isValid(chat)) {
@@ -53,10 +53,13 @@ const getChatMessagesEvent = (socket) => {
             }
 
             const role = socket.user.role;
-            const query = { chat, isAdmin: role != ROLES.ADMIN };
+            const query = { chat, isAdmin: role != ROLES.ADMIN, isRead: false };
 
             // read all messages sent by other
             await readMessages(query);
+
+            const unreadCount = await countMessages(query);
+            io.emit(`messages-read-${chat}`, unreadCount);
 
             const messagesData = await findMessages({ query: { chat }, page, limit });
 
@@ -125,7 +128,7 @@ const closeChatEvent = (socket) => {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
                 return;
             }
-            
+
             await updateChat({ _id: chat }, { $set: { status: SUPPORT_CHAT_STATUS.CLOSED } });
 
             socket.emit(`close-chat-${chat}`, { message: "Chat closed successfully" });
@@ -156,7 +159,7 @@ exports.initializeSocketIO = (io) => {
             // Common events that needs to be mounted on the initialization
             createChatEvent(socket);
             getChatListEvent(socket);
-            getChatMessagesEvent(socket);
+            getChatMessagesEvent(socket, io);
             sendMessageEvent(socket);
             closeChatEvent(socket);
 

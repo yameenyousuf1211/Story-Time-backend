@@ -61,6 +61,6 @@ exports.updateMessages = (query, obj) => SupportMessageModel.updateMany(query, o
 // delete message by user
 exports.updateMessageById = (messageId, obj) => SupportMessageModel.findByIdAndUpdate(messageId, obj, { new: true });
 
-exports.countUnreadMessages = (query) => SupportMessageModel.countDocuments(query);
+exports.countMessages = (query) => SupportMessageModel.countDocuments(query);
 
 exports.readMessages = (query) => SupportMessageModel.updateMany(query, { $set: { isRead: true } });

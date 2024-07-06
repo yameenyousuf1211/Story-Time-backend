@@ -22,17 +22,14 @@ const fileFilter = (req, file, cb) => {
       cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE"), false);
     }
   } catch (e) {
-    console.log(e);
-    // res.json(error("Server Error", e));
+    console.log('fileFilter error: ', e);
   }
 };
-
-// ["image", "jpeg"]
 
 exports.upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2000000, files: 4 },
+  limits: { fileSize: 30_000_000, files: 4 },  // 30MB
 });
 
 exports.s3Uploadv3 = async (files, base64 = false) => {

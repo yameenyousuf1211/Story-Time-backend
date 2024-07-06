@@ -36,7 +36,6 @@ app.set("io", io);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
-app.use('/uploads', express.static('uploads'));
 app.use(cookieSession({
     name: 'session',
     keys: [process.env.COOKIE_KEY],

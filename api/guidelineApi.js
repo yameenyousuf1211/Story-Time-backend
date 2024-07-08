@@ -18,7 +18,7 @@ class GuidelineAPI {
     setupRoutes() {
         const router = this.router;
 
-        router.get("/", authMiddleware(Object.values(ROLES)), getGuidelines);
+        router.get("/", getGuidelines);
         router.get('/logs', authMiddleware([ROLES.ADMIN]), getAllGuidelinesLogs);
         router.get('/faq/:faqId', authMiddleware([ROLES.ADMIN]), getFAQById)
         router.post("/", authMiddleware([ROLES.ADMIN]), addGuidelines);

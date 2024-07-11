@@ -47,6 +47,7 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: echo '${{secrets.FIREBASE_JSON}}' > firebase.json
-    - run: git pull origin main
+    - run: git checkout main
+    - run: git pull
     - run: npm install
     - run: sudo pm2 restart story-time-api

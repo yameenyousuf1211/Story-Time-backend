@@ -426,12 +426,15 @@ exports.editAdminInfo = asyncHandler(async (req, res, next) => {
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: error.details[0].message
   });
+  let user = await findUser({ _id: userId });
   const userWithEmail = await findUser({ email: body.email });
 
-  if (userWithEmail) return next({
-    statusCode: STATUS_CODES.CONFLICT,
-    message: 'Email already exists'
-  });
+  if (user.email !== body.email && userWithEmail) {
+    if (userWithEmail) return next({
+      statusCode: STATUS_CODES.CONFLICT,
+      message: 'Email already exists'
+    });
+  }
 
   // if password is provided, decrypt it
   body.decryptedPassword = body.password;
@@ -440,7 +443,7 @@ exports.editAdminInfo = asyncHandler(async (req, res, next) => {
   const hashedPassword = await hash(body.password, 10);
   body.password = hashedPassword;
 
-  const user = await updateUser({ _id: userId }, { $set: body });
+  user = await updateUser({ _id: userId }, { $set: body });
   generateResponse(user, 'Profile updated successfully', res);
 });
 

@@ -428,15 +428,14 @@ exports.editAdminInfo = asyncHandler(async (req, res, next) => {
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: error.details[0].message
   });
-  let user = await findUser({ _id: userId });
-  const userWithEmail = await findUser({ email: body.email });
 
-  if (user.email !== body.email && userWithEmail) {
-    if (userWithEmail) return next({
-      statusCode: STATUS_CODES.CONFLICT,
-      message: 'Email already exists'
-    });
-  }
+  let user = await findUser({ _id: userId });
+
+  const userWithEmail = await findUser({ email: body.email, _id: { $ne: userId } });
+  if (userWithEmail) return next({
+    statusCode: STATUS_CODES.CONFLICT,
+    message: 'Email already exists'
+  });
 
   // if password is provided, decrypt it
   body.decryptedPassword = body.password;

@@ -12,7 +12,6 @@ const { createReport, findReportById, findReports } = require('../models/reportM
 const { s3Uploadv3 } = require('../utils/s3Upload');
 
 // check username availability
-// check username availability
 exports.checkAvailability = asyncHandler(async (req, res, next) => {
   const body = parseBody(req.body);
 
@@ -26,7 +25,7 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
   const key = body.username ? 'username' : body.email ? 'email' : 'completePhone';
   const displayKey = key === 'completePhone' ? 'Phone No.' : key;
 
-  const user = await findUser({ [key]: body[key], role: ROLES.USER, isDeleted: false });
+  const user = await findUser({ [key]: body[key] });
   if (user) return next({
     statusCode: STATUS_CODES.CONFLICT,
     message: `${displayKey} already exists`

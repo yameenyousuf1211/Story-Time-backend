@@ -8,10 +8,10 @@ const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants
 const { sendMessageValidation } = require("../validations/supportChatValidation");
 
 // listener for new chat
-const createChatEvent = (socket) => {
+const createChatEvent = (socket, io) => {
     socket.on("create-chat", async (user) => {
         const chat = await createChat({ user });
-        socket.emit("create-chat", chat);
+        io.emit("create-chat", chat);
     });
 }
 
@@ -76,7 +76,7 @@ const getChatMessagesEvent = (socket) => {
     });
 };
 
-const sendMessageEvent = (socket) => {
+const sendMessageEvent = (socket, io) => {
     socket.on("send-message", async ({ chat, text, media = null }) => {
         try {
             console.log('sendMessageEvent :', chat, text, media);
@@ -111,8 +111,7 @@ const sendMessageEvent = (socket) => {
                     }
                 });
 
-            socket.emit(`send-message-${chat}`, message);
-
+            io.emit(`send-message-${chat}`, message);
         } catch (error) {
             console.error('Error in sendMessageEvent:', error);
             socket.emit("socket-error", { message: error.message || "Something went wrong while sending the message." });
@@ -120,7 +119,7 @@ const sendMessageEvent = (socket) => {
     });
 };
 
-const closeChatEvent = (socket) => {
+const closeChatEvent = (socket, io) => {
     socket.on("close-chat", async ({ chat }) => {
         try {
             const supportChat = await findChat({ _id: chat, status: { $ne: SUPPORT_CHAT_STATUS.CLOSED } });
@@ -131,7 +130,7 @@ const closeChatEvent = (socket) => {
 
             await updateChat({ _id: chat }, { $set: { status: SUPPORT_CHAT_STATUS.CLOSED } });
 
-            socket.emit(`close-chat-${chat}`, { message: "Chat closed successfully" });
+            io.emit(`close-chat-${chat}`, { message: "Chat closed successfully" });
         } catch (error) {
             console.error('Error in closeChatEvent:', error);
             socket.emit("socket-error", { message: error.message || "Something went wrong while closing the chat." });
@@ -149,6 +148,10 @@ exports.initializeSocketIO = (io) => {
                 throw new ApiError(401, "Unauthorized handshake. Token is missing");
             }
 
+            // io.emit will emit to all connected sockets
+            // socket.emit will emit to the current connected socket
+            // socket.broadcast.emit will emit to all connected sockets except the current socket
+
             const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
             // mount the user object on the socket
@@ -157,11 +160,11 @@ exports.initializeSocketIO = (io) => {
             console.log('Socket connected');
 
             // Common events that needs to be mounted on the initialization
-            createChatEvent(socket);
+            createChatEvent(socket, io);
             getChatListEvent(socket);
             getChatMessagesEvent(socket);
-            sendMessageEvent(socket);
-            closeChatEvent(socket);
+            sendMessageEvent(socket, io);
+            closeChatEvent(socket, io);
 
             socket.on("disconnect", async () => {
                 console.log("User has disconnected");
@@ -172,8 +175,4 @@ exports.initializeSocketIO = (io) => {
             socket.emit("socket-error", error?.message || "Something went wrong while connecting to the socket.");
         }
     });
-};
-
-exports.emitSocketEvent = (req, event, payload) => {
-    req.app.get("io").emit(event, payload);
 };

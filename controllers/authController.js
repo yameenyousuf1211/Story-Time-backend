@@ -86,6 +86,11 @@ exports.login = asyncHandler(async (req, res, next) => {
         message: 'Email not found'
     });
 
+    if (!user.isActive) return next({
+        statusCode: STATUS_CODES.UNAUTHORIZED,
+        message: 'Your account is deactivated, please contact admin'
+    });
+
     const isMatch = await compare(body.password, user.password);
     if (!isMatch) return next({
         statusCode: STATUS_CODES.UNAUTHORIZED,

@@ -24,7 +24,7 @@ module.exports = (roles) => {
 
             if (!user || !user.isActive) return next({
                 statusCode: STATUS_CODES.FORBIDDEN,
-                message: 'Your profile is inactive, please contact admin'
+                message: 'Your account is inactive, please contact admin'
             });
 
             if (!roles.includes(req.user.role)) return next({

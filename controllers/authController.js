@@ -294,10 +294,12 @@ exports.socialLogin = asyncHandler(async (req, res, next) => {
     });
 
     const user = await findUser({ socialAuthId: body.socialAuthId });
-    if (!user.isActive) {
-        generateResponse(null, 'Your account is deactivated, please contact admin', res);
-        return;
-    }
+
+    // check if user is active
+    if (!user.isActive) return next({
+        statusCode: STATUS_CODES.FORBIDDEN,
+        message: 'Your account is inactive, please contact admin'
+    });
 
     const accessToken = generateToken(user);
     const refreshToken = generateRefreshToken(user);

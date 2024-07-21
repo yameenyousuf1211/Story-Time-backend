@@ -88,7 +88,7 @@ const sendMessageEvent = (socket, io) => {
 
             const supportChat = await findChat({ _id: chat, status: { $ne: SUPPORT_CHAT_STATUS.CLOSED } });
             if (!supportChat) {
-                socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat is Closed" });
+                socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat is already closed." });
                 return;
             }
             const chatObj = await findChat({ _id: chat });

@@ -94,11 +94,7 @@ exports.getFriendsQuery = (keyword, user) => {
                     { role: { $ne: ROLES.ADMIN } },
                     { isActive: true },
                     { isDeleted: false },
-                    {
-                        $or: [
-                            { username: { $regex: keyword, $options: 'i' } }
-                        ]
-                    },
+                    { username: keyword }
                 ]
             }
         },

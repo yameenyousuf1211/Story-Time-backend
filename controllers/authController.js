@@ -333,6 +333,10 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
         refreshToken,
     });
 
+    // follow storyTimeUserEmail account with their email on signup
+    const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
+    if (storyTimeUserEmail) await addFollowing({ user: user._id, following: storyTimeUserEmail._id });
+
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
 });
@@ -361,6 +365,11 @@ exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
         refreshToken,
     });
 
+    // follow storyTimeUserEmail account with their email on signup
+    const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
+    if (storyTimeUserEmail) await addFollowing({ user: user._id, following: storyTimeUserEmail._id });
+
+
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);
 });
@@ -388,6 +397,10 @@ exports.registerWithApple = asyncHandler(async (req, res, next) => {
         ...body,
         refreshToken,
     });
+
+    // follow storyTimeUserEmail account with their email on signup
+    const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
+    if (storyTimeUserEmail) await addFollowing({ user: user._id, following: storyTimeUserEmail._id });
 
     const accessToken = generateToken(user);
     generateResponse({ user, accessToken, refreshToken }, 'Register & Login successful', res);

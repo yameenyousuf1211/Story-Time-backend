@@ -16,14 +16,14 @@ exports.sendNotificationByAdmin = asyncHandler(async (req, res, next) => {
     });
 
     // get users Ids
-    const users = [];
+    let users = [];
 
     if (body.sendToAll) {
-        const usersData = await getUsers().select('_id');
-        usersData?.forEach(user => users.push(user?._id.toString()));
+        const usersData = await getUsers().select('_id settings.inAppNotifications');
+        users = usersData.filter(user => user.settings.inAppNotifications).map(user => user._id.toString());
     } else {
-        const activeUsers = await getUsers({ isActive: true }).select('_id');
-        activeUsers?.forEach(user => users.push(user?._id.toString()));
+        const activeUsers = await getUsers({ isActive: true }).select('_id settings.inAppNotifications');
+        users = activeUsers.filter(user => user.settings.inAppNotifications).map(user => user._id.toString());
     }
 
     // if no users found return

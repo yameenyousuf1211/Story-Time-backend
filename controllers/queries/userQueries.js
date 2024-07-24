@@ -85,7 +85,7 @@ exports.getUsersQuery = (keyword, user, story) => {
 }
 
 // get all friends
-exports.getFriendsQuery = (keyword, user) => {
+exports.getFriendsQuery = (keyword = "", user) => {
     return [
         {
             $match: {
@@ -94,11 +94,7 @@ exports.getFriendsQuery = (keyword, user) => {
                     { role: { $ne: ROLES.ADMIN } },
                     { isActive: true },
                     { isDeleted: false },
-                    {
-                        $or: [
-                            { username: keyword }
-                        ]
-                    },
+                    ...(keyword ? [{ username: keyword }] : [])
                 ]
             }
         },

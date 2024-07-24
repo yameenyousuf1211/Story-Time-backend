@@ -94,7 +94,7 @@ exports.getFriendsQuery = (keyword = "", user) => {
                     { role: { $ne: ROLES.ADMIN } },
                     { isActive: true },
                     { isDeleted: false },
-                    ...(keyword ? [{ username: keyword }] : [])
+                    ...(keyword && [{ username: keyword }])
                 ]
             }
         },

@@ -3,30 +3,15 @@ const Joi = require('joi');
 exports.checkAvailabilityValidation = Joi.object({
   username: Joi.string().min(1).max(20),
   email: Joi.string().email({ minDomainSegments: 2 }),
-  completePhone: Joi.string().regex(/^\+\d*$/).min(7).max(14),
-}).or('username', 'email', 'completePhone').xor('username', 'email', 'completePhone');
+}).or('username', 'email').xor('username', 'email');
 
 exports.checkAllAvailabilityValidation = Joi.object({
   username: Joi.string().allow(null, ''),
   email: Joi.string().email({ minDomainSegments: 2 }).allow(null, ''),
-  completePhone: Joi.string().regex(/^\+\d*$/).min(7).max(20).allow(null, ''),
 });
 
 exports.updateProfileValidation = Joi.object({
   email: Joi.string().email().required(),
-  // phone code like +92
-  phoneCode: Joi.string().regex(/^\+\d*$/).min(2).max(4).required().messages({
-    'string.pattern.base': 'phone code is not valid.',
-    'string.min': 'phone code must be at least {#limit} characters long.',
-    'string.max': 'phone code must be at most {#limit} characters long.',
-    'any.required': 'phone code is required.',
-  }),
-  phoneNo: Joi.string().regex(/^\d*$/).min(7).max(14).required().messages({
-    'string.pattern.base': 'phone number is not valid.',
-    'string.min': 'phone number must be at least {#limit} characters long.',
-    'string.max': 'phone number must be at most {#limit} characters long.',
-    'any.required': 'phone number is required.',
-  }),
   firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(1).max(30).required().messages({
     "string.pattern.base": "First name is not valid.",
     "string.min": "First name must be at least {#limit} characters long.",

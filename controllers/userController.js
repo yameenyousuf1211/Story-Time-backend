@@ -22,16 +22,15 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
     message: error.details[0].message
   });
 
-  const key = body.username ? 'username' : body.email ? 'email' : 'completePhone';
-  const displayKey = key === 'completePhone' ? 'Phone No.' : key;
+  const key = body.username ? 'username' : body.email ? 'email' : null;
 
   const user = await findUser({ [key]: body[key] });
   if (user) return next({
     statusCode: STATUS_CODES.CONFLICT,
-    message: `${displayKey} already exists`
+    message: `${key} already exists`
   });
 
-  generateResponse(null, `${displayKey} available`, res);
+  generateResponse(null, `${key} available`, res);
 });
 
 exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
@@ -48,7 +47,6 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
 
   if (body.username) checkPromises.push({ check: findUser({ username: body.username }), field: 'username' });
   if (body.email) checkPromises.push({ check: findUser({ email: body.email }), field: 'email' });
-  if (body.completePhone) checkPromises.push({ check: findUser({ completePhone: body.completePhone }), field: 'phone' });
 
   if (checkPromises.length === 0) return next({
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
@@ -177,8 +175,6 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
     message: error.details[0].message
   });
-
-  body.completePhone = body.phoneCode + body.phoneNo;
 
   // upload images to s3
   if (req?.files?.profileImage?.length > 0) [body.profileImage] = await s3Uploadv3(req.files?.profileImage);
@@ -502,7 +498,6 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
       password,
       firstName: 'Admin',
       username: 'admin',
-      completePhone: '+921111111111',
       role: ROLES.ADMIN,
     });
 

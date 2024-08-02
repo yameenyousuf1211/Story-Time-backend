@@ -19,9 +19,6 @@ exports.registerUserValidation = Joi.object({
         "any.required": "Last name is required.",
     }),
     username: Joi.string().min(1).max(20).required(),
-    zipCode: Joi.string().required(),
-    city: Joi.string().required(),
-    state: Joi.string().required(),
     password: Joi.string().min(8).max(30).required(),
     confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
         'any.only': 'Confirm password does not match with password.',
@@ -39,13 +36,7 @@ exports.loginUserValidation = Joi.object({
 // send code validation
 exports.sendCodeValidation = Joi.object({
     email: Joi.string().email({ minDomainSegments: 2 }),
-    phone: Joi.string().regex(/^\+\d*$/).min(7).max(14).messages({
-        'string.pattern.base': 'phone number is not valid.',
-        'string.min': 'phone number must be at least {#limit} characters long.',
-        'string.max': 'phone number must be at most {#limit} characters long.',
-        'any.required': 'phone number is required.',
-    }),
-}).xor('email', 'phone');
+})
 
 exports.codeValidation = Joi.object({
     code: Joi.string().min(6).max(6).required(),
@@ -83,9 +74,6 @@ exports.socialAuthValidation = Joi.object({
         "any.required": "Last name is required.",
     }),
     username: Joi.string().min(1).max(20).required(),
-    zipCode: Joi.string().required(),
-    city: Joi.string().required(),
-    state: Joi.string().required()
 });
 
 // google login validation

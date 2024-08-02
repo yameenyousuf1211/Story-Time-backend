@@ -53,17 +53,16 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
     message: 'Please provide at least one field to check'
   });
 
-  const results = await Promise.all(checkPromises);
-
+  const results = await Promise.all(checkPromises.map(p => p.check));
   const response = [];
 
-  const conflicts = results.map((result, index) => {
+  results.forEach((result, index) => {
     if (result) {
       response.push({ [checkPromises[index].field]: `${checkPromises[index].field} already exists` });
     }
-  })
+  });
 
-  if (conflicts.length >= 1) {
+  if (response.length > 0) {
     return generateResponse(response, 'Conflicts found', res);
   }
 

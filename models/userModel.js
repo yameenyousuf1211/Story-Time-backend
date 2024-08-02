@@ -26,7 +26,6 @@ const userSchema = new Schema({
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
     username: { type: String, default: "" },
-    countryCode: { type: String, default: null },   // regex like 'PK', 'US'
     phoneCode: { type: String, default: null }, // phoneCode like +92
     phoneNo: { type: String, default: null },
     completePhone: { type: String, select: false },

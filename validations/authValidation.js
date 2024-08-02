@@ -11,11 +11,6 @@ exports.registerUserValidation = Joi.object({
         'string.max': 'phone code must be at most {#limit} characters long.',
         'any.required': 'phone code is required.',
     }),
-    // regex like 'PK', 'US' length is 2
-    countryCode: Joi.string().regex(/^[A-Z]{2}$/).length(2).required().messages({
-        'string.pattern.base': 'country code is not valid.',
-        'any.required': 'country code is required.',
-    }),
     phoneNo: Joi.string().regex(/^\d*$/).min(7).max(14).required().messages({
         'string.pattern.base': 'phone number is not valid.',
         'string.min': 'phone number must be at least {#limit} characters long.',
@@ -93,11 +88,6 @@ exports.socialAuthValidation = Joi.object({
         'string.min': 'phone code must be at least {#limit} characters long.',
         'string.max': 'phone code must be at most {#limit} characters long.',
         'any.required': 'phone code is required.',
-    }),
-    // regex like 'PK', 'US' length is 2
-    countryCode: Joi.string().regex(/^[A-Z]{2}$/).length(2).required().messages({
-        'string.pattern.base': 'country code is not valid.',
-        'any.required': 'country code is required.',
     }),
     phoneNo: Joi.string().regex(/^\d*$/).min(7).max(14).required().messages({
         'string.pattern.base': 'phone number is not valid.',

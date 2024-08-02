@@ -2,7 +2,6 @@ const { Schema, model } = require("mongoose");
 
 const otpSchema = new Schema({
   email: { type: String, default: null },
-  completePhone: { type: String, default: null },
   otp: { type: Number, required: true },
 }, { timestamps: true, versionKey: false });
 

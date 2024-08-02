@@ -28,16 +28,9 @@ exports.register = asyncHandler(async (req, res, next) => {
         message: error.details[0].message
     });
 
-    body.completePhone = body.phoneCode + body.phoneNo;
-
     const userWithEmail = await findUser({ email: body.email });
-    const userWithPhone = await findUser({ completePhone: body.completePhone });
 
-    if (userWithEmail && userWithPhone) return next({
-        statusCode: STATUS_CODES.CONFLICT,
-        message: 'Both email and phone already exist'
-    });
-    else if (userWithEmail) return next({
+    if (userWithEmail) return next({
         statusCode: STATUS_CODES.CONFLICT,
         message: 'Email already exists'
     });
@@ -126,10 +119,10 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
         message: error.details[0].message
     });
 
-    const { email, phone: completePhone } = body;
-    const query = { $or: [{ email }, { completePhone }] };
+    const { email } = body;
+    const query = { email };
 
-    const user = await findUser({ ...query, role: ROLES.USER }).select('completePhone email');
+    const user = await findUser({ ...query, role: ROLES.USER }).select(' email');
     if (!user) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Invalid Information, Record Not Found!'
@@ -140,7 +133,7 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
 
     const otpObj = await addOTP({
         email: user.email,
-        completePhone: user.completePhone,
+
         otp: generateRandomOTP(),
     });
 
@@ -173,7 +166,7 @@ exports.verifyCode = asyncHandler(async (req, res, next) => {
         message: 'OTP expired'
     });
 
-    const user = await findUser({ $or: [{ email: otpObj.email, completePhone: otpObj.completePhone }] });
+    const user = await findUser({ email: otpObj.email });
     // throw error if user not found via email or phone
     if (!user) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
@@ -321,7 +314,6 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
     });
 
     if (!body.email) body.email = null;
-    body.completePhone = body.phoneCode + body.phoneNo;
     body.authProvider = AUTH_PROVIDERS.GOOGLE;
 
     const generateUserId = getMongoId();
@@ -353,7 +345,6 @@ exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
     });
 
     if (!body.email) body.email = null;
-    body.completePhone = body.phoneCode + body.phoneNo;
     body.authProvider = AUTH_PROVIDERS.FACEBOOK;
 
     const generateUserId = getMongoId();
@@ -386,7 +377,6 @@ exports.registerWithApple = asyncHandler(async (req, res, next) => {
     });
 
     if (!body.email) body.email = null;
-    body.completePhone = body.phoneCode + body.phoneNo;
     body.authProvider = AUTH_PROVIDERS.APPLE;
 
     const generateUserId = getMongoId();

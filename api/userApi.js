@@ -27,11 +27,11 @@ class UserAPI {
     router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
     router.get('/user-count', getGuestAndUserCount);
 
-    router.post('/check-availability', checkAvailability); // checking uniqueness of email, phone, or username (1 at a time)
+    router.post('/check-availability', checkAvailability); // checking uniqueness of email, or username (1 at a time)
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);
     router.post('/report-user', authMiddleware([ROLES.USER]), reportUser);
     router.post('/card', authMiddleware(Object.values(ROLES)), addOrUpdateCard);
-    router.post('/availability', authMiddleware(Object.values(ROLES)), checkAllAvailability);  // checking uniqueness of email, phone, or username (all at once)
+    router.post('/availability', authMiddleware(Object.values(ROLES)), checkAllAvailability);  // checking uniqueness of email, or username (all at once)
     router.post('/update-guest-count', updateGuestCount);
 
     router.put('/update-profile', authMiddleware(Object.values(ROLES)),

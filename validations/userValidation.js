@@ -25,9 +25,6 @@ exports.updateProfileValidation = Joi.object({
     "any.required": "Last name is required.",
   }),
   username: Joi.string().min(1).max(20).required(),
-  zipCode: Joi.string().required(),
-  state: Joi.string().required(),
-  city: Joi.string().required(),
 })
 
 // toggle notifications validation

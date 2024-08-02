@@ -34,10 +34,6 @@ exports.register = asyncHandler(async (req, res, next) => {
         statusCode: STATUS_CODES.CONFLICT,
         message: 'Email already exists'
     });
-    else if (userWithPhone) return next({
-        statusCode: STATUS_CODES.CONFLICT,
-        message: 'Phone already exists'
-    });
     body.decryptedPassword = body.password;
 
     // hash password
@@ -167,7 +163,7 @@ exports.verifyCode = asyncHandler(async (req, res, next) => {
     });
 
     const user = await findUser({ email: otpObj.email });
-    // throw error if user not found via email or phone
+    // throw error if user not found via email
     if (!user) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'User not found'

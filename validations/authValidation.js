@@ -35,7 +35,7 @@ exports.loginUserValidation = Joi.object({
 
 // send code validation
 exports.sendCodeValidation = Joi.object({
-    email: Joi.string().email({ minDomainSegments: 2 }),
+    email: Joi.string().email({ minDomainSegments: 2 }).required(),
 })
 
 exports.codeValidation = Joi.object({

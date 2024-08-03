@@ -118,7 +118,7 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
     const { email } = body;
     const query = { email };
 
-    const user = await findUser({ ...query, role: ROLES.USER }).select(' email');
+    const user = await findUser({ ...query, role: ROLES.USER }).select('email');
     if (!user) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Invalid Information, Record Not Found!'
@@ -129,7 +129,6 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
 
     const otpObj = await addOTP({
         email: user.email,
-
         otp: generateRandomOTP(),
     });
 

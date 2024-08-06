@@ -6,12 +6,29 @@ const { ApiError } = require("../utils/apiError");
 const { Types } = require("mongoose");
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants");
 const { sendMessageValidation } = require("../validations/supportChatValidation");
+const { findUser } = require("../models/userModel");
 
 // listener for new chat
 const createChatEvent = (socket, io) => {
-    socket.on("create-chat", async (user) => {
-        const chat = await createChat({ user });
-        io.emit("create-chat", chat);
+    socket.on("create-chat", async (userId) => {
+        const user = await findUser({ _id: userId });
+        if (!user) {
+            socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "User not found" });
+            return;
+        }
+        const chat = await createChat({ user: user._id });
+
+        const populatedChat = {
+            ...chat.toObject(),
+            user: {
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isActive: user.isActive,
+                isDeleted: user.isDeleted
+            }
+        };
+        io.emit("create-chat", populatedChat);
     });
 }
 

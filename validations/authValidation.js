@@ -72,7 +72,7 @@ exports.socialAuthValidation = Joi.object({
         "string.min": "Last name must be at least {#limit} characters long.",
         "string.max": "Last name must be at most {#limit} characters long.",
         "any.required": "Last name is required.",
-    }).required(),
+    }),
     username: Joi.string().min(1).max(20).required(),
 });
 

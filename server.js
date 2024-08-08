@@ -43,7 +43,7 @@ app.use(cookieSession({
 }));
 
 app.use(cors({
-    origin: ["http://localhost:3000", "https://story-time4.vercel.app"], credentials: true
+    origin: ["https://admin.storytime.social"], credentials: true
 }));
 
 app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project` }));

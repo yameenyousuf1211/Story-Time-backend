@@ -18,17 +18,27 @@ const createChatEvent = (socket, io) => {
         }
         const chat = await createChat({ user: user._id });
 
-        const populatedChat = {
-            ...chat.toObject(),
+        const response = {
+            chat:{
+                _id: chat._id,
+                status: chat.status,
+                lastMessage: chat.lastMessage,
+                createdAt: chat.createdAt,
+                updatedAt: chat.updatedAt,
+            },
+            unreadMessages: 0,
             user: {
                 _id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 isActive: user.isActive,
-                isDeleted: user.isDeleted
-            }
-        };
-        io.emit("create-chat", populatedChat);
+                isDeleted: user.isDeleted,
+                profileImage: user.profileImage
+            },
+            _id: chat._id,
+        }
+
+        io.emit("create-chat", response);
     });
 }
 

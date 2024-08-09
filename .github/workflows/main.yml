@@ -49,4 +49,4 @@ jobs:
     - run: git checkout main
     - run: git pull
     - run: npm install
-    - run: sudo pm2 restart story-time-api
+    - run: sudo pm2 restart apis-story-time

@@ -7,7 +7,7 @@ const supportMessageSchema = new Schema({
     chat: { type: Types.ObjectId, ref: "SupportChat" },
     user: { type: Types.ObjectId, ref: "User" },
     isAdmin: { type: Boolean, default: false },
-    text: { type: String, required: true },
+    text: { type: String },
     media: { type: [String], default: null },
     isRead: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });

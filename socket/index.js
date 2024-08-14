@@ -19,7 +19,7 @@ const createChatEvent = (socket, io) => {
         const chat = await createChat({ user: user._id });
 
         const response = {
-            chat:{
+            chat: {
                 _id: chat._id,
                 status: chat.status,
                 lastMessage: chat.lastMessage,
@@ -107,7 +107,8 @@ const sendMessageEvent = (socket, io) => {
     socket.on("send-message", async ({ chat, text, media = null }) => {
         try {
             console.log('sendMessageEvent :', chat, text, media);
-            const { error } = sendMessageValidation.validate({ chat, text });
+
+            const { error } = sendMessageValidation.validate({ chat, text, media });
             if (error) {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY, message: error.details[0].message });
                 return;
@@ -128,7 +129,7 @@ const sendMessageEvent = (socket, io) => {
                 chat,
                 user: chatObj.user,
                 isAdmin: socket.user.role === ROLES.ADMIN,
-                text,
+                text: text || null,
                 media
             });
 

@@ -4,6 +4,10 @@ const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
+const CryptoJS = require('crypto-js');
+const { hash } = require('bcrypt');
+const { updateUser } = require('../models/userModel');
+const { sendEmail } = require('./mailer');
 
 // console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
@@ -206,3 +210,32 @@ exports.sendFirebaseNotification = async ({ title, body, token }) => {
         return error;
     }
 };
+
+exports.generateAndSendPassword = async (user) => {
+    // Generate a random password
+    const password = CryptoJS.lib.WordArray.random(6).toString();
+    console.log('PASSWORD >>>>', password);
+
+    // Hash the password
+    const hashedPassword = await hash(password, 10);
+
+    await updateUser(
+        { _id: user._id },
+        { $set: { password: hashedPassword, } }
+    );
+
+    const subject = 'Your Account Credentials';
+    const message = `
+    Your account has been created successfully.
+    
+    Your login credentials are:
+    Email: ${user.email}
+    Password: ${password}
+    
+    Please keep this information secure and consider changing your password after your first login.
+    `;
+
+    await sendEmail({ email: user.email, subject, message });
+
+    return password;
+}

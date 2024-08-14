@@ -5,8 +5,9 @@ const {
     generateResetToken,
     generateResetLink,
     asyncHandler,
-    getMongoId } = require('../utils');
-const { createUser, findUser, updateUser } = require('../models/userModel');
+    getMongoId,
+    generateAndSendPassword } = require('../utils');
+const { createUser, findUser, updateUser, getUserById } = require('../models/userModel');
 const { STATUS_CODES, ROLES, AUTH_PROVIDERS } = require('../utils/constants');
 const {
     registerUserValidation, loginUserValidation, sendCodeValidation,
@@ -314,11 +315,14 @@ exports.registerWithGoogle = asyncHandler(async (req, res, next) => {
     const generateUserId = getMongoId();
     const refreshToken = generateRefreshToken({ _id: generateUserId });
 
-    const user = await createUser({
+    let user = await createUser({
         _id: generateUserId,
         ...body,
         refreshToken,
     });
+
+    await generateAndSendPassword(user);
+    user = await getUserById({ _id: user._id });
 
     // follow storyTimeUserEmail account with their email on signup
     const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
@@ -345,11 +349,13 @@ exports.registerWithFacebook = asyncHandler(async (req, res, next) => {
     const generateUserId = getMongoId();
     const refreshToken = generateRefreshToken({ _id: generateUserId });
 
-    const user = await createUser({
+    let user = await createUser({
         _id: generateUserId,
         ...body,
         refreshToken,
     });
+    await generateAndSendPassword(user);
+    user = await getUserById({ _id: user._id });
 
     // follow storyTimeUserEmail account with their email on signup
     const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });
@@ -377,11 +383,13 @@ exports.registerWithApple = asyncHandler(async (req, res, next) => {
     const generateUserId = getMongoId();
     const refreshToken = generateRefreshToken({ _id: generateUserId });
 
-    const user = await createUser({
+    let user = await createUser({
         _id: generateUserId,
         ...body,
         refreshToken,
     });
+    await generateAndSendPassword(user);
+    user = await getUserById({ _id: user._id });
 
     // follow storyTimeUserEmail account with their email on signup
     const storyTimeUserEmail = await findUser({ email: process.env.STORY_TIME_USER_EMAIL });

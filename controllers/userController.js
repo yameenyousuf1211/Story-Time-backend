@@ -477,12 +477,19 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
+  const { status } = req.body;
+
+  if (!status == "true" || !status == "false") return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please, provide valid status.'
+  });
+
   const user = await findUser({ _id: userId });
 
-  user.isSubscribed = !user.isSubscribed;
+  user.isSubscribed = status;
   await user.save();
 
-  const message = user.isSubscribed ? 'User subscribed successfully' : 'User unsubscribed successfully';
+  const message = status ? 'User subscribed successfully' : 'User unsubscribed successfully';
   generateResponse(user, message, res);
 });
 

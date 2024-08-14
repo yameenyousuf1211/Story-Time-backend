@@ -463,16 +463,27 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [userCount, guestCounts] = await Promise.all([
-    getUserCount({}),
-    getGuestCount({})
+  const [PremiumUserCount, guestCounts] = await Promise.all([
+    getUserCount({ isSubscribed: true }),
+    getGuestCount({}),
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
   const response = {
-    userCount,
+    PremiumUserCount,
     guestCount
   };
   generateResponse(response, 'Total Guest and User Count', res);
+});
+
+exports.subscribeUser = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const user = await findUser({ _id: userId });
+
+  user.isSubscribed = !user.isSubscribed;
+  await user.save();
+
+  const message = user.isSubscribed ? 'User subscribed successfully' : 'User unsubscribed successfully';
+  generateResponse(user, message, res);
 });
 
 // create default admin account

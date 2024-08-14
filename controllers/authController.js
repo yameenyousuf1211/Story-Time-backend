@@ -11,7 +11,8 @@ const { STATUS_CODES, ROLES, AUTH_PROVIDERS } = require('../utils/constants');
 const {
     registerUserValidation, loginUserValidation, sendCodeValidation,
     codeValidation, resetPasswordValidation, refreshTokenValidation,
-    socialAuthValidation, socialLoginValidation } = require('../validations/authValidation');
+    socialAuthValidation, socialLoginValidation,
+    appleSocailAuthValidation } = require('../validations/authValidation');
 const { compare, hash } = require('bcrypt');
 const { deleteOTPs, addOTP, getOTP } = require('../models/otpModel');
 const { sendEmail } = require('../utils/mailer');
@@ -365,13 +366,12 @@ exports.registerWithApple = asyncHandler(async (req, res, next) => {
     const body = parseBody(req.body);
 
     // Joi validation
-    const { error } = socialAuthValidation.validate(body);
+    const { error } = appleSocailAuthValidation.validate(body);
     if (error) return next({
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: error.details[0].message
     });
 
-    if (!body.email) body.email = null;
     body.authProvider = AUTH_PROVIDERS.APPLE;
 
     const generateUserId = getMongoId();

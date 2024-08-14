@@ -76,6 +76,11 @@ exports.socialAuthValidation = Joi.object({
     username: Joi.string().min(1).max(20).required(),
 });
 
+exports.appleSocailAuthValidation = Joi.object({
+    socialAuthId: Joi.string().required(),
+    fcmToken: Joi.string().required(),
+});
+
 // google login validation
 exports.socialLoginValidation = Joi.object({
     socialAuthId: Joi.string().required(),

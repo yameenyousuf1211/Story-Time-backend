@@ -19,7 +19,9 @@ const createChatEvent = (socket, io) => {
         const chat = await createChat({ user: user._id });
 
         const response = {
-            chat: {
+
+            chat:{
+
                 _id: chat._id,
                 status: chat.status,
                 lastMessage: chat.lastMessage,

@@ -129,7 +129,7 @@ const sendMessageEvent = (socket, io) => {
                 chat,
                 user: chatObj.user,
                 isAdmin: socket.user.role === ROLES.ADMIN,
-                text: text || null,
+                text: text,
                 media
             });
 

@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation, subscribeUserValidatiion } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -463,16 +463,36 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [userCount, guestCounts] = await Promise.all([
-    getUserCount({}),
-    getGuestCount({})
+  const [PremiumUserCount, guestCounts] = await Promise.all([
+    getUserCount({ isSubscribed: true }),
+    getGuestCount({}),
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
   const response = {
-    userCount,
+    PremiumUserCount,
     guestCount
   };
   generateResponse(response, 'Total Guest and User Count', res);
+});
+
+exports.subscribeUser = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const { status } = req.body;
+
+  // Joi validation
+  const { error } = subscribeUserValidatiion.validate(req.body);
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
+  });
+
+  const user = await findUser({ _id: userId });
+
+  user.isSubscribed = status;
+  await user.save();
+
+  const message = status ? 'User subscribed successfully' : 'User unsubscribed successfully';
+  generateResponse(user, message, res);
 });
 
 // create default admin account

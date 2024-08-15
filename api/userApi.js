@@ -6,7 +6,8 @@ const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle,
   reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard,
   getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo,
   toggleUserProfileMode, checkAllAvailability, updateGuestCount,
-  getGuestAndUserCount } = require('../controllers/userController');
+  getGuestAndUserCount,
+  subscribeUser } = require('../controllers/userController');
 const { upload } = require("../utils/s3Upload");
 
 class UserAPI {
@@ -42,6 +43,7 @@ class UserAPI {
     router.put('/update-status', authMiddleware([ROLES.ADMIN]), userStatusToggle);
     router.put('/admin-info', authMiddleware([ROLES.ADMIN]), editAdminInfo);
     router.put('/profile-mode', authMiddleware([ROLES.USER]), toggleUserProfileMode);
+    router.put('/subscribe', authMiddleware(Object.values(ROLES)), subscribeUser);
 
     router.delete('/delete-account', authMiddleware(Object.values(ROLES)), deleteUser);
     router.delete('/delete-card', authMiddleware(Object.values(ROLES)), deleteCard);

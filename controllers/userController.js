@@ -2,7 +2,7 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation } = require('../validations/userValidation');
+const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation, subscribeUserValidatiion } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -479,9 +479,11 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const { status } = req.body;
 
-  if (!status == "true" || !status == "false") return next({
+  // Joi validation
+  const { error } = subscribeUserValidatiion.validate(req.body);
+  if (error) return next({
     statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: 'Please, provide valid status.'
+    message: error.details[0].message
   });
 
   const user = await findUser({ _id: userId });

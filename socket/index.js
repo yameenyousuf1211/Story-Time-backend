@@ -19,9 +19,7 @@ const createChatEvent = (socket, io) => {
         const chat = await createChat({ user: user._id });
 
         const response = {
-
-            chat:{
-
+            chat: {
                 _id: chat._id,
                 status: chat.status,
                 lastMessage: chat.lastMessage,
@@ -82,13 +80,13 @@ const getChatMessagesEvent = (socket) => {
             }
 
             const role = socket.user.role;
-            const query = { chat, isAdmin: role != ROLES.ADMIN, isRead: false };
+            const isAdmin = role === ROLES.ADMIN;
 
-            // read all messages sent by other
-            await readMessages(query);
+            await readMessages({ chat, isAdmin: !isAdmin });
 
-            const unreadCount = await countMessages(query);
-            socket.emit(`unread-count-${chat}`, { unreadCount });
+            const unreadCount = await countMessages({ chat, isAdmin: !isAdmin, isRead: false });
+
+            socket.emit(`unread-count-${chat}`, { chatId: chat, unreadCount });
 
             const messagesData = await findMessages({ query: { chat }, page, limit });
 
@@ -147,6 +145,31 @@ const sendMessageEvent = (socket, io) => {
                 });
 
             io.emit(`send-message-${chat}`, message);
+
+            const adminUnreadCount = await countMessages({
+                chat: chat,
+                isRead: false,
+                isAdmin: false
+            });
+
+            const userUnreadCount = await countMessages({
+                chat: chat,
+                isRead: false,
+                isAdmin: true
+            });
+
+            // Emit unread count to admin
+            io.to('admins').emit(`unread-count-${chat}`, {
+                chatId: chat,
+                unreadCount: adminUnreadCount
+            });
+
+            // Emit unread count to user
+            io.to(supportChat.user._id.toString()).emit(`unread-count-${chat}`, {
+                chatId: chat,
+                unreadCount: userUnreadCount
+            });
+
         } catch (error) {
             console.error('Error in sendMessageEvent:', error);
             socket.emit("socket-error", { message: error.message || "Something went wrong while sending the message." });
@@ -193,6 +216,12 @@ exports.initializeSocketIO = (io) => {
             socket.user = decodedToken;
 
             console.log('Socket connected');
+
+            if (socket.user.role === ROLES.ADMIN) {
+                socket.join('admins');
+            } else {
+                socket.join(socket.user.id.toString());
+            }
 
             // Common events that needs to be mounted on the initialization
             createChatEvent(socket, io);

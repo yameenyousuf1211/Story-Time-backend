@@ -463,38 +463,25 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [guestCounts, result] = await Promise.all([
+
+  const [guestCounts, countResponse] = await Promise.all([
     getGuestCount({}),
-    aggregateDocumentCount([
-      {
-        $group: {
-          _id: "$isSubscribed",
-          count: { $sum: 1 }
-        }
-      }
-    ])
+    getPremiumNonPremiumCount(),
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
 
-  const counts = result.reduce(
-    (acc, curr) => {
-      if (curr._id === true) {
-        acc.premiumUsersCount = curr.count;
-      } else {
-        acc.nonPremiumUsersCount = curr.count;
-      }
-      return acc;
-    },
-    { premiumUsersCount: 0, nonPremiumUsersCount: 0 }
-  );
+  
+   const{ premiumUsersCount, nonPremiumUsersCount} = countResponse
+  
 
   const response = {
     guestCount,
-    premiumUsersCount: counts.premiumUsersCount,
-    nonPremiumUsersCount: counts.nonPremiumUsersCount,
+    premiumUsersCount,
+    nonPremiumUsersCount,
   };
 
   generateResponse(response, 'Total Guest and User Count', res);
+
 });
 
 

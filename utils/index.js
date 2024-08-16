@@ -17,6 +17,7 @@ exports.generateResponse = (data, message, res, code = 200) => {
     });
 }
 
+
 // Body parsing utility
 exports.parseBody = (body) => typeof body === 'object' ? body : JSON.parse(body);
 

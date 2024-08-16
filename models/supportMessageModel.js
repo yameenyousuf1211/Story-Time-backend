@@ -66,3 +66,31 @@ exports.countMessages = (query) => SupportMessageModel.countDocuments(query);
 exports.readMessages = (query) => SupportMessageModel.updateMany(query, { $set: { isRead: true } });
 
 exports.aggregateDocument = (query) => SupportMessageModel.aggregate(query);
+
+
+exports.getUserAdminUnreadCount = async(chatId)=>{
+      const response = await SupportMessageModel.aggregate([
+        {
+            $match: {
+                chat: new Types.ObjectId(chatId), // Fix: Ensure `new` is used with `ObjectId`
+                isRead: false
+            }
+        },
+        {
+            $group: {
+                _id: "$isAdmin",
+                count: { $sum: 1 }
+            }
+        }
+    ])
+    const counts = response.reduce((acc, curr) => {
+        if (curr._id === true) {
+            acc.userUnreadCount = curr.count;
+        } else {
+            acc.adminUnreadCount = curr.count;
+        }
+        return acc;
+    }, { adminUnreadCount: 0, userUnreadCount: 0 });
+
+    return counts;
+}

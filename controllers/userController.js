@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount, aggregateDocumentCount } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -463,19 +463,41 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [PremiumUserCount, guestCounts, nonSubscribedUserCount] = await Promise.all([
-    getUserCount({ isSubscribed: true }),
+  const [guestCounts, result] = await Promise.all([
     getGuestCount({}),
-    getUserCount({ isSubscribed: false })
+    aggregateDocumentCount([
+      {
+        $group: {
+          _id: "$isSubscribed",
+          count: { $sum: 1 }
+        }
+      }
+    ])
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
+
+  const counts = result.reduce(
+    (acc, curr) => {
+      if (curr._id === true) {
+        acc.premiumUsersCount = curr.count;
+      } else {
+        acc.nonPremiumUsersCount = curr.count;
+      }
+      return acc;
+    },
+    { premiumUsersCount: 0, nonPremiumUsersCount: 0 }
+  );
+
   const response = {
-    PremiumUserCount,
     guestCount,
-    nonSubscribedUserCount
+    premiumUsersCount: counts.premiumUsersCount,
+    nonPremiumUsersCount: counts.nonPremiumUsersCount,
   };
+
   generateResponse(response, 'Total Guest and User Count', res);
 });
+
+
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;

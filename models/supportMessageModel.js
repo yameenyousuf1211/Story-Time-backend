@@ -64,3 +64,5 @@ exports.updateMessageById = (messageId, obj) => SupportMessageModel.findByIdAndU
 exports.countMessages = (query) => SupportMessageModel.countDocuments(query);
 
 exports.readMessages = (query) => SupportMessageModel.updateMany(query, { $set: { isRead: true } });
+
+exports.aggregateDocument = (query) => SupportMessageModel.aggregate(query);

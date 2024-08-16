@@ -1,7 +1,7 @@
 const { createChat, findChat, updateChat } = require("../models/supportChatModel");
 const jwt = require('jsonwebtoken');
 const { getChatsQuery } = require("../controllers/queries/supportChatQueries");
-const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById, countMessages } = require("../models/supportMessageModel");
+const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById, countMessages, aggregateDocument } = require("../models/supportMessageModel");
 const { ApiError } = require("../utils/apiError");
 const { Types } = require("mongoose");
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants");
@@ -146,28 +146,40 @@ const sendMessageEvent = (socket, io) => {
 
             io.emit(`send-message-${chat}`, message);
 
-            const adminUnreadCount = await countMessages({
-                chat: chat,
-                isRead: false,
-                isAdmin: false
-            });
+            const result = await aggregateDocument([
+                {
+                    $match: {
+                        chat: new Types.ObjectId(chat), // Fix: Ensure `new` is used with `ObjectId`
+                        isRead: false
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$isAdmin",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]);
 
-            const userUnreadCount = await countMessages({
-                chat: chat,
-                isRead: false,
-                isAdmin: true
-            });
+            const counts = result.reduce((acc, curr) => {
+                if (curr._id === true) {
+                    acc.userUnreadCount = curr.count;
+                } else {
+                    acc.adminUnreadCount = curr.count;
+                }
+                return acc;
+            }, { adminUnreadCount: 0, userUnreadCount: 0 });
 
             // Emit unread count to admin
             io.to('admins').emit(`unread-count-${chat}`, {
                 chatId: chat,
-                unreadCount: adminUnreadCount
+                unreadCount: counts.adminUnreadCount
             });
 
             // Emit unread count to user
             io.to(supportChat.user._id.toString()).emit(`unread-count-${chat}`, {
                 chatId: chat,
-                unreadCount: userUnreadCount
+                unreadCount: counts.userUnreadCount
             });
 
         } catch (error) {

@@ -146,14 +146,14 @@ const sendMessageEvent = (socket, io) => {
 
             io.emit(`send-message-${chat}`, message);
 
-          const countResponse = getUserAdminUnreadCount(chat)
-
-            const { adminUnreadCount,userUnreadCount} = countResponse
+            const countResponse = await getUserAdminUnreadCount(chat)
+            console.log('countResponse :', countResponse);
+            const { adminUnreadCount, userUnreadCount } = countResponse
 
             // Emit unread count to admin
             io.to('admins').emit(`unread-count-${chat}`, {
                 chatId: chat,
-                unreadCount:adminUnreadCount
+                unreadCount: adminUnreadCount
             });
 
             // Emit unread count to user

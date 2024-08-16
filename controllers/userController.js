@@ -463,14 +463,16 @@ exports.updateGuestCount = asyncHandler(async (req, res, next) => {
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
-  const [PremiumUserCount, guestCounts] = await Promise.all([
+  const [PremiumUserCount, guestCounts, nonSubscribedUserCount] = await Promise.all([
     getUserCount({ isSubscribed: true }),
     getGuestCount({}),
+    getUserCount({ isSubscribed: false })
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
   const response = {
     PremiumUserCount,
-    guestCount
+    guestCount,
+    nonSubscribedUserCount
   };
   generateResponse(response, 'Total Guest and User Count', res);
 });

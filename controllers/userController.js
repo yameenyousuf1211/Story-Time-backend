@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount, aggregateDocumentCount } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount, aggregateDocumentCount, getPremiumNonPremiumCount } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -470,9 +470,9 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
   ]);
   const guestCount = guestCounts ? guestCounts.count : 0;
 
-  
-   const{ premiumUsersCount, nonPremiumUsersCount} = countResponse
-  
+
+  const { premiumUsersCount, nonPremiumUsersCount } = countResponse
+
 
   const response = {
     guestCount,

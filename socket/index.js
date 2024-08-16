@@ -216,12 +216,7 @@ exports.initializeSocketIO = (io) => {
             socket.user = decodedToken;
 
             console.log('Socket connected');
-
-            if (socket.user.role === ROLES.ADMIN) {
-                socket.join('admins');
-            } else {
-                socket.join(socket.user.id.toString());
-            }
+            socket.join(socket.user.role === ROLES.ADMIN ? 'admins' : socket.user.id.toString());
 
             // Common events that needs to be mounted on the initialization
             createChatEvent(socket, io);

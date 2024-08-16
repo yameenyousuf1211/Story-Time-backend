@@ -102,3 +102,5 @@ exports.deleteCard = (query) => UserModel.deleteOne(query);
 exports.getUsers = (query) => UserModel.find({ ...query, isDeleted: false });
 
 exports.getUserById = (id) => UserModel.find(id);
+
+exports.aggregateDocumentCount = (query) => UserModel.aggregate(query);

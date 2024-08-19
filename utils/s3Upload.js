@@ -16,7 +16,10 @@ function config() {
 
 const fileFilter = (req, file, cb) => {
   try {
-    if (file.mimetype.split("/")[0] === "image") {
+    const fileType = file.mimetype.split("/")[0];
+    const fileExtension = file.mimetype.split("/")[1];
+
+    if (fileType === "image" || fileExtension === "pdf") {
       cb(null, true);
     } else {
       cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE"), false);
@@ -25,6 +28,7 @@ const fileFilter = (req, file, cb) => {
     console.log('fileFilter error: ', e);
   }
 };
+
 
 exports.upload = multer({
   storage,
@@ -35,29 +39,47 @@ exports.upload = multer({
 exports.s3Uploadv3 = async (files, base64 = false) => {
   try {
     const s3client = new S3Client(config());
-    let keys = [];
-    let key = ''
-    let buf;
-    const params = files.map((file) => {
+    const uploadPromises = [];
+    const keys = [];
+
+    files.map((file) => {
+      let key = `uploads/${uuid()}-${base64 ? 'image.png' : file.originalname}`;
+      let contentType = file.mimetype;
+      let body = base64 ? Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64') : file.buffer;
+
       if (base64) {
-        buf = Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+        // Extract MIME type if available, otherwise default to image/png
+        const mimeMatch = file.match(/^data:(image\/\w+);base64,/);
+        contentType = mimeMatch ? mimeMatch[1] : 'image/png';
+        key = `uploads/${uuid()}.${contentType.split('/')[1]}`;
       }
-      key = `uploads/${uuid()}-${base64 ? '.png' : file.originalname}`;
-      return {
+
+      const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: key,
-        Body: base64 ? buf : file.buffer,
-        ContentEncoding: 'base64',
-        ContentType: 'image/png'
+        Body: body,
+        ContentType: contentType,
+        ...(base64 && { ContentEncoding: 'base64' }),
       };
+
+      const uploadPromise = s3client.send(new PutObjectCommand(params))
+        .then(() => {
+          keys.push(key);
+        })
+        .catch((error) => {
+          console.error(`Error uploading file ${key}:`, error);
+          throw error;
+        });
+
+      uploadPromises.push(uploadPromise);
     });
 
-    await Promise.all(
-      params.map((param) => s3client.send(new PutObjectCommand(param)).then((v) => { console.log(v); keys.push(param.Key) }))
-    );
+    await Promise.all(uploadPromises);
+
     return keys;
   } catch (e) {
-    console.log(e);
+    console.log('Error uploading files:', e);
+    throw e;
   }
 };
 

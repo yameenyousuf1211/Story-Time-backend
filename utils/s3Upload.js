@@ -39,9 +39,10 @@ exports.upload = multer({
 exports.s3Uploadv3 = async (files, base64 = false) => {
   try {
     const s3client = new S3Client(config());
-    let keys = [];
+    const uploadPromises = [];
+    const keys = [];
 
-    const params = files.map((file) => {
+    files.map((file) => {
       let key = `uploads/${uuid()}-${base64 ? 'image.png' : file.originalname}`;
       let contentType = file.mimetype;
       let body = base64 ? Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64') : file.buffer;
@@ -53,27 +54,32 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
         key = `uploads/${uuid()}.${contentType.split('/')[1]}`;
       }
 
-      return {
+      const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: key,
         Body: body,
         ContentType: contentType,
         ...(base64 && { ContentEncoding: 'base64' }),
       };
+
+      const uploadPromise = s3client.send(new PutObjectCommand(params))
+        .then(() => {
+          keys.push(key);
+        })
+        .catch((error) => {
+          console.error(`Error uploading file ${key}:`, error);
+          throw error;
+        });
+
+      uploadPromises.push(uploadPromise);
     });
 
-    await Promise.all(
-      params.map((param) => 
-        s3client.send(new PutObjectCommand(param)).then((v) => {
-          console.log(v); 
-          keys.push(param.Key);
-        })
-      )
-    );
+    await Promise.all(uploadPromises);
 
     return keys;
   } catch (e) {
     console.log('Error uploading files:', e);
+    throw e;
   }
 };
 

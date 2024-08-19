@@ -46,9 +46,11 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
       let contentType = file.mimetype;
       let body = base64 ? Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64') : file.buffer;
 
-      // If base64, assume it's an image and set the content type accordingly
       if (base64) {
-        contentType = 'image/png';
+        // Extract MIME type if available, otherwise default to image/png
+        const mimeMatch = file.match(/^data:(image\/\w+);base64,/);
+        contentType = mimeMatch ? mimeMatch[1] : 'image/png';
+        key = `uploads/${uuid()}.${contentType.split('/')[1]}`;
       }
 
       return {

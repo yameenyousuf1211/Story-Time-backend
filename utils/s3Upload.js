@@ -16,7 +16,10 @@ function config() {
 
 const fileFilter = (req, file, cb) => {
   try {
-    if (file.mimetype.split("/")[0] === "image") {
+    const fileType = file.mimetype.split("/")[0];
+    const fileExtension = file.mimetype.split("/")[1];
+
+    if (fileType === "image" || fileExtension === "pdf") {
       cb(null, true);
     } else {
       cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE"), false);
@@ -25,6 +28,7 @@ const fileFilter = (req, file, cb) => {
     console.log('fileFilter error: ', e);
   }
 };
+
 
 exports.upload = multer({
   storage,
@@ -36,28 +40,38 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
   try {
     const s3client = new S3Client(config());
     let keys = [];
-    let key = ''
-    let buf;
+
     const params = files.map((file) => {
+      let key = `uploads/${uuid()}-${base64 ? 'image.png' : file.originalname}`;
+      let contentType = file.mimetype;
+      let body = base64 ? Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64') : file.buffer;
+
+      // If base64, assume it's an image and set the content type accordingly
       if (base64) {
-        buf = Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+        contentType = 'image/png';
       }
-      key = `uploads/${uuid()}-${base64 ? '.png' : file.originalname}`;
+
       return {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: key,
-        Body: base64 ? buf : file.buffer,
-        ContentEncoding: 'base64',
-        ContentType: 'image/png'
+        Body: body,
+        ContentType: contentType,
+        ...(base64 && { ContentEncoding: 'base64' }),
       };
     });
 
     await Promise.all(
-      params.map((param) => s3client.send(new PutObjectCommand(param)).then((v) => { console.log(v); keys.push(param.Key) }))
+      params.map((param) => 
+        s3client.send(new PutObjectCommand(param)).then((v) => {
+          console.log(v); 
+          keys.push(param.Key);
+        })
+      )
     );
+
     return keys;
   } catch (e) {
-    console.log(e);
+    console.log('Error uploading files:', e);
   }
 };
 

@@ -3,10 +3,10 @@ const fs = require('fs');
 const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
-// const serviceAccount = require("../firebase.json");
+const serviceAccount = require("../firebase.json");
 
-// // console.log('serviceAccount', serviceAccount);
-// const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
+// console.log('serviceAccount', serviceAccount);
+const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
 
 // Response generation utility
 exports.generateResponse = (data, message, res, code = 200) => {

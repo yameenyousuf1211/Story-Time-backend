@@ -76,6 +76,11 @@ exports.login = asyncHandler(async (req, res, next) => {
         message: 'Email not found'
     });
 
+    if (!user.password) return next({
+        statusCode: STATUS_CODES.UNAUTHORIZED,
+        message: 'This account is linked to a social login. Please use your social account to log in.'
+    });
+
     // checking password match
     const isMatch = await compare(body.password, user.password);
     if (!isMatch) return next({

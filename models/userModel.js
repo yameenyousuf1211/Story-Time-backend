@@ -61,7 +61,7 @@ const GuestCountModel = model('GuestCount', guestCountSchema);
 
 exports.createOrUpdateGuestCount = (obj) => GuestCountModel.findOneAndUpdate({}, obj, { new: true, upsert: true });
 
-exports.getGuestCount = () => GuestCountModel.findOne();
+exports.getGuestCount = () => GuestCountModel.countDocuments();
 
 exports.findGuest = (query) => GuestCountModel.findOne(query);
 

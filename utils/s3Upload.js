@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand, S3, DeleteObjectCommand } = require("@aws-sd
 const uuid = require("uuid").v4;
 const storage = multer.memoryStorage();
 
-function config() {
+exports.config = () => {
   return {
     region: process.env.AWS_REGION,
     endpoint: process.env.AWS_ENDPOINT,

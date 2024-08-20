@@ -11,7 +11,7 @@ exports.checkAllAvailabilityValidation = Joi.object({
 });
 
 exports.updateProfileValidation = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().email(),
   firstName: Joi.string().regex(/^[a-zA-Z]+[0-9]*$/).min(1).max(30).required().messages({
     "string.pattern.base": "First name is not valid.",
     "string.min": "First name must be at least {#limit} characters long.",

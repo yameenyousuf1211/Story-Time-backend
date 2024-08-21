@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand, S3, DeleteObjectCommand } = require("@aws-sd
 const uuid = require("uuid").v4;
 const storage = multer.memoryStorage();
 
-function config() {
+exports.config = () => {
   return {
     region: process.env.AWS_REGION,
     endpoint: process.env.AWS_ENDPOINT,
@@ -38,7 +38,7 @@ exports.upload = multer({
 
 exports.s3Uploadv3 = async (files, base64 = false) => {
   try {
-    const s3client = new S3Client(config());
+    const s3client = new S3Client(this.config());
     const uploadPromises = [];
     const keys = [];
 
@@ -62,16 +62,11 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
         ...(base64 && { ContentEncoding: 'base64' }),
       };
 
-      const uploadPromise = s3client.send(new PutObjectCommand(params))
-        .then(() => {
-          keys.push(key);
-        })
-        .catch((error) => {
-          console.error(`Error uploading file ${key}:`, error);
-          throw error;
-        });
-
+      const uploadPromise = s3client.send(new PutObjectCommand(params));
+      
       uploadPromises.push(uploadPromise);
+
+      keys.push(key);
     });
 
     await Promise.all(uploadPromises);
@@ -83,10 +78,11 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
   }
 };
 
+
 exports.deleteImage = async (images) => {
   try {
     if (images.length != 0 && images[0] == null) return;
-    const s3 = new S3Client(config());
+    const s3 = new S3Client(this.config());
 
     const params = images.map((file) => {
       console.log(file);

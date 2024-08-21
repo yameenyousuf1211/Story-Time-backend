@@ -498,7 +498,12 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 });
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
-  const { socialAuthId, email, status } = req.body;
+  const { socialAuthId = 'ABCD', email = 'ABCD', status } = req.body;
+
+  if (status === undefined) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: 'Please provide the status'
+  });
 
   const user = await findUser({
     $or: [

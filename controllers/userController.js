@@ -463,17 +463,17 @@ exports.createGuestUser = asyncHandler(async (req, res, next) => {
   let guestUser = await findGuest({ fcmToken });
 
   if (guestUser) {
-    return generateResponse(guestUser, 'Guest count updated successfully', res);
+    return generateResponse(guestUser, 'Guest found successfully', res);
   }
 
   // Get the count of guest users to generate the next guest ID
-  const guestCount = await getGuestCount();
+  const guestCount = await getGuestCount({});
   const nextGuestId = guestCount + 1;
 
   // Create a new guest user with the next guest ID
   guestUser = await createGuest({ guestId: nextGuestId, fcmToken });
 
-  return generateResponse(guestUser, 'Guest count updated successfully', res);
+  generateResponse(guestUser, 'Guest created successfully', res);
 });
 
 // get total guest and user count

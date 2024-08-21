@@ -1,7 +1,8 @@
 const { generateResponse, asyncHandler } = require('../utils');
 const { STATUS_CODES } = require('../utils/constants');
 const countryStateCity = require('country-state-city');
-const { s3Uploadv3 } = require('../utils/s3Upload');
+const { s3Uploadv3, config } = require('../utils/s3Upload');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 exports.DefaultHandler = asyncHandler(async (req, res, next) => {
     generateResponse(null, `${process.env.APP_NAME} API - Health check passed`, res);
@@ -57,4 +58,24 @@ exports.uploadMedia = asyncHandler(async (req, res, next) => {
 
     const media = await s3Uploadv3(req.files.media);
     generateResponse(media, 'Media uploaded successfully', res);
+});
+
+exports.downloadImage = asyncHandler(async (req, res, next) => {
+    const { key } = req.params;
+
+    const s3 = new S3Client(config());
+  
+    try {
+        const data = await s3.send(new GetObjectCommand({Bucket: process.env.AWS_BUCKET_NAME, Key: key}));
+     
+        res.setHeader('Content-Type', data.ContentType); 
+        res.setHeader('Content-Disposition', `attachment; filename="${key.split('/').pop()}"`); 
+
+        data.Body.pipe(res);
+    } catch (error) {
+        next({
+            statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
+            message: 'Error fetching image from S3',
+        });
+    }
 });

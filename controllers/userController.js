@@ -2,7 +2,10 @@ const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremi
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
-const { checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation, reportUserValidation, addCardValidation, getAllUsersForAdminValidation, editAdminInfoValidation, checkAllAvailabilityValidation, subscribeUserValidatiion } = require('../validations/userValidation');
+const {
+  checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation,
+  reportUserValidation, addCardValidation, editAdminInfoValidation, checkAllAvailabilityValidation
+} = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
 const { hash } = require('bcrypt');
@@ -494,19 +497,14 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
   generateResponse(response, 'Total Guest and User Count', res);
 });
 
-
-
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
-  const { email, status } = req.body;
+  const { socialAuthId, email, status } = req.body;
 
-  // Joi validation
-  const { error } = subscribeUserValidatiion.validate(req.body);
-  if (error) return next({
-    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: error.details[0].message
+  const user = await findUser({
+    $or: [
+      { socialAuthId },
+      { email }]
   });
-
-  const user = await findUser({ email });
 
   user.isSubscribed = status;
   await user.save();

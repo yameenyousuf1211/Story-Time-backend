@@ -456,30 +456,25 @@ exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
 });
 
 // update guest count
-exports.updateGuestCount = asyncHandler(async (req, res, next) => {
+exports.createGuestUser = asyncHandler(async (req, res, next) => {
   const { fcmToken } = req.body;
 
   // Check if the guest user exists by their fcmToken
   let guestUser = await findGuest({ fcmToken });
 
-  if (guestUser) return generateResponse(guestUser, 'Guest count updated successfully', res);
+  if (guestUser) {
+    return generateResponse(guestUser, 'Guest count updated successfully', res);
+  }
 
-  // Fetch the latest guest user by guestId in descending order
-  const latestGuestUser = await findGuest({}, { guestId: 1 })
-    .sort({ guestId: -1 })
-    .lean();
-
-  // Generate the next guestId based on the latest one, defaulting to '0001' if none found
-  const nextGuestId = latestGuestUser
-    ? String(Number(latestGuestUser.guestId) + 1).padStart(4, '0')
-    : '0001';
+  // Get the count of guest users to generate the next guest ID
+  const guestCount = await getGuestCount();
+  const nextGuestId = guestCount + 1;
 
   // Create a new guest user with the next guest ID
   guestUser = await createGuest({ guestId: nextGuestId, fcmToken });
 
   return generateResponse(guestUser, 'Guest count updated successfully', res);
 });
-
 
 // get total guest and user count
 exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {

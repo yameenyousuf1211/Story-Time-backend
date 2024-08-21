@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getUsers, createOrUpdateGuestCount, getGuestCount, getUserCount, aggregateDocumentCount, getPremiumNonPremiumCount, createGuest, findGuest } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -10,6 +10,7 @@ const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../mode
 const { findStoryById } = require('../models/storyModel');
 const { createReport, findReportById, findReports } = require('../models/reportModel');
 const { s3Uploadv3 } = require('../utils/s3Upload');
+const { getGuestCount, findGuest } = require('../models/guestModel');
 
 // check username availability
 exports.checkAvailability = asyncHandler(async (req, res, next) => {
@@ -456,7 +457,7 @@ exports.toggleUserProfileMode = asyncHandler(async (req, res, next) => {
 });
 
 // update guest count
-exports.createGuestUser = asyncHandler(async (req, res, next) => {
+exports.createOrFetchGuestUser = asyncHandler(async (req, res, next) => {
   const { fcmToken } = req.body;
 
   // Check if the guest user exists by their fcmToken

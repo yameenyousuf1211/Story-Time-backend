@@ -78,7 +78,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
     if (user.socialAuthId) return next({
         statusCode: STATUS_CODES.BAD_REQUEST,
-        message: 'please login with social account'
+        message: 'Please login with social account'
     });
 
     // checking password match

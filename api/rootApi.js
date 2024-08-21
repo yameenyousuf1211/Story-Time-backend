@@ -18,7 +18,7 @@ class RootAPI {
         router.get('/cities', getCitiesByState);
 
         router.post('/upload-media', upload.fields([{ name: "media", maxCount: 5 }]), uploadMedia);
-        router.post('/image-download',downloadImage);
+        router.post('/image-download/:key',downloadImage);
     }
 
     getRouter() {

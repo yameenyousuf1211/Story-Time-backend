@@ -4,11 +4,9 @@ const { ROLES } = require('../utils/constants');
 const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle,
   getAllFriends, updateProfile, notificationsToggle, blockToggle, getBlockList,
   reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard,
-  getAllUsersForAdmin, userStatusToggle, editAdminInfo, getAdminInfo,
-  toggleUserProfileMode, checkAllAvailability, updateGuestCount,
-  getGuestAndUserCount,
-  subscribeUser,
-  createGuestUser } = require('../controllers/userController');
+  getAllUsersForAdmin, userStatusToggle, editAdminInfo,
+  toggleUserProfileMode, checkAllAvailability, getGuestAndUserCount,
+  subscribeUser, createOrFetchGuestUser } = require('../controllers/userController');
 const { upload } = require("../utils/s3Upload");
 
 class UserAPI {
@@ -34,7 +32,7 @@ class UserAPI {
     router.post('/report-user', authMiddleware([ROLES.USER]), reportUser);
     router.post('/card', authMiddleware(Object.values(ROLES)), addOrUpdateCard);
     router.post('/availability', authMiddleware(Object.values(ROLES)), checkAllAvailability);  // checking uniqueness of email, or username (all at once)
-    router.post('/create-guest', createGuestUser);
+    router.post('/create-guest', createOrFetchGuestUser);
 
     router.put('/update-profile', authMiddleware(Object.values(ROLES)),
       upload.fields([{ name: 'coverImage', maxCount: 1 }, { name: 'profileImage', maxCount: 1 }]),

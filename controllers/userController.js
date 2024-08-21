@@ -496,8 +496,7 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
-  const userId = req.user.id;
-  const { status } = req.body;
+  const { userId, status } = req.body;
 
   // Joi validation
   const { error } = subscribeUserValidatiion.validate(req.body);

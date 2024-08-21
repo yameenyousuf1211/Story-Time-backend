@@ -80,5 +80,6 @@ exports.editAdminInfoValidation = Joi.object({
 })
 
 exports.subscribeUserValidatiion = Joi.object({
+  userId: Joi.string().required(),
   status: Joi.boolean().required()
 }).unknown(true);

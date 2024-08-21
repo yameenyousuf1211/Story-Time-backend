@@ -61,35 +61,21 @@ exports.uploadMedia = asyncHandler(async (req, res, next) => {
 });
 
 exports.downloadImage = asyncHandler(async (req, res, next) => {
-    const { key } = req.body;
-
-    if (!key) {
-        return next({
-            statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY, 
-            message: 'Please, provide key.'
-        });
-    }
+    const { key } = req.params;
 
     const s3 = new S3Client(config());
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: key,
-    };
-
+  
     try {
-        const data = await s3.send(new GetObjectCommand(params));
-        
+        const data = await s3.send(new GetObjectCommand({Bucket: process.env.AWS_BUCKET_NAME, Key: key}));
      
         res.setHeader('Content-Type', data.ContentType); 
         res.setHeader('Content-Disposition', `attachment; filename="${key.split('/').pop()}"`); 
 
-   
         data.Body.pipe(res);
     } catch (error) {
         next({
-            statusCode: 500,
+            statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
             message: 'Error fetching image from S3',
-            error: error.message
         });
     }
 });

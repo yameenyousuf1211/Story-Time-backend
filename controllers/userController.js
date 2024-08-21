@@ -511,6 +511,11 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
       { email }]
   });
 
+  if (!user) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'User not found'
+  });
+
   user.isSubscribed = status;
   await user.save();
 

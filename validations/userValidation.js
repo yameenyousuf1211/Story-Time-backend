@@ -77,9 +77,4 @@ exports.editAdminInfoValidation = Joi.object({
   username: Joi.string().min(3).max(20),
   email: Joi.string().email({ minDomainSegments: 2 }),
   password: Joi.string().min(8).max(30),
-})
-
-exports.subscribeUserValidatiion = Joi.object({
-  email: Joi.string().email().required(),
-  status: Joi.boolean().required()
-}).unknown(true);
+});

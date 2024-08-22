@@ -1,7 +1,7 @@
-const { createAndSendNotifications, getAllNotifications } = require('../models/notificationModel.js');
+const { getAllNotifications, createAndSendNotification } = require('../models/notificationModel.js');
 const { getUsers } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler, sendFirebaseNotification } = require('../utils');
-const { STATUS_CODES } = require('../utils/constants');
+const { STATUS_CODES, NOTIFICATION_TYPES } = require('../utils/constants');
 const { sendNotificationsByAdminValidation } = require('../validations/notificationValidation.js');
 
 // send notifications by admin
@@ -28,22 +28,40 @@ exports.sendNotificationByAdmin = asyncHandler(async (req, res, next) => {
 
     // if no users found return
     if (users.length === 0) return generateResponse(null, 'No users found', res);
+    const notification = await Promise.all(users.map(userId =>
+        createAndSendNotification({
+            senderId: req.user.id,
+            receiverId: userId,
+            type: NOTIFICATION_TYPES.ADMIN_NOTIFICATION,
+            message: body.message,
+            title: body.title,
+        })
+    ));
 
-    const notification = await createAndSendNotifications({ users, message: body.message, title: body.title });
     generateResponse(notification, 'Notifications sent successfully', res);
 });
 
 // get all notifications by admin
 exports.getAllNotifications = asyncHandler(async (req, res, next) => {
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
+    const { page = 1, limit = 10, type } = req.query;
 
-    const notificationsData = await getAllNotifications({ page, limit });
+    let query = {};
+    let populate = [];
+
+    query = { receiver: req.user.id };
+    if (type) query.type = type;
+
+    populate = [
+        { path: "sender", select: "userName photo firstName lastName" },
+        { path: "receiver", select: "userName photo firstName lastName" },
+        { path: "story" }
+    ];
+
+    const notificationsData = await getAllNotifications({ query, page, limit, populate });
+
     if (notificationsData?.notifications?.length === 0) {
-        generateResponse(null, 'No notifications found', res);
-        return;
+        return generateResponse(null, 'No notifications found', res);
     }
-
     generateResponse(notificationsData, 'Notifications found successfully', res);
 });
 

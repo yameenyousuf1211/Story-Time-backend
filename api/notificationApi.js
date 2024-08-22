@@ -12,7 +12,7 @@ class NotificationAPI {
     setupRoutes() {
         const router = this.router;
 
-        router.get('/', authMiddleware([ROLES.ADMIN]), getAllNotifications);
+        router.get('/', authMiddleware(Object.values(ROLES)), getAllNotifications);
         router.post('/', authMiddleware([ROLES.ADMIN]), sendNotificationByAdmin);
         router.post('/test', sendTestNotification);
     }

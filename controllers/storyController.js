@@ -1,11 +1,12 @@
 const { generateResponse, parseBody, asyncHandler, } = require('../utils');
 const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
-const { STATUS_CODES, STORY_TYPES } = require('../utils/constants');
+const { STATUS_CODES, STORY_TYPES, NOTIFICATION_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
 const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
 const { s3Uploadv3 } = require('../utils/s3Upload');
+const { createAndSendNotification } = require('../models/notificationModel');
 
 //Create Text Story
 exports.createStory = asyncHandler(async (req, res, next) => {
@@ -115,6 +116,20 @@ exports.likeStoryToggle = asyncHandler(async (req, res, next) => {
     // like the story
     story.likes.push(user);
     await story.save();
+
+    const contributorsToNotify = story.contributors.filter(contributor =>
+        contributor.toString() !== user.toString()
+    );
+
+    await Promise.all(contributorsToNotify.map(contributorId =>
+        createAndSendNotification({
+            senderId: user,
+            receiverId: contributorId,
+            type: NOTIFICATION_TYPES.LIKE_POST,
+            story: story.id
+        })
+    ));
+    console.log('story', story);
 
     generateResponse(story, 'Story liked successfully', res);
 });

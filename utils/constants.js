@@ -44,3 +44,10 @@ exports.AUTH_PROVIDERS = Object.freeze({
   FACEBOOK: 'facebook',
   APPLE: 'apple',
 });
+
+exports.NOTIFICATION_TYPES = Object.freeze({
+  LIKE_POST: 'LIKE_POST',
+  COMMENT: 'COMMENT',
+  ADMIN_NOTIFICATION: 'ADMIN_NOTIFICATION',
+  SHARE_POST: 'SHARE_POST',
+});

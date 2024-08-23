@@ -203,7 +203,7 @@ exports.addCommentOnStory = asyncHandler(async (req, res, next) => {
             senderId: req.user.id,
             receiverId: contributorId,
             type: NOTIFICATION_TYPES.COMMENT,
-            story: story.id
+            story: story._id
         })
     ));
     generateResponse(comment, 'Comment created successfully', res);

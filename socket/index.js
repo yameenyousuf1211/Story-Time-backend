@@ -154,14 +154,14 @@ const sendMessageEvent = (socket, io) => {
             const isAdmin = socket.user.role === ROLES.ADMIN;
 
             if (isAdmin) {
-                io.to(supportChat.user._id.toString()).emit(`unread-count-${chat}`, {
+                io.to(supportChat.user.toString()).emit(`unread-count-${chat}`, {
                     chatId: chat,
                     unreadCount: userUnreadCount
                 });
 
                 await createAndSendNotification({
-                    senderId: socket.user._id,
-                    receiverId: supportChat.user._id,
+                    senderId: socket.user.id,
+                    receiverId: supportChat.user,
                     type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
                     message: text
                 });
@@ -172,16 +172,12 @@ const sendMessageEvent = (socket, io) => {
                     unreadCount: adminUnreadCount
                 });
 
-                const admins = await getAdmins();
-                await Promise.all(admins.map(async (admin) => {
-                    await createAndSendNotification({
-                        senderId: socket.user._id,
-                        receiverId: admin._id,
-                        isReceiverAdmin: true,
-                        type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                        message: text
-                    });
-                }));
+                await createAndSendNotification({
+                    senderId: socket.user.id,
+                    isReceiverAdmin: true,
+                    type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
+                    message: text
+                });
             }
 
         } catch (error) {

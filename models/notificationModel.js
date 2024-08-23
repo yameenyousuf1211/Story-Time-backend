@@ -45,7 +45,6 @@ exports.createAndSendNotification = async ({
     save = true,
 }) => {
     let body;
-    const fcmTokens = await getFcmTokens(receiverId);
 
     if (!sender && senderId) sender = await findUser({ _id: senderId });
 
@@ -77,7 +76,7 @@ exports.createAndSendNotification = async ({
     let notification = null;
     if (save) {
         notification = await NotificationModel.create({
-            receiver: receiverId,
+            ...(receiverId && { receiver: receiverId }),
             sender: sender?._id,
             isReceiverAdmin,
             type,
@@ -87,15 +86,19 @@ exports.createAndSendNotification = async ({
         });
     }
 
-    if (fcmTokens.length > 0) {
-        fcmTokens.forEach(async (token) => {
-            await sendFirebaseNotification({
-                title,
-                body,
-                token,
-                data
+    if (!isReceiverAdmin) {
+        const fcmTokens = await getFcmTokens(receiverId);
+
+        if (fcmTokens.length > 0) {
+            fcmTokens.forEach(async (token) => {
+                await sendFirebaseNotification({
+                    title,
+                    body,
+                    token,
+                    data
+                });
             });
-        });
+        }
     }
 
     return notification;

@@ -373,5 +373,17 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
         sharedBy: userId,
     });
 
+    const contributorsToNotify = story.contributors.filter(contributor =>
+        contributor.toString() !== userId.toString()
+    );
+
+    await Promise.all(contributorsToNotify.map(contributorId =>
+        createAndSendNotification({
+            senderId: userId,
+            receiverId: contributorId,
+            type: NOTIFICATION_TYPES.SHARE_POST,
+            story: newStory.id
+        })
+    ));
     generateResponse(newStory, 'Story shared successfully', res);
 });

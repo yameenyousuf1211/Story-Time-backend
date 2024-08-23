@@ -1,7 +1,7 @@
 const { getAllNotifications, createAndSendNotification } = require('../models/notificationModel.js');
 const { getUsers } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler, sendFirebaseNotification } = require('../utils');
-const { STATUS_CODES, NOTIFICATION_TYPES } = require('../utils/constants');
+const { STATUS_CODES, NOTIFICATION_TYPES, ROLES } = require('../utils/constants');
 const { sendNotificationsByAdminValidation } = require('../validations/notificationValidation.js');
 
 // send notifications by admin
@@ -43,15 +43,13 @@ exports.sendNotificationByAdmin = asyncHandler(async (req, res, next) => {
 
 // get all notifications by admin
 exports.getAllNotifications = asyncHandler(async (req, res, next) => {
+    const isAdmin = req.user.role === ROLES.ADMIN;
     const { page = 1, limit = 10, type } = req.query;
 
-    let query = {};
-    let populate = [];
-
-    query = { receiver: req.user.id };
+    const query = isAdmin ? { isReceiverAdmin: true } : { receiver: req.user.id };
     if (type) query.type = type;
 
-    populate = [
+    const populate = [
         { path: "sender", select: "userName photo firstName lastName" },
         { path: "receiver", select: "userName photo firstName lastName" },
         { path: "story" }

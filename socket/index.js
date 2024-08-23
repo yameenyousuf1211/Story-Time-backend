@@ -177,6 +177,7 @@ const sendMessageEvent = (socket, io) => {
                     await createAndSendNotification({
                         senderId: socket.user._id,
                         receiverId: admin._id,
+                        isReceiverAdmin: true,
                         type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
                         message: text
                     });

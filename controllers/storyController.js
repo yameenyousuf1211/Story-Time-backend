@@ -129,8 +129,6 @@ exports.likeStoryToggle = asyncHandler(async (req, res, next) => {
             story: story.id
         })
     ));
-    console.log('story', story);
-
     generateResponse(story, 'Story liked successfully', res);
 });
 
@@ -182,6 +180,12 @@ exports.addCommentOnStory = asyncHandler(async (req, res, next) => {
     // upload media to s3
     if (req.files?.media?.length > 0) body.media = await s3Uploadv3(req.files.media);
 
+    const story = await findStoryById(body.story);
+    if (!story) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Story not found'
+    });
+
     let comment = await createComment(body);
 
     // update parent comment
@@ -190,6 +194,18 @@ exports.addCommentOnStory = asyncHandler(async (req, res, next) => {
     }
     await updateStoryById(body.story, { $inc: { commentsCount: 1 } });
     comment = await getCommentById(comment._id).populate('user', 'firstName lastName profileImage');
+
+    const contributorsToNotify = story.contributors.filter(contributor =>
+        contributor.toString() !== req.user.id.toString()
+    );
+    await Promise.all(contributorsToNotify.map(contributorId =>
+        createAndSendNotification({
+            senderId: req.user.id,
+            receiverId: contributorId,
+            type: NOTIFICATION_TYPES.COMMENT,
+            story: story.id
+        })
+    ));
     generateResponse(comment, 'Comment created successfully', res);
 });
 

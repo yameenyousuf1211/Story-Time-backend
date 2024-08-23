@@ -124,3 +124,8 @@ exports.getPremiumNonPremiumCount = async () => {
   return counts;
 
 }
+
+exports.getAdmins = async () => {
+  const admins = await UserModel.find({ role: ROLES.ADMIN, isDeleted: false }).select('_id');
+  return admins?.map(admin => admin?._id);
+}

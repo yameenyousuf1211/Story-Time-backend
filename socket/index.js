@@ -4,9 +4,10 @@ const { getChatsQuery } = require("../controllers/queries/supportChatQueries");
 const { getAllMessagesAggregate, readMessages, findMessages, createMessage, findMessageById, countMessages, aggregateDocument, getUserAdminUnreadCount } = require("../models/supportMessageModel");
 const { ApiError } = require("../utils/apiError");
 const { Types } = require("mongoose");
-const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS } = require("../utils/constants");
+const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS, NOTIFICATION_TYPES } = require("../utils/constants");
 const { sendMessageValidation } = require("../validations/supportChatValidation");
-const { findUser } = require("../models/userModel");
+const { findUser, getAdmins } = require("../models/userModel");
+const { createAndSendNotification } = require("../models/notificationModel");
 
 // listener for new chat
 const createChatEvent = (socket, io) => {
@@ -119,6 +120,7 @@ const sendMessageEvent = (socket, io) => {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat is already closed." });
                 return;
             }
+
             const chatObj = await findChat({ _id: chat });
             if (!chatObj) {
                 socket.emit("socket-error", { statusCode: STATUS_CODES.NOT_FOUND, message: "Chat not found" });
@@ -146,21 +148,40 @@ const sendMessageEvent = (socket, io) => {
 
             io.emit(`send-message-${chat}`, message);
 
-            const countResponse = await getUserAdminUnreadCount(chat)
-            console.log('countResponse :', countResponse);
-            const { adminUnreadCount, userUnreadCount } = countResponse
+            const countResponse = await getUserAdminUnreadCount(chat);
+            const { adminUnreadCount, userUnreadCount } = countResponse;
 
-            // Emit unread count to admin
-            io.to('admins').emit(`unread-count-${chat}`, {
-                chatId: chat,
-                unreadCount: adminUnreadCount
-            });
+            const isAdmin = socket.user.role === ROLES.ADMIN;
 
-            // Emit unread count to user
-            io.to(supportChat.user._id.toString()).emit(`unread-count-${chat}`, {
-                chatId: chat,
-                unreadCount: userUnreadCount
-            });
+            if (isAdmin) {
+                io.to(supportChat.user._id.toString()).emit(`unread-count-${chat}`, {
+                    chatId: chat,
+                    unreadCount: userUnreadCount
+                });
+
+                await createAndSendNotification({
+                    senderId: socket.user._id,
+                    receiverId: supportChat.user._id,
+                    type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
+                    message: text
+                });
+
+            } else {
+                io.to('admins').emit(`unread-count-${chat}`, {
+                    chatId: chat,
+                    unreadCount: adminUnreadCount
+                });
+
+                const admins = await getAdmins();
+                await Promise.all(admins.map(async (admin) => {
+                    await createAndSendNotification({
+                        senderId: socket.user._id,
+                        receiverId: admin._id,
+                        type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
+                        message: text
+                    });
+                }));
+            }
 
         } catch (error) {
             console.error('Error in sendMessageEvent:', error);
@@ -168,6 +189,7 @@ const sendMessageEvent = (socket, io) => {
         }
     });
 };
+
 
 const closeChatEvent = (socket, io) => {
     socket.on("close-chat", async ({ chat }) => {

@@ -11,7 +11,8 @@ const {
     addCommentOnStory,
     tagFriendToggle,
     toggleStoryVisibility,
-    shareStory
+    shareStory,
+    fetchHiddenStories
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require("../utils/s3Upload");
@@ -28,6 +29,7 @@ class StoryAPI {
 
         router.get('/', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchAllStories);
         router.get('/user', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchUserStories);
+        router.get('/hidden', authMiddleware([ROLES.USER]), fetchHiddenStories);
         router.get("/:storyId", authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchStoryById);
         router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
 

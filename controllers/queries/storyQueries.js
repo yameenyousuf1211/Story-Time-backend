@@ -69,27 +69,47 @@ exports.getStoriesQuery = (user) => {
 }
 
 // get user's stories
-exports.getUserStoriesQuery = (user, type, isHidden) => {
+exports.getUserStoriesQuery = (user, type) => {
     const pipeline = [
         {
             $match: {
                 contributors: new Types.ObjectId(user),
                 type,
-                ...(isHidden && { hiddenBy: { $nin: [new Types.ObjectId(user)] } })
+                hiddenBy: { $nin: [new Types.ObjectId(user)] }
             }
         },
-
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },
         { $unwind: "$subCategory" },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                dislikesCount: { $size: "$dislikes" },
+                isHidden: { $in: [new Types.ObjectId(user), "$hiddenBy"] }
+            }
+        },
+        { $sort: { createdAt: -1 } }
+    ];
 
+    return pipeline;
+};
+
+exports.fetchHiddenStoriesQuery = (user, type) => {
+    return [
+        {
+            $match: {
+                contributors: new Types.ObjectId(user),
+                hiddenBy: new Types.ObjectId(user),
+                type
+            }
+        },
+        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },
+        { $unwind: "$subCategory" },
         {
             $addFields: {
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
             }
         },
-        { $sort: { createdAt: -1 } } // latest first
+        { $sort: { createdAt: -1 } }
     ];
-
-    return pipeline;
 }

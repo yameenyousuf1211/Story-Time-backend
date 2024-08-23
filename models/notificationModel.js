@@ -43,7 +43,6 @@ exports.createAndSendNotification = async ({
     save = true,
 }) => {
     let body;
-
     const fcmTokens = await getFcmTokens(receiverId);
 
     if (!sender && senderId) sender = await findUser({ _id: senderId });
@@ -65,7 +64,10 @@ exports.createAndSendNotification = async ({
             title = `${sender?.username}`;
             body = `shared your post`;
             break;
-
+        case NOTIFICATION_TYPES.SUPPORT_MESSAGE:
+            title = 'Support Message';
+            body = message;
+            break;
         default:
             break;
     }

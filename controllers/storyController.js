@@ -2,7 +2,7 @@ const { generateResponse, parseBody, asyncHandler, } = require('../utils');
 const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
 const { STATUS_CODES, STORY_TYPES, NOTIFICATION_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
-const { getStoriesQuery, getUserStoriesQuery } = require('./queries/storyQueries');
+const { getStoriesQuery, getUserStoriesQuery, fetchHiddenStoriesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
 const { s3Uploadv3 } = require('../utils/s3Upload');
@@ -48,20 +48,32 @@ exports.fetchUserStories = asyncHandler(async (req, res, next) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
-    let query;
-    if (req.query?.user) {
-        query = getUserStoriesQuery(user, type, true);
-    } else {
-        query = getUserStoriesQuery(user, type, false);
-    }
+    const query = getUserStoriesQuery(user, type);
 
     const storiesData = await getAllStories({ query, page, limit });
     if (storiesData?.stories.length === 0) {
-        generateResponse(null, 'No any story found', res);
+        generateResponse(null, 'No stories found', res);
         return;
     }
 
     generateResponse(storiesData, 'All stories retrieved successfully', res);
+});
+
+exports.fetchHiddenStories = asyncHandler(async (req, res, next) => {
+    const user = req.user.id;
+    const type = req.query?.type || STORY_TYPES.TEXT;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+
+    const query = fetchHiddenStoriesQuery(user, type);
+
+    const storiesData = await getAllStories({ query, page, limit });
+    if (storiesData?.stories.length === 0) {
+        generateResponse(null, 'No hidden stories found', res);
+        return;
+    }
+
+    generateResponse(storiesData, 'Hidden stories retrieved successfully', res);
 });
 
 // get a story by Id
@@ -385,3 +397,4 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
     ));
     generateResponse(newStory, 'Story shared successfully', res);
 });
+

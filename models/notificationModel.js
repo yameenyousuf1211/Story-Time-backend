@@ -4,15 +4,16 @@ const { getMongoosePaginatedData, sendFirebaseNotification } = require("../utils
 const { getFcmTokens, findUser } = require("./userModel");
 const { NOTIFICATION_TYPES } = require("../utils/constants");
 
-
 const notificationSchema = new Schema({
     receiver: { type: Schema.Types.ObjectId, ref: "User" },
+    isReceiverAdmin: { type: Boolean, default: false },
     sender: { type: Schema.Types.ObjectId, ref: "User" },
     type: { type: String, enum: Object.values(NOTIFICATION_TYPES) },
     story: { type: Schema.Types.ObjectId, ref: "Story" },
-    body: { type: String, default: null },
     title: { type: String, default: null },
+    body: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
+    isRead: { type: Boolean, default: false },
 });
 
 notificationSchema.plugin(mongoosePaginate);
@@ -40,6 +41,7 @@ exports.createAndSendNotification = async ({
     message,
     title,
     story,
+    isReceiverAdmin = false,
     save = true,
 }) => {
     let body;
@@ -77,6 +79,7 @@ exports.createAndSendNotification = async ({
         notification = await NotificationModel.create({
             receiver: receiverId,
             sender: sender?._id,
+            isReceiverAdmin,
             type,
             body,
             title,

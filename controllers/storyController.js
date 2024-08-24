@@ -41,14 +41,24 @@ exports.fetchAllStories = asyncHandler(async (req, res, next) => {
     generateResponse(storiesData, 'All stories retrieved successfully', res);
 });
 
-// get user's stories
 exports.fetchUserStories = asyncHandler(async (req, res, next) => {
-    const user = req.query?.user || req.user.id;
+    const requestedUser = req.query?.user;
+    const user = requestedUser || req.user.id;
     const type = req.query?.type || STORY_TYPES.TEXT;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
+    const fetchHidden = req.query.hidden === 'true';
 
-    const query = getUserStoriesQuery(user, type);
+    let query;
+
+    if (fetchHidden) {
+        if (requestedUser) return next({
+            statusCode: STATUS_CODES.FORBIDDEN,
+            message: 'Cannot access hidden stories of other users'
+        });
+        query = fetchHiddenStoriesQuery(req.user.id, type);
+    }
+    else query = getUserStoriesQuery(user, type);
 
     const storiesData = await getAllStories({ query, page, limit });
     if (storiesData?.stories.length === 0) {
@@ -56,24 +66,7 @@ exports.fetchUserStories = asyncHandler(async (req, res, next) => {
         return;
     }
 
-    generateResponse(storiesData, 'All stories retrieved successfully', res);
-});
-
-exports.fetchHiddenStories = asyncHandler(async (req, res, next) => {
-    const user = req.user.id;
-    const type = req.query?.type || STORY_TYPES.TEXT;
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
-
-    const query = fetchHiddenStoriesQuery(user, type);
-
-    const storiesData = await getAllStories({ query, page, limit });
-    if (storiesData?.stories.length === 0) {
-        generateResponse(null, 'No hidden stories found', res);
-        return;
-    }
-
-    generateResponse(storiesData, 'Hidden stories retrieved successfully', res);
+    generateResponse(storiesData, 'Stories fetched successfully', res);
 });
 
 // get a story by Id

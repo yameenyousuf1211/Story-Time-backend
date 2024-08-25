@@ -6,27 +6,16 @@ exports.getStoriesQuery = (user) => {
         {
             $lookup: {
                 from: 'followings',
-                let: { user: new Types.ObjectId(user), contributorIds: '$contributors', sharedBy: '$sharedBy' },
+                let: { user: new Types.ObjectId(user), contributorIds: '$contributors' },
                 pipeline: [
                     {
                         $match: {
                             $expr: {
-                                $or: [
-                                    {
-                                        $and: [
-                                            { $eq: ['$user', '$$user'] },
-                                            { $in: ['$following', '$$contributorIds'] },
-                                        ]
-                                    },
-                                    {
-                                        $and: [
-                                            { $eq: ['$user', '$$user'] },
-                                            { $eq: ['$following', '$$sharedBy'] },
-                                        ]
-                                    }
+                                $and: [
+                                    { $eq: ['$user', '$$user'] },
+                                    { $in: ['$following', '$$contributorIds'] }
                                 ]
                             }
-
                         },
                     },
                 ],
@@ -39,32 +28,39 @@ exports.getStoriesQuery = (user) => {
                 dislikesCount: { $size: "$dislikes" },
                 likedByMe: { $in: [new Types.ObjectId(user), "$likes"] },
                 dislikesByMe: { $in: [new Types.ObjectId(user), "$dislikes"] },
-                isFollowing: { $cond: [{ $gt: [{ $size: '$followings' }, 0] }, true, false] },
+                isFollowing: { $gt: [{ $size: '$followings' }, 0] },
+                isHiddenByMe: { $in: [new Types.ObjectId(user), "$hiddenBy"] },
+                visibleFollowedContributors: {
+                    $filter: {
+                        input: '$contributors',
+                        as: 'contributor',
+                        cond: {
+                            $and: [
+                                { $in: ['$$contributor', '$followings.following'] },
+                                { $not: { $in: ['$$contributor', '$hiddenBy'] } }
+                            ]
+                        }
+                    }
+                }
             }
         },
         {
             $match: {
-                $and: [
-                    {
-                        $or: [
-                            { isFollowing: true }, // if user is following the contributor or the sharedBy
-                            { sharedBy: new Types.ObjectId(user) },
-                            { contributors: new Types.ObjectId(user) },
-                            { tag: new Types.ObjectId(user) },
-                        ],
-                    },
-                    {
-                        $or: [
-                            { hiddenBy: { $nin: [new Types.ObjectId(user)] } }
-                        ]
-                    }
-                ]
+                $or: [
+                    { sharedBy: new Types.ObjectId(user) },
+                    { contributors: new Types.ObjectId(user) },
+                    { tag: new Types.ObjectId(user) },
+                    { $expr: { $gt: [{ $size: '$visibleFollowedContributors' }, 0] } }
+                ],
+                isHiddenByMe: { $ne: true }
             },
         },
-        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } }, { $unwind: "$creator" },
-        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } }, { $unwind: "$subCategory" },
-        { $sort: { createdAt: -1 } },    // latest first
-        { $project: { followings: 0 } }
+        { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } },
+        { $unwind: "$creator" },
+        { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },
+        { $unwind: "$subCategory" },
+        { $sort: { createdAt: -1 } },
+        { $project: { followings: 0, visibleFollowedContributors: 0, isHiddenByMe: 0 } }
     ]
 }
 

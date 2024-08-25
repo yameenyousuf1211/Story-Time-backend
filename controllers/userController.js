@@ -13,7 +13,7 @@ const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../mode
 const { findStoryById } = require('../models/storyModel');
 const { createReport, findReportById, findReports } = require('../models/reportModel');
 const { s3Uploadv3 } = require('../utils/s3Upload');
-const { getGuestCount, findGuest } = require('../models/guestModel');
+const { getGuestCount, findGuest, createGuest } = require('../models/guestModel');
 
 // check username availability
 exports.checkAvailability = asyncHandler(async (req, res, next) => {

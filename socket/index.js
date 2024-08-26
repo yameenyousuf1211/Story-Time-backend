@@ -163,7 +163,8 @@ const sendMessageEvent = (socket, io) => {
                     senderId: socket.user.id,
                     receiverId: supportChat.user,
                     type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text
+                    message: text,
+                    chatId: chat
                 });
 
             } else {
@@ -176,7 +177,8 @@ const sendMessageEvent = (socket, io) => {
                     senderId: socket.user.id,
                     isReceiverAdmin: true,
                     type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text
+                    message: text,
+                    chatId: chat
                 });
             }
 

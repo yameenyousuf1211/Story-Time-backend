@@ -14,6 +14,7 @@ const notificationSchema = new Schema({
     body: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
     isRead: { type: Boolean, default: false },
+    chatId: { type: Schema.Types.ObjectId },
 });
 
 notificationSchema.plugin(mongoosePaginate);
@@ -41,6 +42,7 @@ exports.createAndSendNotification = async ({
     message,
     title,
     story,
+    chatId,
     isReceiverAdmin = false,
     save = true,
 }) => {
@@ -82,7 +84,8 @@ exports.createAndSendNotification = async ({
             type,
             body,
             title,
-            story
+            story,
+            chatId,
         });
     }
 

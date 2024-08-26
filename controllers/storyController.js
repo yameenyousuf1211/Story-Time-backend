@@ -42,22 +42,14 @@ exports.fetchAllStories = asyncHandler(async (req, res, next) => {
 });
 
 exports.fetchUserStories = asyncHandler(async (req, res, next) => {
-    const requestedUser = req.query?.user;
-    const user = requestedUser || req.user.id;
+    const user = req.query?.user || req.user.id;
     const type = req.query?.type || STORY_TYPES.TEXT;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    const fetchHidden = req.query.hidden === 'true';
 
     let query;
 
-    if (fetchHidden) {
-        if (requestedUser) return next({
-            statusCode: STATUS_CODES.FORBIDDEN,
-            message: 'Cannot access hidden stories of other users'
-        });
-        query = fetchHiddenStoriesQuery(req.user.id, type);
-    }
+    if (req.query.hidden) query = fetchHiddenStoriesQuery(user, type);
     else query = getUserStoriesQuery(user, type);
 
     const storiesData = await getAllStories({ query, page, limit });

@@ -80,7 +80,6 @@ exports.getUserStoriesQuery = (user, type) => {
             $addFields: {
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
-                isHidden: { $in: [new Types.ObjectId(user), "$hiddenBy"] }
             }
         },
         { $sort: { createdAt: -1 } }

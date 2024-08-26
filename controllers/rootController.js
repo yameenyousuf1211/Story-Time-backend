@@ -61,7 +61,7 @@ exports.uploadMedia = asyncHandler(async (req, res, next) => {
 });
 
 exports.downloadImage = asyncHandler(async (req, res, next) => {
-    const { key } = req.params;
+    const { key } = req.body;
 
     const s3 = new S3Client(config());
   

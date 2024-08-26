@@ -163,9 +163,9 @@ const sendMessageEvent = (socket, io) => {
                     senderId: socket.user.id,
                     receiverId: supportChat.user,
                     type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text
+                    message: text,
+                    chatId: chat
                 });
-
             } else {
                 io.to('admins').emit(`unread-count-${chat}`, {
                     chatId: chat,
@@ -176,8 +176,10 @@ const sendMessageEvent = (socket, io) => {
                     senderId: socket.user.id,
                     isReceiverAdmin: true,
                     type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text
+                    message: text,
+                    chatId: chat
                 });
+
             }
 
         } catch (error) {

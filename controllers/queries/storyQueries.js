@@ -6,16 +6,27 @@ exports.getStoriesQuery = (user) => {
         {
             $lookup: {
                 from: 'followings',
-                let: { user: new Types.ObjectId(user), contributorIds: '$contributors' },
+                let: { user: new Types.ObjectId(user), contributorIds: '$contributors', sharedBy: '$sharedBy' },
                 pipeline: [
                     {
                         $match: {
                             $expr: {
-                                $and: [
-                                    { $eq: ['$user', '$$user'] },
-                                    { $in: ['$following', '$$contributorIds'] }
+                                $or: [
+                                    {
+                                        $and: [
+                                            { $eq: ['$user', '$$user'] },
+                                            { $in: ['$following', '$$contributorIds'] },
+                                        ]
+                                    },
+                                    {
+                                        $and: [
+                                            { $eq: ['$user', '$$user'] },
+                                            { $eq: ['$following', '$$sharedBy'] },
+                                        ]
+                                    }
                                 ]
                             }
+
                         },
                     },
                 ],
@@ -30,14 +41,15 @@ exports.getStoriesQuery = (user) => {
                 dislikesByMe: { $in: [new Types.ObjectId(user), "$dislikes"] },
                 isFollowing: { $gt: [{ $size: '$followings' }, 0] },
                 isHiddenByMe: { $in: [new Types.ObjectId(user), "$hiddenBy"] },
+                // filter out contributors who have not hidden the story and are followed by the user
                 visibleFollowedContributors: {
                     $filter: {
                         input: '$contributors',
-                        as: 'contributor',
+                        as: 'contributors',
                         cond: {
                             $and: [
-                                { $in: ['$$contributor', '$followings.following'] },
-                                { $not: { $in: ['$$contributor', '$hiddenBy'] } }
+                                { $in: ['$$contributors', '$followings.following'] },
+                                { $not: { $in: ['$$contributors', '$hiddenBy'] } }
                             ]
                         }
                     }

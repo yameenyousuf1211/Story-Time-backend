@@ -1,4 +1,4 @@
-const { getAllNotifications, createAndSendNotification, updateAdminNotification, getAdminUnreadNotificationCount } = require('../models/notificationModel.js');
+const { getAllNotifications, createAndSendNotification, updateNotifications, getNotificationCount } = require('../models/notificationModel.js');
 const { getUsers } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler, sendFirebaseNotification } = require('../utils');
 const { STATUS_CODES, NOTIFICATION_TYPES, ROLES } = require('../utils/constants');
@@ -50,7 +50,7 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
     const query = isAdmin ? { type } : { receiver: req.user.id };
 
     if (isAdmin) {
-        await updateAdminNotification({ isReceiverAdmin: true, isRead: false }, { isRead: true });
+        await updateNotifications({ isReceiverAdmin: true, isRead: false }, { $set: { isRead: true } });
     }
 
     const populate = [
@@ -61,13 +61,13 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
 
     const notificationsData = await getAllNotifications({ query, page, limit, populate });
 
-    if (notificationsData?.notifications?.length === 0) {
-        return generateResponse(null, 'No notifications found', res);
+    if (isAdmin) {
+        const adminUnreadNotificationCount = await getNotificationCount({ isReceiverAdmin: true, isRead: false });
+        io.to('admins').emit('unread-notifications-count', { unreadCount: adminUnreadNotificationCount });
     }
 
-    if (isAdmin) {
-        const adminUnreadNotificationCount = await getAdminUnreadNotificationCount();
-        io.to('admins').emit('admin-unread-notification-count', { unreadCount: adminUnreadNotificationCount });
+    if (notificationsData?.notifications?.length === 0) {
+        return generateResponse(null, 'No notifications found', res);
     }
     generateResponse(notificationsData, 'Notifications found successfully', res);
 });

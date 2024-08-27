@@ -7,7 +7,7 @@ const { Types } = require("mongoose");
 const { STATUS_CODES, ROLES, SUPPORT_CHAT_STATUS, NOTIFICATION_TYPES } = require("../utils/constants");
 const { sendMessageValidation } = require("../validations/supportChatValidation");
 const { findUser, getAdmins } = require("../models/userModel");
-const { createAndSendNotification, getAdminUnreadNotificationCount } = require("../models/notificationModel");
+const { createAndSendNotification, getNotificationCount } = require("../models/notificationModel");
 
 // listener for new chat
 const createChatEvent = (socket, io) => {
@@ -175,7 +175,7 @@ const sendMessageEvent = (socket, io) => {
             });
 
             if (!isAdmin) {
-                const adminUnreadNotificationCount = await getAdminUnreadNotificationCount();
+                const adminUnreadNotificationCount = await getNotificationCount();
                 io.to('admins').emit('admin-unread-notification-count', { unreadCount: adminUnreadNotificationCount });
             }
 

@@ -44,14 +44,13 @@ exports.sendNotificationByAdmin = asyncHandler(async (req, res, next) => {
 // get all notifications by admin
 exports.getAllNotifications = asyncHandler(async (req, res, next) => {
     const isAdmin = req.user.role === ROLES.ADMIN;
-    const { page = 1, limit = 10, type } = req.query;
+    const { page = 1, limit = 10, type = NOTIFICATION_TYPES.ADMIN_NOTIFICATION } = req.query;
 
-    const query = isAdmin ? { isReceiverAdmin: true } : { receiver: req.user.id };
-    if (type) query.type = type;
+    const query = isAdmin ? { type } : { receiver: req.user.id };
 
     const populate = [
-        { path: "sender", select: "userName photo firstName lastName" },
-        { path: "receiver", select: "userName photo firstName lastName" },
+        { path: "sender", select: "userName profileImage firstName lastName" },
+        { path: "receiver", select: "userName profileImage firstName lastName" },
         { path: "story" }
     ];
 

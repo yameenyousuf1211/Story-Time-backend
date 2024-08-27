@@ -158,29 +158,21 @@ const sendMessageEvent = (socket, io) => {
                     chatId: chat,
                     unreadCount: userUnreadCount
                 });
-
-                await createAndSendNotification({
-                    senderId: socket.user.id,
-                    receiverId: supportChat.user,
-                    type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text,
-                    chatId: chat
-                });
-
             } else {
                 io.to('admins').emit(`unread-count-${chat}`, {
                     chatId: chat,
                     unreadCount: adminUnreadCount
                 });
 
-                await createAndSendNotification({
-                    senderId: socket.user.id,
-                    isReceiverAdmin: true,
-                    type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
-                    message: text,
-                    chatId: chat
-                });
             }
+            await createAndSendNotification({
+                senderId: socket.user.id,
+                isReceiverAdmin: isAdmin ? false : true,
+                ...(isAdmin && { receiverId: supportChat.user }),
+                type: NOTIFICATION_TYPES.SUPPORT_MESSAGE,
+                message: text,
+                chatId: chat
+            });
 
         } catch (error) {
             console.error('Error in sendMessageEvent:', error);

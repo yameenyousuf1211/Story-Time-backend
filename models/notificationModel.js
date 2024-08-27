@@ -106,3 +106,7 @@ exports.createAndSendNotification = async ({
 
     return notification;
 };
+
+exports.getAdminUnreadNotificationCount = () => NotificationModel.countDocuments({ isReceiverAdmin: true, isRead: false });
+
+exports.updateAdminNotification = () => NotificationModel.updateMany({ isReceiverAdmin: true, isRead: false }, { isRead: true });

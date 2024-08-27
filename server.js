@@ -30,6 +30,7 @@ const io = new Server(httpServer, {
         credentials: true,
     },
 });
+module.exports.io = io;
 
 // mount io to app
 app.set("io", io);
@@ -43,7 +44,7 @@ app.use(cookieSession({
 }));
 
 app.use(cors({
-    origin: ["https://admin.storytime.social","http://localhost:3000"], credentials: true
+    origin: ["https://admin.storytime.social", "http://localhost:3000"], credentials: true
 }));
 
 app.get('/', (req, res) => res.json({ message: `Welcome to the ${process.env.APP_NAME} Project` }));

@@ -175,7 +175,7 @@ const sendMessageEvent = (socket, io) => {
             });
 
             if (!isAdmin) {
-                const adminUnreadNotificationCount = await getNotificationCount();
+                const adminUnreadNotificationCount = await getNotificationCount({ isReceiverAdmin: true, isRead: false });
                 io.to('admins').emit('unread-notifications-count', { unreadCount: adminUnreadNotificationCount });
             }
 

@@ -38,7 +38,7 @@ exports.createAndSendNotification = async ({
     senderId,
     receiverId,
     type,
-    data,
+    data = {},
     message,
     title,
     story,
@@ -91,6 +91,12 @@ exports.createAndSendNotification = async ({
 
     if (!isReceiverAdmin) {
         const fcmTokens = await getFcmTokens(receiverId);
+
+        data = {
+            notificationId: notification?._id.toString(),
+            type: notification?.type,
+            storyId: notification?.story?.toString(),
+        };
 
         if (fcmTokens.length > 0) {
             fcmTokens.forEach(async (token) => {

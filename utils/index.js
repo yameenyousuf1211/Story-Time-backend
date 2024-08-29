@@ -192,12 +192,14 @@ exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
 };
 
 // send firebase notification
-exports.sendFirebaseNotification = async ({ title, body, token }) => {
+exports.sendFirebaseNotification = async ({ title, body, token, data }) => {
     const message = {
         notification: { title, body },
         token,
+        data: data
     };
 
+    console.log('message', message);
     try {
         const response = await firebaseApp.messaging().send(message);
         console.log("Successfully sent message:", response);

@@ -192,16 +192,44 @@ exports.lookupUser = (localField = "_id", as = "user", projectMore = {}) => {
 };
 
 // send firebase notification
-exports.sendFirebaseNotification = async ({ title, body, token, data }) => {
-    const message = {
-        notification: { title, body },
-        token,
-        data: data
-    };
+exports.sendFirebaseNotification = async (title, body,deviceTokens, data) => {
+    if(deviceTokens.length <= 0){
+        return ;
+    }
+    const messages = deviceTokens.map((token) => ({
+        notification: {
+          title: title,
+          body: description,
+        },
+        data: data,
+        token: token,
+      }));
 
-    console.log('message', message);
+    console.log('message', {messages});
     try {
-        const response = await firebaseApp.messaging().send(message);
+        const response = await firebaseApp.messaging().sendEach(message);
+        const invalidTokens= [];
+        const sendResponses = response.responses;
+        sendResponses.forEach((response, index) => {
+          if (response.error) {
+            console.error(
+              `Error sending notification to token ${deviceTokens[index]}:`,
+              response.error.code
+            );
+            if (
+              response.error.code === "messaging/invalid-registration-token" ||
+              response.error.code === "messaging/invalid-argument" ||
+              response.error.code ===
+                "messaging/registration-token-not-registered"
+            ) {
+              invalidTokens.push(deviceTokens[index]);
+            }
+          }
+        });
+  
+        if (invalidTokens.length > 0) {
+            console.log("invalid tokens",{invalidTokens});
+        }
         console.log("Successfully sent message:", response);
         return response;
     } catch (error) {

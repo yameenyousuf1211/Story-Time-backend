@@ -89,6 +89,8 @@ exports.createAndSendNotification = async ({
         });
     }
 
+
+
     if (!isReceiverAdmin) {
         const fcmTokens = await getFcmTokens(receiverId);
 
@@ -99,14 +101,14 @@ exports.createAndSendNotification = async ({
         };
 
         if (fcmTokens.length > 0) {
-            fcmTokens.forEach(async (token) => {
-                await sendFirebaseNotification({
-                    title,
-                    body,
-                    token,
-                    data
-                });
-            });
+        
+            const deviceToken = Array.isArray(fcmTokens) ? fcmTokens : [];
+            await sendFirebaseNotification(
+                title,
+                body,
+                deviceToken,
+                data
+            );
         }
     }
 

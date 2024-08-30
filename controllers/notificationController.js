@@ -76,7 +76,8 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
 // send test notification
 exports.sendTestNotification = asyncHandler(async (req, res, next) => {
     const { token } = parseBody(req.body);
+    const deviceToken = Array.isArray(token) ? token : [token];
 
-    await sendFirebaseNotification({ token, title: 'Test Notification', body: 'This is a test notification' })
+    await sendFirebaseNotification('Test Notification','This is a test notification',deviceToken,req.body.data)
     generateResponse(null, 'Test notification sent successfully', res);
 });

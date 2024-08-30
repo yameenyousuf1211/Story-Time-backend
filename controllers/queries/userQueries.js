@@ -31,27 +31,9 @@ exports.getUsersQuery = (keyword, user, story) => {
                             },
                         },
                     },
+                    { $project: { _id: 0, user: 1, following: 1 } }
                 ],
-                as: 'following',
-            },
-        },
-        {
-            $lookup: {
-                from: 'followings',
-                let: { user: new Types.ObjectId(user), targetId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$user', '$$targetId'] },
-                                    { $eq: ['$following', '$$user'] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'follower',
+                as: 'followData',
             },
         },
         {
@@ -64,24 +46,37 @@ exports.getUsersQuery = (keyword, user, story) => {
                             $and: [
                                 { $expr: { $in: ['$$userId', '$tag'] } },
                                 { isDeleted: false },
-                                { _id: { $eq: new Types.ObjectId(story) } }, // Match against the provided story _id
+                                { _id: { $eq: new Types.ObjectId(story) } },
                             ],
                         },
                     },
+                    { $project: { _id: 1 } }
                 ],
                 as: 'taggedStory',
             },
         },
         {
             $addFields: {
-                isFollower: { $cond: [{ $gt: [{ $size: '$follower' }, 0] }, true, false] },
-                isFollowing: { $cond: [{ $gt: [{ $size: '$following' }, 0] }, true, false] },
-                isTagged: { $cond: [{ $gt: [{ $size: '$taggedStory' }, 0] }, true, false] },
+                isFollower: {
+                    $cond: {
+                        if: { $gt: [{ $size: { $filter: { input: '$followData', as: 'f', cond: { $eq: ['$$f.following', new Types.ObjectId(user)] } } } }, 0] },
+                        then: true,
+                        else: false
+                    }
+                },
+                isFollowing: {
+                    $cond: {
+                        if: { $gt: [{ $size: { $filter: { input: '$followData', as: 'f', cond: { $eq: ['$$f.user', new Types.ObjectId(user)] } } } }, 0] },
+                        then: true,
+                        else: false
+                    }
+                },
+                isTagged: { $gt: [{ $size: '$taggedStory' }, 0] },
             },
         },
-        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0, taggedStory: 0 } },
-        { $sort: { isTagged: -1, createdAt: -1 } }, // sort on tagged first then latest
-    ]
+        { $project: { followData: 0, refreshToken: 0, password: 0, taggedStory: 0 } },
+        { $sort: { isTagged: -1, createdAt: -1 } },
+    ];
 }
 
 // get all friends

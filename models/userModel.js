@@ -90,7 +90,7 @@ exports.getUsers = (query) => UserModel.find({ ...query, isDeleted: false });
 
 exports.getUserById = (id) => UserModel.find(id);
 
-exports.aggregateDocumentCount = (query) => UserModel.aggregate(query);
+exports.aggregateUsers = (query) => UserModel.aggregate(query);
 
 exports.getPremiumNonPremiumCount = async () => {
   const response = await UserModel.aggregate([
@@ -129,3 +129,6 @@ exports.getAdmins = async () => {
   const admins = await UserModel.find({ role: ROLES.ADMIN, isDeleted: false }).select('_id');
   return admins?.map(admin => admin?._id);
 }
+
+//count documents
+exports.countUserDocuments = (query) => UserModel.countDocuments(query);

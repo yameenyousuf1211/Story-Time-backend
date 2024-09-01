@@ -1,40 +1,50 @@
 const { Types } = require("mongoose")
-const { ROLES } = require("../../utils/constants")
+const { ROLES } = require("../../utils/constants");
+const { getUserById, countUserDocuments, getUsers, aggregateUsers } = require("../../models/userModel");
+const { aggregateFollowings, findFollowers } = require("../../models/followingModel");
+const { aggregateStories, findStory } = require("../../models/storyModel");
 
 // get all users (excluding currentUser & admin)
-exports.getUsersQuery = (keyword, user, story) => {
-    return [
-        {
-            $match: {
-                $and: [
-                    { _id: { $ne: new Types.ObjectId(user) } },
-                    { role: { $ne: ROLES.ADMIN } },
-                    { isActive: true },
-                    { isDeleted: false },
-                    { username: { $regex: keyword, $options: 'i' } },
+exports.getUsersQuery = async (keyword, userId, storyId, page, limit) => {
+    const skip = (page - 1) * limit;
 
-                ]
-            }
-        },
+    // Prepare the main query
+    const matchStage = {
+        $match: {
+            _id: { $ne: new Types.ObjectId(userId) },
+            role: { $ne: ROLES.ADMIN },
+            isActive: true,
+            isDeleted: false
+        }
+    };
+
+    if (keyword && keyword.trim() !== '') {
+        matchStage.$match.username = { $regex: new RegExp(keyword, 'i') };
+    }
+
+    const pipeline = [
+        matchStage,
+        { $sort: { _id: -1 } }, // Sort by _id to get the latest users first
+        { $skip: skip },
+        { $limit: limit },
         {
             $lookup: {
                 from: 'followings',
-                let: { user: new Types.ObjectId(user), targetId: '$_id' },
+                let: { userId: '$_id' },
                 pipeline: [
                     {
                         $match: {
                             $expr: {
-                                $and: [
-                                    { $eq: ['$user', '$$user'] },
-                                    { $eq: ['$following', '$$targetId'] },
-                                ],
-                            },
-                        },
-                    },
-                    { $project: { _id: 0, user: 1, following: 1 } }
+                                $or: [
+                                    { $and: [{ $eq: ['$user', '$$userId'] }, { $eq: ['$following', new Types.ObjectId(userId)] }] },
+                                    { $and: [{ $eq: ['$user', new Types.ObjectId(userId)] }, { $eq: ['$following', '$$userId'] }] }
+                                ]
+                            }
+                        }
+                    }
                 ],
-                as: 'followData',
-            },
+                as: 'followStatus'
+            }
         },
         {
             $lookup: {
@@ -43,41 +53,70 @@ exports.getUsersQuery = (keyword, user, story) => {
                 pipeline: [
                     {
                         $match: {
-                            $and: [
-                                { $expr: { $in: ['$$userId', '$tag'] } },
-                                { isDeleted: false },
-                                { _id: { $eq: new Types.ObjectId(story) } },
-                            ],
-                        },
-                    },
-                    { $project: { _id: 1 } }
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$_id', new Types.ObjectId(storyId)] },
+                                    { $eq: ['$isDeleted', false] },
+                                    { $in: ['$$userId', '$tag'] }
+                                ]
+                            }
+                        }
+                    }
                 ],
-                as: 'taggedStory',
-            },
+                as: 'taggedStory'
+            }
         },
         {
             $addFields: {
-                isFollower: {
-                    $cond: {
-                        if: { $gt: [{ $size: { $filter: { input: '$followData', as: 'f', cond: { $eq: ['$$f.following', new Types.ObjectId(user)] } } } }, 0] },
-                        then: true,
-                        else: false
-                    }
-                },
                 isFollowing: {
-                    $cond: {
-                        if: { $gt: [{ $size: { $filter: { input: '$followData', as: 'f', cond: { $eq: ['$$f.user', new Types.ObjectId(user)] } } } }, 0] },
-                        then: true,
-                        else: false
-                    }
+                    $cond: [
+                        { $gt: [{ $size: { $filter: { input: '$followStatus', cond: { $eq: ['$$this.user', new Types.ObjectId(userId)] } } } }, 0] },
+                        true,
+                        false
+                    ]
                 },
-                isTagged: { $gt: [{ $size: '$taggedStory' }, 0] },
-            },
+                isFollower: {
+                    $cond: [
+                        { $gt: [{ $size: { $filter: { input: '$followStatus', cond: { $eq: ['$$this.following', new Types.ObjectId(userId)] } } } }, 0] },
+                        true,
+                        false
+                    ]
+                },
+                isTagged: { $gt: [{ $size: '$taggedStory' }, 0] }
+            }
         },
-        { $project: { followData: 0, refreshToken: 0, password: 0, taggedStory: 0 } },
-        { $sort: { isTagged: -1, createdAt: -1 } },
+        {
+            $project: {
+                username: 1,
+                email: 1,
+                role: 1,
+                isActive: 1,
+                createdAt: 1,
+                profileImage: 1,
+                isFollowing: 1,
+                isFollower: 1,
+                isTagged: 1
+            }
+        }
     ];
-}
+
+    const [users, totalCount] = await Promise.all([
+        aggregateUsers(pipeline),
+        countUserDocuments(matchStage.$match)
+    ]);
+
+    // Sort enriched users
+    users.sort((a, b) => {
+        if (a.isTagged !== b.isTagged) return b.isTagged ? 1 : -1;
+        return b.createdAt - a.createdAt;
+    });
+
+    return {
+        users,
+        totalCount
+    };
+};
+
 
 // get all friends
 exports.getFriendsQuery = (keyword = "", user) => {

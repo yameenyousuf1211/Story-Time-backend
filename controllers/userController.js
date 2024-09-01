@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount, createUserIndexes } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -7,10 +7,10 @@ const {
   reportUserValidation, addCardValidation, editAdminInfoValidation, checkAllAvailabilityValidation
 } = require('../validations/userValidation');
 const { Types } = require('mongoose');
-const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
+const { addFollowing, findFollowing, deleteFollowing, createFollowerIndexes } = require('../models/followingModel');
 const { hash } = require('bcrypt');
 const { findBlockUser, unblockUser, blockUser, getBlockList } = require('../models/blockModel');
-const { findStoryById } = require('../models/storyModel');
+const { findStoryById, createStoryIndexes } = require('../models/storyModel');
 const { createReport, findReportById, findReports } = require('../models/reportModel');
 const { s3Uploadv3 } = require('../utils/s3Upload');
 const { getGuestCount, findGuest, createGuest } = require('../models/guestModel');
@@ -75,7 +75,6 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
 
 // get all users
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-
   // Joi validation
   const { error } = getAllUsersValidation.validate(req.query);
   if (error) return next({
@@ -83,20 +82,28 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
     message: error.details[0].message
   });
 
-  const user = req.user.id;
-  const { search = "", story } = req.query;
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
+  const { userId } = req.user.id;
+  const { search = "", story: storyId } = req.query;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
-  const query = getUsersQuery(search, user, story);
+  const { users, totalCount } = await getUsersQuery(search, userId, storyId, page, limit);
 
-  const usersData = await getAllUsers({ query, page, limit });
-  if (usersData?.users.length === 0) {
-    generateResponse(null, 'No users found', res);
-    return;
+  if (users.length === 0) {
+    return generateResponse(null, 'No users found', res);
   }
 
-  generateResponse(usersData, 'All users retrieved successfully', res);
+  const totalPages = Math.ceil(totalCount / limit);
+
+  generateResponse({
+    users,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: totalCount,
+      itemsPerPage: limit
+    }
+  }, 'Users retrieved successfully', res);
 });
 
 // get user by id

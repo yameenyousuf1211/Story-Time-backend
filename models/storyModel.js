@@ -47,3 +47,6 @@ exports.findStoryById = (id) => StoryModel.findById(id);
 
 exports.updateStoryById = (id, obj) => StoryModel.findByIdAndUpdate(id, obj, { new: true });
 
+exports.aggregateStories = (query) => StoryModel.aggregate(query);
+
+exports.findStory = (query) => StoryModel.findOne(query);

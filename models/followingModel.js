@@ -36,3 +36,8 @@ exports.getFollowerFollowing = async ({ query, page, limit }) => {
 
   return { users: data, pagination };
 }
+
+exports.findFollowers = (query) => FollowingModel.find(query);
+
+exports.aggregateFollowings = (query) => FollowingModel.aggregate(query);
+

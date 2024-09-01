@@ -75,18 +75,8 @@ exports.checkAllAvailability = asyncHandler(async (req, res, next) => {
 
 // get all users
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-
-  // Joi validation
-  const { error } = getAllUsersValidation.validate(req.query);
-  if (error) return next({
-    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: error.details[0].message
-  });
-
   const user = req.user.id;
-  const { search = "", story } = req.query;
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
+  const { page = 1, limit = 10, search = "", story } = req.query;
 
   const query = getUsersQuery(search, user, story);
 

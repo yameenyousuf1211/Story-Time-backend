@@ -2,7 +2,7 @@ const { Types } = require("mongoose")
 const { ROLES } = require("../../utils/constants")
 
 // get all users (excluding currentUser & admin)
-exports.getUsersQuery = (keyword, user, story) => {
+exports.getUsersQuery = (keyword = "", user, story) => {
     return [
         {
             $match: {

@@ -122,27 +122,27 @@ exports.sendVerificationCode = asyncHandler(async (req, res, next) => {
     });
 
     const { email } = body;
-    const query = { email };
 
-    const user = await findUser({ ...query, role: ROLES.USER }).select('email');
+
+    const user = await findUser({ email, role: ROLES.USER }).select('email');
     if (!user) return next({
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Invalid Information, Record Not Found!'
     });
 
     // Delete all previous OTPs
-    await deleteOTPs(query);
+    await deleteOTPs({ email });
 
     const otpObj = await addOTP({
         email: user.email,
         otp: generateRandomOTP(),
     });
 
-    if (email) {
-        await sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` });
-    }
-
     generateResponse({ code: otpObj.otp }, 'Verification Code is Generated Successfully', res);
+
+    sendEmail({ email, subject: 'Verification Code', message: `Your OTP Code is ${otpObj.otp}` })
+        .then(() => console.log("Email sent successfully"))
+        .catch(err => console.error("Email sending failed: ", err));
 });
 
 // verify code

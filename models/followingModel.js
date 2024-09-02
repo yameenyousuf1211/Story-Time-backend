@@ -9,6 +9,9 @@ const followingSchema = new Schema({
   following: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true, versionKey: false });
 
+// Define the compound index
+followingSchema.index({ user: 1, following: 1 });
+
 // pagination plugins
 followingSchema.plugin(mongoosePaginate);
 followingSchema.plugin(aggregatePaginate);

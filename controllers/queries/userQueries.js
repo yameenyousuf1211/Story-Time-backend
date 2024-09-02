@@ -12,7 +12,6 @@ exports.getUsersQuery = (keyword = "", user, story) => {
                     { isActive: true },
                     { isDeleted: false },
                     { username: { $regex: keyword, $options: 'i' } },
-
                 ]
             }
         },
@@ -64,7 +63,7 @@ exports.getUsersQuery = (keyword = "", user, story) => {
                             $and: [
                                 { $expr: { $in: ['$$userId', '$tag'] } },
                                 { isDeleted: false },
-                                { _id: { $eq: new Types.ObjectId(story) } }, // Match against the provided story _id
+                                { _id: { $eq: new Types.ObjectId(story) } },
                             ],
                         },
                     },
@@ -79,8 +78,17 @@ exports.getUsersQuery = (keyword = "", user, story) => {
                 isTagged: { $cond: [{ $gt: [{ $size: '$taggedStory' }, 0] }, true, false] },
             },
         },
-        { $project: { follower: 0, following: 0, refreshToken: 0, password: 0, taggedStory: 0 } },
-        { $sort: { isTagged: -1, createdAt: -1 } }, // sort on tagged first then latest
+        {
+            $project: {
+                username: 1,
+                email: 1,
+                profileImage: 1,
+                isFollower: 1,
+                isFollowing: 1,
+                isTagged: 1,
+            },
+        },
+        { $sort: { isTagged: -1, createdAt: -1 } },
     ]
 }
 

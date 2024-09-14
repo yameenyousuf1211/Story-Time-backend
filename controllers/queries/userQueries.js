@@ -218,40 +218,38 @@ exports.getAllUserQuery = (keyword, user, status) => {
                             $and: [
                                 { $expr: { $eq: ['$creator', '$$userId'] } },
                                 { isDeleted: false },
-                                { type: 'text' },
                             ],
                         },
                     },
-                ],
-                as: 'textStories',
-            },
-        },
-        {
-            $lookup: {
-                from: 'stories',
-                let: { userId: '$_id' },
-                pipeline: [
                     {
-                        $match: {
-                            $and: [
-                                { $expr: { $eq: ['$creator', '$$userId'] } },
-                                { isDeleted: false },
-                                { type: 'video' },
-                            ],
+                        $group: {
+                            _id: null,
+                            totalLikes: { $sum: { $size: '$likes' } },
+                            textStoriesCount: {
+                                $sum: {
+                                    $cond: [{ $eq: ['$type', 'text'] }, 1, 0],
+                                },
+                            },
+                            videoStoriesCount: {
+                                $sum: {
+                                    $cond: [{ $eq: ['$type', 'video'] }, 1, 0],
+                                },
+                            },
                         },
                     },
                 ],
-                as: 'videoStories',
+                as: 'storyStats',
             },
         },
         {
             $addFields: {
-                textStoriesCount: { $size: '$textStories' },
-                videoStoriesCount: { $size: '$videoStories' },
+                textStoriesCount: { $arrayElemAt: ['$storyStats.textStoriesCount', 0] },
+                videoStoriesCount: { $arrayElemAt: ['$storyStats.videoStoriesCount', 0] },
+                totalLikesCount: { $arrayElemAt: ['$storyStats.totalLikes', 0] },
             },
         },
         {
-            $unset: ['textStories', 'videoStories'],
+            $unset: ['storyStats'],
         },
         {
             $project: {

@@ -19,7 +19,8 @@ const fileFilter = (req, file, cb) => {
     const fileType = file.mimetype.split("/")[0];
     const fileExtension = file.mimetype.split("/")[1];
 
-    if (fileType === "image" || fileExtension === "pdf") {
+    // Allow images, videos, and PDFs
+    if (fileType === "image" || fileType === "video" || fileExtension === "pdf") {
       cb(null, true);
     } else {
       cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE"), false);
@@ -43,15 +44,22 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
     const keys = [];
 
     files.map((file) => {
-      let key = `uploads/${uuid()}-${base64 ? 'image.png' : file.originalname}`;
-      let contentType = file.mimetype;
-      let body = base64 ? Buffer.from(file.replace(/^data:image\/\w+;base64,/, ""), 'base64') : file.buffer;
+      let key;
+      let contentType;
+      let body;
 
       if (base64) {
-        // Extract MIME type if available, otherwise default to image/png
-        const mimeMatch = file.match(/^data:(image\/\w+);base64,/);
+        // Extract MIME type if available, default to image/png for images
+        const mimeMatch = file.match(/^data:(image\/\w+|video\/\w+);base64,/);
         contentType = mimeMatch ? mimeMatch[1] : 'image/png';
+        body = Buffer.from(file.replace(/^data:image\/\w+;base64,|^data:video\/\w+;base64,/, ""), 'base64');
         key = `uploads/${uuid()}.${contentType.split('/')[1]}`;
+      } else {
+        // Use the MIME type and buffer directly for non-base64 files
+        contentType = file.mimetype;
+        body = file.buffer;
+        const fileExtension = file.originalname.split('.').pop(); // get file extension
+        key = `uploads/${uuid()}.${fileExtension}`;
       }
 
       const params = {
@@ -63,9 +71,7 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
       };
 
       const uploadPromise = s3client.send(new PutObjectCommand(params));
-      
       uploadPromises.push(uploadPromise);
-
       keys.push(key);
     });
 

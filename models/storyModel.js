@@ -18,6 +18,8 @@ const storySchema = new Schema({
     isDeleted: { type: Boolean, default: false },
     hiddenBy: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     sharedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    video: { type: String, default: "" },
+    thumbnail: { type: String, default: "" },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

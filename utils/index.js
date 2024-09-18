@@ -4,6 +4,7 @@ const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
+const { removeInvalidTokens } = require('../models/userModel');
 
 // console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
@@ -196,18 +197,24 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
     if (deviceTokens.length <= 0) {
         return;
     }
+
+    const stringData = Object.entries(data).reduce((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+    }, {});
+
     const messages = deviceTokens.map((token) => ({
         notification: {
-            title: title,
-            body: body,
+            title: String(title),
+            body: String(body),
         },
-        data: data,
+        data: stringData,
         token: token,
     }));
 
     console.log('message', { messages });
     try {
-        const response = await firebaseApp.messaging().sendEach(message);
+        const response = await firebaseApp.messaging().sendEach(messages);
         const invalidTokens = [];
         const sendResponses = response.responses;
         sendResponses.forEach((response, index) => {
@@ -219,8 +226,7 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
                 if (
                     response.error.code === "messaging/invalid-registration-token" ||
                     response.error.code === "messaging/invalid-argument" ||
-                    response.error.code ===
-                    "messaging/registration-token-not-registered"
+                    response.error.code === "messaging/registration-token-not-registered"
                 ) {
                     invalidTokens.push(deviceTokens[index]);
                 }
@@ -229,6 +235,7 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
 
         if (invalidTokens.length > 0) {
             console.log("invalid tokens", { invalidTokens });
+            await removeInvalidTokens(invalidTokens);
         }
         console.log("Successfully sent message:", response);
         return response;

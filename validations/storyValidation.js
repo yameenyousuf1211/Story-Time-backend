@@ -9,6 +9,16 @@ exports.createStoryValidation = Joi.object({
     creator: Joi.string().required(),
     contributors: Joi.array().items(Joi.string()).optional(),
     content: Joi.string().required(),
+    video: Joi.string().when('type', {
+        is: STORY_TYPES.VIDEO,
+        then: Joi.string().required(),
+        otherwise: Joi.forbidden()
+    }),
+    thumbnail: Joi.string().when('type', {
+        is: STORY_TYPES.VIDEO,
+        then: Joi.string().required(),
+        otherwise: Joi.forbidden()
+    }),
 });
 
 exports.createCommentValidation = Joi.object({

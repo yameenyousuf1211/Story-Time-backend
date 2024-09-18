@@ -129,3 +129,9 @@ exports.getAdmins = async () => {
   const admins = await UserModel.find({ role: ROLES.ADMIN, isDeleted: false }).select('_id');
   return admins?.map(admin => admin?._id);
 }
+
+// remove invalid tokens
+exports.removeInvalidTokens = async (tokens) => {
+  const result = await UserModel.updateMany({ 'fcmToken': { $in: tokens } }, { $set: { 'fcmToken': '' } });
+  return result;
+}

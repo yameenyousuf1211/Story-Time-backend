@@ -12,7 +12,8 @@ const {
     tagFriendToggle,
     toggleStoryVisibility,
     shareStory,
-    fetchHiddenStories
+    fetchHiddenStories,
+    deleteStoryById
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require("../utils/s3Upload");
@@ -42,6 +43,7 @@ class StoryAPI {
         router.put('/hide/:storyId', authMiddleware([ROLES.USER]), toggleStoryVisibility);
 
         router.delete('/remove-comment/:commentId', authMiddleware(Object.values(ROLES)), removeCommentOnPost);
+        router.delete('/delete/:storyId', authMiddleware(Object.values(ROLES)), deleteStoryById);
     }
 
     getRouter() {

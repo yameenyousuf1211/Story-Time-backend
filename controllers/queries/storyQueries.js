@@ -83,7 +83,8 @@ exports.getUserStoriesQuery = (user, type) => {
             $match: {
                 contributors: new Types.ObjectId(user),
                 type,
-                hiddenBy: { $nin: [new Types.ObjectId(user)] }
+                hiddenBy: { $nin: [new Types.ObjectId(user)] },
+                isDeleted: { $ne: true }
             }
         },
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },
@@ -106,7 +107,8 @@ exports.fetchHiddenStoriesQuery = (user, type) => {
             $match: {
                 contributors: new Types.ObjectId(user),
                 hiddenBy: new Types.ObjectId(user),
-                type
+                type,
+                isDeleted: { $ne: true }
             }
         },
         { $lookup: { from: "categories", localField: "subCategory", foreignField: "_id", as: "subCategory" } },

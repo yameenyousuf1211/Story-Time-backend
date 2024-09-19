@@ -383,3 +383,24 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
     generateResponse(newStory, 'Story shared successfully', res);
 });
 
+// delete story by id (soft deleted)
+exports.deleteStoryById = asyncHandler(async (req, res, next) => {
+    const { storyId } = req.params;
+
+    // check if ID is valid
+    if (!Types.ObjectId.isValid(storyId)) return next({
+        statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+        message: 'invalid story id'
+    });
+
+    const story = await findStoryById(storyId);
+    if (!story) return next({
+        statusCode: STATUS_CODES.NOT_FOUND,
+        message: 'Story not found'
+    });
+
+    story.isDeleted = true;
+    await story.save();
+
+    generateResponse(story, 'Story deleted successfully', res);
+});

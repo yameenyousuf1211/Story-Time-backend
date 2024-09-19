@@ -1,5 +1,5 @@
 const { Schema, model } = require("mongoose");
-const { getMongoosePaginatedData } = require("../utils");
+const { getMongoosePaginatedData, getMongooseAggregatePaginatedData } = require("../utils");
 const mongoosePaginate = require('mongoose-paginate-v2');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 
@@ -29,6 +29,17 @@ exports.getAllCategories = async ({ query, page, limit }) => {
     });
 
     return { categories: data, pagination };
+};
+
+exports.fetchAllCategories = async ({ query, page, limit }) => {
+    const { data, pagination } = await getMongooseAggregatePaginatedData({
+        model: CategoryModel,
+        query,
+        page,
+        limit,
+    });
+
+    return { data, pagination };
 };
 
 // create new category

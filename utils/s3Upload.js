@@ -2,6 +2,7 @@ const multer = require("multer");
 const { S3Client, PutObjectCommand, S3, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const uuid = require("uuid").v4;
 const storage = multer.memoryStorage();
+const path = require('path');
 
 exports.config = () => {
   return {
@@ -44,22 +45,18 @@ exports.s3Uploadv3 = async (files, base64 = false) => {
     const keys = [];
 
     files.map((file) => {
-      let key;
-      let contentType;
-      let body;
+      let key, contentType, body;
 
       if (base64) {
-        // Extract MIME type if available, default to image/png for images
-        const mimeMatch = file.match(/^data:(image\/\w+|video\/\w+);base64,/);
+        const mimeMatch = file.match(/^data:(image\/\w+|video\/\w+|application\/pdf);base64,/);
         contentType = mimeMatch ? mimeMatch[1] : 'image/png';
-        body = Buffer.from(file.replace(/^data:image\/\w+;base64,|^data:video\/\w+;base64,/, ""), 'base64');
+        body = Buffer.from(file.replace(/^data:(image\/\w+|video\/\w+|application\/pdf);base64,/, ""), 'base64');
         key = `uploads/${uuid()}.${contentType.split('/')[1]}`;
       } else {
-        // Use the MIME type and buffer directly for non-base64 files
         contentType = file.mimetype;
         body = file.buffer;
-        const fileExtension = file.originalname.split('.').pop(); // get file extension
-        key = `uploads/${uuid()}.${fileExtension}`;
+        const fileExtension = path.extname(file.originalname);
+        key = `uploads/${uuid()}${fileExtension}`;
       }
 
       const params = {

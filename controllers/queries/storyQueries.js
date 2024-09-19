@@ -64,7 +64,8 @@ exports.getStoriesQuery = (user) => {
                     { tag: new Types.ObjectId(user) },
                     { $expr: { $gt: [{ $size: '$visibleFollowedContributors' }, 0] } }
                 ],
-                isHiddenByMe: { $ne: true }
+                isHiddenByMe: { $ne: true },
+                isDeleted: { $ne: true }
             },
         },
         { $lookup: { from: "users", localField: "creator", foreignField: "_id", as: "creator" } },

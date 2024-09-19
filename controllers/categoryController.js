@@ -1,9 +1,9 @@
 const { STATUS_CODES } = require('../utils/constants');
 const { parseBody, generateResponse, getRandomIndexFromArray, asyncHandler } = require('../utils/index');
-const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById, updateCategories } = require('../models/categoryModel');
+const { createCategory, getAllCategories, findCategory, findCategories, updateCategoryById, updateCategories, fetchAllCategories } = require('../models/categoryModel');
 const { createCategoryValidation, updateCategoryValidation } = require('../validations/categoryValidation');
 const { Types } = require('mongoose');
-const { categoryQuery } = require('./queries/categoryQueries');
+const { categoryQuery, getCategoriesByLikesQuery } = require('./queries/categoryQueries');
 const { s3Uploadv3 } = require('../utils/s3Upload');
 
 exports.createCategory = asyncHandler(async (req, res, next) => {
@@ -149,4 +149,12 @@ exports.getCategoryById = asyncHandler(async (req, res, next) => {
     });
 
     generateResponse(category, 'Category retrieved successfully', res);
+});
+
+exports.getCategoriesByLikes = asyncHandler(async (req, res, next) => {
+    const { page = 1, limit = 10 } = req.query;
+    const query = getCategoriesByLikesQuery();
+    const categoryData = await fetchAllCategories({ query, page, limit });
+
+    generateResponse(categoryData, 'Categories retrieved successfully', res);
 });

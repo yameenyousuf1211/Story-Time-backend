@@ -16,7 +16,7 @@ exports.createStoryValidation = Joi.object({
     }),
     thumbnail: Joi.string().when('type', {
         is: STORY_TYPES.VIDEO,
-        then: Joi.string().required(),
+        then: Joi.string().optional(),
         otherwise: Joi.forbidden()
     }),
 });

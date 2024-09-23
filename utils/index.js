@@ -4,7 +4,6 @@ const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
-const { removeInvalidTokens } = require('../models/userModel');
 
 // console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
@@ -232,6 +231,8 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
                 }
             }
         });
+
+        const { removeInvalidTokens } = require('../models/userModel'); // lazy loading to avoid circular dependency 
 
         if (invalidTokens.length > 0) {
             console.log("invalid tokens", { invalidTokens });

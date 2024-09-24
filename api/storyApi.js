@@ -13,7 +13,8 @@ const {
     toggleStoryVisibility,
     shareStory,
     fetchHiddenStories,
-    deleteStoryById
+    deleteStoryById,
+    fetchStoriesByLikes
 } = require('../controllers/storyController');
 const authMiddleware = require('../middlewares/auth');
 const { upload } = require("../utils/s3Upload");
@@ -32,6 +33,7 @@ class StoryAPI {
         router.get('/user', authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchUserStories);
         router.get("/:storyId", authMiddleware([ROLES.USER, ROLES.ADMIN]), fetchStoryById);
         router.get('/comments/:storyId', authMiddleware(Object.values(ROLES)), getCommentsOfStory);
+        router.get('/admin/most-liked', authMiddleware([ROLES.ADMIN]), fetchStoriesByLikes);
 
         router.post('/', authMiddleware([ROLES.USER]), createStory);
         router.post('/add-comment', authMiddleware(Object.values(ROLES)), upload.fields([{ name: "media", maxCount: 5 }]), addCommentOnStory);

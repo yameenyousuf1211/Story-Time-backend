@@ -187,6 +187,7 @@ exports.fetchStoriesByLikesQuery = (month, status) => {
                 'creator.username': 1,
                 'creator.email': 1,
                 'creator.isActive': 1,
+                'creator.profileImage': 1,
                 createdAt: 1,
                 updatedAt: 1,
             }

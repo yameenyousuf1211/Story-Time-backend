@@ -180,6 +180,7 @@ exports.fetchStoriesByLikesQuery = (month, status) => {
                 _id: 1,
                 type: 1,
                 category: '$category.name',
+                categoryImage:"$category.image",
                 likesCount: { $size: '$likes' },
                 'creator._id': 1,
                 'creator.firstName': 1,

@@ -2,7 +2,7 @@ const { generateResponse, parseBody, asyncHandler, } = require('../utils');
 const { createStory, getAllStories, findStoryById, updateStoryById } = require('../models/storyModel');
 const { STATUS_CODES, STORY_TYPES, NOTIFICATION_TYPES } = require('../utils/constants');
 const { createStoryValidation, createCommentValidation } = require('../validations/storyValidation');
-const { getStoriesQuery, getUserStoriesQuery, fetchHiddenStoriesQuery } = require('./queries/storyQueries');
+const { getStoriesQuery, getUserStoriesQuery, fetchHiddenStoriesQuery, fetchStoriesByLikesQuery } = require('./queries/storyQueries');
 const { createComment, removeCommentById, getCommentById, getAllComments, updateCommentById, countComments } = require('../models/commentModel');
 const { Types } = require('mongoose');
 const { s3Uploadv3 } = require('../utils/s3Upload');
@@ -51,6 +51,23 @@ exports.fetchUserStories = asyncHandler(async (req, res, next) => {
 
     if (req.query.hidden) query = fetchHiddenStoriesQuery(user, type);
     else query = getUserStoriesQuery(user, type);
+
+    const storiesData = await getAllStories({ query, page, limit });
+    if (storiesData?.stories.length === 0) {
+        generateResponse(null, 'No stories found', res);
+        return;
+    }
+
+    generateResponse(storiesData, 'Stories fetched successfully', res);
+});
+
+exports.fetchStoriesByLikes = asyncHandler(async (req, res, next) => {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const month = parseInt(req.query.month);
+    const status = req.query.status;
+
+    const query = fetchStoriesByLikesQuery(month, status);
 
     const storiesData = await getAllStories({ query, page, limit });
     if (storiesData?.stories.length === 0) {

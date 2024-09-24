@@ -123,3 +123,78 @@ exports.fetchHiddenStoriesQuery = (user, type) => {
         { $sort: { createdAt: -1 } }
     ];
 }
+
+exports.fetchStoriesByLikesQuery = (month, status) => {
+    let query = [
+        {
+            $match: {
+                isDeleted: false
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'creator',
+                foreignField: '_id',
+                as: 'creator'
+            }
+        },
+        {
+            $unwind: '$creator'
+        }
+    ];
+
+    if (status === 'active' || status === 'inactive') {
+        query.push({
+            $match: {
+                'creator.isActive': status === 'active'
+            }
+        });
+    }
+
+    if (month && month >= 1 && month <= 12) {
+        query.push({
+            $match: {
+                $expr: {
+                    $eq: [{ $month: "$createdAt" }, month]
+                }
+            }
+        });
+    }
+
+    query = [
+        ...query,
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'subCategory',
+                foreignField: '_id',
+                as: 'category'
+            }
+        },
+        {
+            $unwind: '$category'
+        },
+        {
+            $project: {
+                _id: 1,
+                type: 1,
+                category: '$category.name',
+                likesCount: { $size: '$likes' },
+                'creator._id': 1,
+                'creator.firstName': 1,
+                'creator.lastName': 1,
+                'creator.username': 1,
+                'creator.email': 1,
+                'creator.isActive': 1,
+                createdAt: 1,
+                updatedAt: 1,
+            }
+        },
+        {
+            $sort: { likesCount: -1 }
+        }
+    ];
+
+    return query;
+};

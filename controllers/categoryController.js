@@ -152,8 +152,11 @@ exports.getCategoryById = asyncHandler(async (req, res, next) => {
 });
 
 exports.getCategoriesByLikes = asyncHandler(async (req, res, next) => {
-    const { page = 1, limit = 10 } = req.query;
-    const query = getCategoriesByLikesQuery();
+    const { page = 1, limit = 10, sortOrder = '-1' } = req.query;
+    const month = parseInt(req.query.month);
+    const sortDirection = parseInt(sortOrder) === 1 ? 1 : -1;
+
+    const query = getCategoriesByLikesQuery(month, sortDirection);
     const categoryData = await fetchAllCategories({ query, page, limit });
 
     generateResponse(categoryData, 'Categories retrieved successfully', res);

@@ -10,9 +10,14 @@ exports.categoryQuery = (parent, search) => {
     return query;
 };
 
-exports.getCategoriesByLikesQuery = () => {
+exports.getCategoriesByLikesQuery = (month, sortOrder = -1) => {
     return [
-        { $match: { parent: { $ne: null }, isDeleted: false } },
+        {
+            $match: {
+                parent: { $ne: null },
+                isDeleted: false
+            }
+        },
         {
             $lookup: {
                 from: 'categories',
@@ -25,26 +30,48 @@ exports.getCategoriesByLikesQuery = () => {
         {
             $lookup: {
                 from: 'stories',
-                localField: '_id',
-                foreignField: 'subCategory',
-                as: 'stories'
+                let: { categoryId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$subCategory', '$$categoryId'] },
+                            isDeleted: false
+                        }
+                    },
+                    {
+                        $project: {
+                            likesCount: { $size: '$likes' },
+                            createdAt: 1
+                        }
+                    },
+                    ...(month ? [
+                        {
+                            $match: {
+                                $expr: { $eq: [{ $month: '$createdAt' }, month] }
+                            }
+                        }
+                    ] : []),
+                    {
+                        $group: {
+                            _id: null,
+                            totalLikes: { $sum: '$likesCount' }
+                        }
+                    }
+                ],
+                as: 'storyStats'
             }
         },
         {
-            $unwind: {
-                path: '$stories',
-                preserveNullAndEmptyArrays: true
+            $project: {
+                _id: 1,
+                name: 1,
+                image: 1,
+                parentName: '$parentCategory.name',
+                totalLikes: {
+                    $ifNull: [{ $arrayElemAt: ['$storyStats.totalLikes', 0] }, 0]
+                }
             }
         },
-        {
-            $group: {
-                _id: '$_id',
-                name: { $first: '$name' },
-                image: { $first: '$image' },
-                parentName: { $first: '$parentCategory.name' },
-                totalLikes: { $sum: { $size: { $ifNull: ['$stories.likes', []] } } }
-            }
-        },
-        { $sort: { totalLikes: -1 } }
+        { $sort: { totalLikes: sortOrder } }
     ];
 };

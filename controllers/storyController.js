@@ -66,10 +66,11 @@ exports.fetchStoriesByLikes = asyncHandler(async (req, res, next) => {
     const limit = req.query.limit || 10;
     const month = parseInt(req.query.month);
     const status = req.query.status;
+    const search = req.query.search;
 
-    const query = fetchStoriesByLikesQuery(month, status);
-
+    const query = fetchStoriesByLikesQuery(month, status, search);
     const storiesData = await getAllStories({ query, page, limit });
+
     if (storiesData?.stories.length === 0) {
         generateResponse(null, 'No stories found', res);
         return;
@@ -77,6 +78,7 @@ exports.fetchStoriesByLikes = asyncHandler(async (req, res, next) => {
 
     generateResponse(storiesData, 'Stories fetched successfully', res);
 });
+
 
 // get a story by Id
 exports.fetchStoryById = asyncHandler(async (req, res, next) => {

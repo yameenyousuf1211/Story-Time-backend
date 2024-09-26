@@ -124,7 +124,7 @@ exports.fetchHiddenStoriesQuery = (user, type) => {
     ];
 }
 
-exports.fetchStoriesByLikesQuery = (month, status) => {
+exports.fetchStoriesByLikesQuery = (month, status, search) => {
     let query = [
         {
             $match: {
@@ -145,19 +145,25 @@ exports.fetchStoriesByLikesQuery = (month, status) => {
     ];
 
     if (status === 'active' || status === 'inactive') {
-        query.push({
-            $match: {
-                'creator.isActive': status === 'active'
-            }
-        });
+        query.push({ $match: { 'creator.isActive': status === 'active' } });
     }
 
     if (month && month >= 1 && month <= 12) {
         query.push({
             $match: {
-                $expr: {
-                    $eq: [{ $month: "$createdAt" }, month]
-                }
+                $expr: { $eq: [{ $month: "$createdAt" }, month] }
+            }
+        });
+    }
+
+    // Add user search functionality
+    if (search) {
+        query.push({
+            $match: {
+                $or: [
+                    { 'creator.email': { $regex: search, $options: 'i' } },
+                    { 'creator.username': { $regex: search, $options: 'i' } }
+                ]
             }
         });
     }
@@ -180,7 +186,7 @@ exports.fetchStoriesByLikesQuery = (month, status) => {
                 _id: 1,
                 type: 1,
                 category: '$category.name',
-                categoryImage:"$category.image",
+                categoryImage: "$category.image",
                 likesCount: { $size: '$likes' },
                 'creator._id': 1,
                 'creator.firstName': 1,

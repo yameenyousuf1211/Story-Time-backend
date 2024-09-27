@@ -50,4 +50,4 @@ jobs:
     - run: git pull
     - run: npm install
     - run: echo '${{secrets.PROD_ENV}}' > .env
-    - run: sudo pm2 restart apis-story-time
+    - run: pm2 restart apis-story-time

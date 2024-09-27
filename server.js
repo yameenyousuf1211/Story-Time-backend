@@ -36,7 +36,7 @@ module.exports.io = io;
 app.set("io", io);
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "250mb" }));
 app.use(cookieSession({
     name: 'session',
     keys: [process.env.COOKIE_KEY],

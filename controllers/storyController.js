@@ -387,6 +387,8 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
         category: story.category,
         subCategory: story.subCategory,
         sharedBy: userId,
+        video: story.video ? story.video : '',
+        thumbnail: story.thumbnail ? story.thumbnail : '',
     });
 
     const contributorsToNotify = story.contributors.filter(contributor => contributor.toString() !== userId.toString());

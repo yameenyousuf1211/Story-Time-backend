@@ -71,6 +71,17 @@ exports.createAndSendNotification = async ({
             title = 'Support Message';
             body = message;
             break;
+
+        case NOTIFICATION_TYPES.STORY_CREATED:
+            title = 'Story Created';
+            body = 'Story has been created successfully';
+            break;
+
+        case NOTIFICATION_TYPES.STORY_CREATION_FAILED:
+            title = 'Story Creation Failed';
+            body = 'Unable to create your story.';
+            break;
+
         default:
             break;
     }
@@ -101,7 +112,7 @@ exports.createAndSendNotification = async ({
         };
 
         if (fcmTokens.length > 0) {
-        
+
             const deviceToken = Array.isArray(fcmTokens) ? fcmTokens : [];
             await sendFirebaseNotification(
                 title,

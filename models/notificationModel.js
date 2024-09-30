@@ -46,84 +46,90 @@ exports.createAndSendNotification = async ({
     isReceiverAdmin = false,
     save = true,
 }) => {
-    let body;
+    try {
+        let body;
 
-    if (!sender && senderId) sender = await findUser({ _id: senderId });
+        if (!sender && senderId) sender = await findUser({ _id: senderId });
 
-    switch (type) {
-        case NOTIFICATION_TYPES.ADMIN_NOTIFICATION:
-            body = message;
-            title = title;
-            break;
-        case NOTIFICATION_TYPES.LIKE_POST:
-            title = `${sender?.username}`;
-            body = `liked your post`;
-            break;
-        case NOTIFICATION_TYPES.COMMENT:
-            title = `${sender?.username}`;
-            body = `commented on your post`;
-            break;
-        case NOTIFICATION_TYPES.SHARE_POST:
-            title = `${sender?.username}`;
-            body = `shared your post`;
-            break;
-        case NOTIFICATION_TYPES.SUPPORT_MESSAGE:
-            title = 'Support Message';
-            body = message;
-            break;
+        switch (type) {
+            case NOTIFICATION_TYPES.ADMIN_NOTIFICATION:
+                body = message;
+                title = title;
+                break;
+            case NOTIFICATION_TYPES.LIKE_POST:
+                title = `${sender?.username}`;
+                body = `liked your post`;
+                break;
+            case NOTIFICATION_TYPES.COMMENT:
+                title = `${sender?.username}`;
+                body = `commented on your post`;
+                break;
+            case NOTIFICATION_TYPES.SHARE_POST:
+                title = `${sender?.username}`;
+                body = `shared your post`;
+                break;
+            case NOTIFICATION_TYPES.SUPPORT_MESSAGE:
+                title = 'Support Message';
+                body = message;
+                break;
 
-        case NOTIFICATION_TYPES.STORY_CREATED:
-            title = 'Story Created';
-            body = 'Story has been created successfully';
-            break;
+            case NOTIFICATION_TYPES.STORY_CREATED:
+                title = 'Story Created';
+                body = 'Story has been created successfully';
+                break;
 
-        case NOTIFICATION_TYPES.STORY_CREATION_FAILED:
-            title = 'Story Creation Failed';
-            body = 'Unable to create your story.';
-            break;
+            case NOTIFICATION_TYPES.STORY_CREATION_FAILED:
+                title = 'Story Creation Failed';
+                body = 'Unable to create your story.';
+                break;
 
-        default:
-            break;
-    }
-
-    let notification = null;
-    if (save) {
-        notification = await NotificationModel.create({
-            ...(receiverId && { receiver: receiverId }),
-            sender: sender?._id,
-            isReceiverAdmin,
-            type,
-            body,
-            title,
-            story,
-            chatId,
-        });
-    }
-
-
-
-    if (!isReceiverAdmin) {
-        const fcmTokens = await getFcmTokens(receiverId);
-
-        data = {
-            notificationId: notification?._id.toString(),
-            type: notification?.type,
-            storyId: notification?.story?.toString(),
-        };
-
-        if (fcmTokens.length > 0) {
-
-            const deviceToken = Array.isArray(fcmTokens) ? fcmTokens : [];
-            await sendFirebaseNotification(
-                title,
-                body,
-                deviceToken,
-                data
-            );
+            default:
+                break;
         }
-    }
 
-    return notification;
+        let notification = null;
+        if (save) {
+            notification = await NotificationModel.create({
+                ...(receiverId && { receiver: receiverId }),
+                sender: sender?._id,
+                isReceiverAdmin,
+                type,
+                body,
+                title,
+                story,
+                chatId,
+            });
+        }
+
+
+
+        if (!isReceiverAdmin) {
+            const fcmTokens = await getFcmTokens(receiverId);
+
+            data = {
+                notificationId: notification?._id.toString(),
+                type: notification?.type,
+                storyId: notification?.story?.toString(),
+            };
+
+            if (fcmTokens.length > 0) {
+
+                const deviceToken = Array.isArray(fcmTokens) ? fcmTokens : [];
+                await sendFirebaseNotification(
+                    title,
+                    body,
+                    deviceToken,
+                    data
+                );
+            }
+        }
+
+        return notification;
+    }
+    catch (e) {
+        console.log('Error creating and sending notification:', e);
+
+    }
 };
 
 exports.getNotificationCount = (query) => NotificationModel.countDocuments(query);

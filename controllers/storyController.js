@@ -395,17 +395,17 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Story not found'
     });
-
+    const { type, creator, contributors, content, category, subCategory, video, thumbnail } = story;
     const newStory = await createStory({
-        type: story.type,
-        creator: story.creator,
-        contributors: [...story.contributors],
-        content: story.content,
-        category: story.category,
-        subCategory: story.subCategory,
+        type,
+        creator,
+        contributors,
+        content,
+        category,
+        subCategory,
         sharedBy: userId,
-        video: story.video ? story.video : '',
-        thumbnail: story.thumbnail ? story.thumbnail : '',
+        video: video || '',
+        thumbnail: thumbnail || '',
     });
 
     const contributorsToNotify = story.contributors.filter(contributor => contributor.toString() !== userId.toString());

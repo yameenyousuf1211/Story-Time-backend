@@ -47,7 +47,9 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
     const isAdmin = req.user.role === ROLES.ADMIN;
     const { page = 1, limit = 10, type = NOTIFICATION_TYPES.ADMIN_NOTIFICATION } = req.query;
 
-    const query = isAdmin ? { type, isReceiverAdmin: true } : { receiver: req.user.id };
+    const query = type === NOTIFICATION_TYPES.SUPPORT_MESSAGE
+        ? { type, isReceiverAdmin: true }
+        : isAdmin ? { type } : { receiver: req.user.id };
 
     if (isAdmin) {
         await updateNotifications({ isReceiverAdmin: true, isRead: false }, { $set: { isRead: true } });

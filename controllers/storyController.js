@@ -19,9 +19,26 @@ exports.createStory = asyncHandler(async (req, res, next) => {
         message: error.details[0].message
     });
 
-    // create story in db
-    const story = await createStory(body);
-    generateResponse(story, 'Story created successfully', res);
+    try {
+        // create story in db
+        const story = await createStory(body);
+        generateResponse(story, 'Story created successfully', res);
+
+        await createAndSendNotification({
+            receiverId: story.creator,
+            type: NOTIFICATION_TYPES.STORY_CREATED,
+            story: story.id
+        });
+    } catch (err) {
+        await createAndSendNotification({
+            receiverId: req.user.id,
+            type: NOTIFICATION_TYPES.STORY_CREATION_FAILED,
+        });
+        return next({
+            statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
+            message: 'Failed to create story'
+        });
+    }
 });
 
 // get all stories
@@ -378,15 +395,17 @@ exports.shareStory = asyncHandler(async (req, res, next) => {
         statusCode: STATUS_CODES.NOT_FOUND,
         message: 'Story not found'
     });
-
+    const { type, creator, contributors, content, category, subCategory, video, thumbnail } = story;
     const newStory = await createStory({
-        type: story.type,
-        creator: story.creator,
-        contributors: [...story.contributors],
-        content: story.content,
-        category: story.category,
-        subCategory: story.subCategory,
+        type,
+        creator,
+        contributors,
+        content,
+        category,
+        subCategory,
         sharedBy: userId,
+        video: video || '',
+        thumbnail: thumbnail || '',
     });
 
     const contributorsToNotify = story.contributors.filter(contributor => contributor.toString() !== userId.toString());

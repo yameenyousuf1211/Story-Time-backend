@@ -47,7 +47,9 @@ exports.getAllNotifications = asyncHandler(async (req, res, next) => {
     const isAdmin = req.user.role === ROLES.ADMIN;
     const { page = 1, limit = 10, type = NOTIFICATION_TYPES.ADMIN_NOTIFICATION } = req.query;
 
-    const query = isAdmin ? { type } : { receiver: req.user.id };
+    const query = type === NOTIFICATION_TYPES.SUPPORT_MESSAGE
+        ? { type, isReceiverAdmin: true }
+        : isAdmin ? { type } : { receiver: req.user.id };
 
     if (isAdmin) {
         await updateNotifications({ isReceiverAdmin: true, isRead: false }, { $set: { isRead: true } });
@@ -78,6 +80,6 @@ exports.sendTestNotification = asyncHandler(async (req, res, next) => {
     const { token } = parseBody(req.body);
     const deviceToken = Array.isArray(token) ? token : [token];
 
-    await sendFirebaseNotification('Test Notification','This is a test notification',deviceToken,req.body.data)
+    await sendFirebaseNotification('Test Notification', 'This is a test notification', deviceToken, req.body.data)
     generateResponse(null, 'Test notification sent successfully', res);
 });

@@ -22,7 +22,6 @@
     "firebase-admin": "^12.2.0",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
-    "mailtrap": "^3.4.0",
     "moment": "^2.29.4",
     "mongoose": "^8.0.2",
     "mongoose-aggregate-paginate-v2": "^1.0.6",

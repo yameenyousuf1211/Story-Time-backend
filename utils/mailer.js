@@ -2,16 +2,24 @@ const nodeMailer = require("nodemailer");
 
 class Mailer {
     static async sendEmail({ email, subject, message }) {
+
         const transporter = nodeMailer.createTransport({
-            service: "gmail",
+            host: "live.smtp.mailtrap.io", // TODO move this to env
+            port: 587,
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD,
+              user: "api",
+              pass: 'd4f7cec201095ca646e708b4d6a6ad9d' // TODO move this to env
+            
             },
-        });
+          });
+
+        const sender = {
+            address: "ceo@storytime.social", // TODO move this to env
+            name: "Storytime",
+        };
 
         const mailOptions = {
-            from: process.env.EMAIL,
+            from: sender,
             to: email,
             subject,
             text: message,

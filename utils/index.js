@@ -4,9 +4,14 @@ const { sign } = require('jsonwebtoken');
 const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
+const { BetaAnalyticsDataClient } = require('@google-analytics/data');
+const serviceAccountKey = require('../serviceAccountKey.json');
 
 // console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
+const analyticsDataClient = new BetaAnalyticsDataClient({
+    credentials: serviceAccountKey,
+});
 
 // Response generation utility
 exports.generateResponse = (data, message, res, code = 200) => {
@@ -245,3 +250,33 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
         return error;
     }
 };
+
+exports.getAppMetrics = async () => {
+    const metrics = ['keyEvents'];
+    try {
+        const [response] = await analyticsDataClient.runReport({
+            property: `properties/${process.env.GA_PROPERTY_ID}`,
+            dateRanges: [
+                {
+                    startDate: '2021-01-01',
+                    endDate: 'today',
+                },
+            ],
+            metrics: metrics.map(name => ({ name })),
+        });
+
+        if (!response.rows || response.rows.length === 0) {
+            console.log("No data returned from the API");
+            return {};
+        }
+
+        const results = response.rows[0].metricValues.reduce((acc, metricValue, index) => {
+                acc[metrics[index]] = metricValue.value; 
+                return acc;
+            }, {}); 
+
+        return results;
+    } catch (error) {
+        console.error("Error fetching data from Google Analytics API:", error);
+    }
+}

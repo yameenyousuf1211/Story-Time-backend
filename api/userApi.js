@@ -6,7 +6,8 @@ const { checkAvailability, getAllUsers, getUserProfile, followUnFollowToggle,
   reportUser, getAllReports, deleteUser, addOrUpdateCard, deleteCard, getCard,
   getAllUsersForAdmin, userStatusToggle, editAdminInfo,
   toggleUserProfileMode, checkAllAvailability, getGuestAndUserCount,
-  subscribeUser, createOrFetchGuestUser } = require('../controllers/userController');
+  subscribeUser, createOrFetchGuestUser,
+  fetchTotalDownloads } = require('../controllers/userController');
 const { upload } = require("../utils/s3Upload");
 
 class UserAPI {
@@ -26,6 +27,7 @@ class UserAPI {
     router.get('/card', authMiddleware(Object.values(ROLES)), getCard)
     router.get('/get-users', authMiddleware([ROLES.ADMIN]), getAllUsersForAdmin);
     router.get('/user-count', getGuestAndUserCount);
+    router.get('/total-downloads', fetchTotalDownloads);
 
     router.post('/check-availability', checkAvailability); // checking uniqueness of email, or username (1 at a time)
     router.post('/follow-toggle', authMiddleware([ROLES.USER]), followUnFollowToggle);

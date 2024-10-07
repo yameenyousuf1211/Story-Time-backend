@@ -1,5 +1,5 @@
 const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount } = require('../models/userModel');
-const { generateResponse, parseBody, asyncHandler } = require('../utils/index');
+const { generateResponse, parseBody, asyncHandler, fetchTotalDownloads, getAppMetrics } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
 const {
@@ -512,6 +512,11 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   const message = status ? 'User subscribed successfully' : 'User unsubscribed successfully';
   generateResponse(user, message, res);
 });
+
+exports.fetchTotalDownloads = async (req, res, next) => {
+  const totalDownloads = await getAppMetrics();
+  generateResponse(totalDownloads, 'Total downloads fetched successfully', res);
+};
 
 // create default admin account
 (async function createDefaultAdminAccount() {

@@ -270,10 +270,10 @@ exports.getAppMetrics = async () => {
             return {};
         }
 
-        const results = {};
-        response.rows[0].metricValues.forEach((metricValue, index) => {
-            results[metrics[index]] = metricValue.value;
-        });
+        const results = response.rows[0].metricValues.reduce((acc, metricValue, index) => {
+                acc[metrics[index]] = metricValue.value; 
+                return acc;
+            }, {}); 
 
         return results;
     } catch (error) {

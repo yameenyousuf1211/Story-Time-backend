@@ -78,3 +78,12 @@ exports.editAdminInfoValidation = Joi.object({
   email: Joi.string().email({ minDomainSegments: 2 }),
   password: Joi.string().min(8).max(30),
 });
+
+exports.subscriptionValidation = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required(),
+  productId: Joi.string().required(),
+  purchaseTime: Joi.date().required(),
+  purchaseToken: Joi.string().required(),
+  autoRenewing: Joi.boolean().required(),
+});

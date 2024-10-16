@@ -145,3 +145,5 @@ exports.removeInvalidTokens = async (tokens) => {
   const result = await UserModel.updateMany({ 'fcmToken': { $in: tokens } }, { $set: { 'fcmToken': '' } });
   return result;
 }
+
+exports.findAndUpdateUser = (query, obj) => UserModel.findOneAndUpdate(query, obj, { new: true });

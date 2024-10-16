@@ -52,7 +52,7 @@ const userSchema = new Schema({
   settings: { type: settingSchema, default: {} },
   card: { type: cardSchema, default: null },
   resetToken: { type: String, select: false },
-  isSubscribed: { type: SubscriptionSchema, default: {} },
+  subscription: { type: SubscriptionSchema, default: {} },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

@@ -524,7 +524,7 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   }
 
   // Update user's subscription
-  user.isSubscribed = {
+  user.subscription = {
     ...subscriptionDetails,
     isActive: true
   };
@@ -542,12 +542,11 @@ exports.getUserSubscription = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
 
   const user = await findUser({ _id: userId });
-
-  if (!user.isSubscribed) {
+  if (!user.subscription) {
     return generateResponse(null, 'User is not subscribed', res);
   }
 
-  generateResponse(user.isSubscribed, 'User subscription details fetched successfully', res);
+  generateResponse(user.subscription, 'User subscription details fetched successfully', res);
 });
 
 // create default admin account

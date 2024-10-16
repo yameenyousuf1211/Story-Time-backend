@@ -4,7 +4,8 @@ const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
 const {
   checkAvailabilityValidation, updateProfileValidation, notificationsToggleValidation, getAllUsersValidation,
-  reportUserValidation, addCardValidation, editAdminInfoValidation, checkAllAvailabilityValidation
+  reportUserValidation, addCardValidation, editAdminInfoValidation, checkAllAvailabilityValidation,
+  subscriptionValidation
 } = require('../validations/userValidation');
 const { Types } = require('mongoose');
 const { addFollowing, findFollowing, deleteFollowing } = require('../models/followingModel');
@@ -488,35 +489,66 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 });
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
-  const { socialAuthId = 'ABCD', email = 'ABCD', status } = req.body;
+  const { socialAuthId, email, ...subscriptionDetails } = req.body;
 
-  if (status === undefined) return next({
-    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-    message: 'Please provide the status'
-  });
+  // Validate subscription details
+  const { error } = subscriptionValidation.validate(subscriptionDetails);
+  if (error) {
+    return next({
+      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+      message: error.details[0].message
+    });
+  }
 
+  // Ensure either socialAuthId or email is provided
+  if (!socialAuthId && !email) {
+    return next({
+      statusCode: STATUS_CODES.BAD_REQUEST,
+      message: 'Either socialAuthId or email is required'
+    });
+  }
+
+  // Find user by socialAuthId or email
   const user = await findUser({
     $or: [
       { socialAuthId },
-      { email }]
+      { email }
+    ]
   });
 
-  if (!user) return next({
-    statusCode: STATUS_CODES.NOT_FOUND,
-    message: 'User not found'
-  });
+  if (!user) {
+    return next({
+      statusCode: STATUS_CODES.NOT_FOUND,
+      message: 'User not found'
+    });
+  }
 
-  user.isSubscribed = status;
+  // Update user's subscription
+  user.isSubscribed = {
+    ...subscriptionDetails,
+    isActive: true
+  };
+
   await user.save();
-
-  const message = status ? 'User subscribed successfully' : 'User unsubscribed successfully';
-  generateResponse(user, message, res);
+  generateResponse(user, 'User subscription updated successfully', res);
 });
 
 exports.fetchTotalDownloads = async (req, res, next) => {
   const totalDownloads = await getAppMetrics();
   generateResponse(totalDownloads, 'Total downloads fetched successfully', res);
 };
+
+exports.getUserSubscription = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const user = await findUser({ _id: userId });
+
+  if (!user.isSubscribed) {
+    return generateResponse(null, 'User is not subscribed', res);
+  }
+
+  generateResponse(user.isSubscribed, 'User subscription details fetched successfully', res);
+});
 
 // create default admin account
 (async function createDefaultAdminAccount() {

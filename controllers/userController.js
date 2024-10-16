@@ -1,4 +1,4 @@
-const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount } = require('../models/userModel');
+const { findUser, getAllUsers, updateUser, createUser, addOrUpdateCard, getPremiumNonPremiumCount, findAndUpdateUser } = require('../models/userModel');
 const { generateResponse, parseBody, asyncHandler, fetchTotalDownloads, getAppMetrics } = require('../utils/index');
 const { STATUS_CODES, ROLES, } = require('../utils/constants');
 const { getUsersQuery, getFriendsQuery, getBlockedUsersQuery, getAllUserQuery } = require('./queries/userQueries');
@@ -491,46 +491,24 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
   const { socialAuthId, email, ...subscriptionDetails } = req.body;
 
-  // Validate subscription details
-  const { error } = subscriptionValidation.validate(subscriptionDetails);
-  if (error) {
-    return next({
-      statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
-      message: error.details[0].message
-    });
-  }
+  const { error } = subscriptionValidation.validate(req.body);
 
-  // Ensure either socialAuthId or email is provided
-  if (!socialAuthId && !email) {
-    return next({
-      statusCode: STATUS_CODES.BAD_REQUEST,
-      message: 'Either socialAuthId or email is required'
-    });
-  }
-
-  // Find user by socialAuthId or email
-  const user = await findUser({
-    $or: [
-      { socialAuthId },
-      { email }
-    ]
+  if (error) return next({
+    statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
+    message: error.details[0].message
   });
 
-  if (!user) {
-    return next({
-      statusCode: STATUS_CODES.NOT_FOUND,
-      message: 'User not found'
-    });
-  }
+  const query = {};
+  if (socialAuthId) query.socialAuthId = socialAuthId;
+  if (email) query.email = email;
 
-  // Update user's subscription
-  user.subscription = {
-    ...subscriptionDetails,
-    isActive: true
-  };
+  const updatedUser = await findAndUpdateUser(query, { subscription: { ...subscriptionDetails, isActive: true } });
+  if (!updatedUser) return next({
+    statusCode: STATUS_CODES.NOT_FOUND,
+    message: 'User not found'
+  });
 
-  await user.save();
-  generateResponse(user, 'User subscription updated successfully', res);
+  generateResponse(updatedUser, 'User subscription updated successfully', res);
 });
 
 exports.fetchTotalDownloads = async (req, res, next) => {
@@ -542,10 +520,9 @@ exports.getUserSubscription = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
 
   const user = await findUser({ _id: userId });
-  if (!user.subscription) {
+  if (!user || !user.subscription) {
     return generateResponse(null, 'User is not subscribed', res);
   }
-
   generateResponse(user.subscription, 'User subscription details fetched successfully', res);
 });
 

@@ -19,6 +19,16 @@ const cardSchema = new Schema({
   cvv: { type: String, default: "" },
 }, { versionKey: false, _id: false })
 
+const SubscriptionSchema = new Schema({
+  name: { type: String, default: "" },
+  description: { type: String, default: "" },
+  productId: { type: String, default: "" },
+  purchaseTime: { type: Date, default: null },
+  purchaseToken: { type: String, default: "" },
+  autoRenewing: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: false },
+}, { versionKey: false, _id: false })
+
 // user schema
 const userSchema = new Schema({
   socialAuthId: { type: String, default: null },
@@ -42,7 +52,7 @@ const userSchema = new Schema({
   settings: { type: settingSchema, default: {} },
   card: { type: cardSchema, default: null },
   resetToken: { type: String, select: false },
-  isSubscribed: { type: Boolean, default: false },
+  isSubscribed: { type: SubscriptionSchema, default: {} },
 }, { timestamps: true, versionKey: false });
 
 // pagination plugins

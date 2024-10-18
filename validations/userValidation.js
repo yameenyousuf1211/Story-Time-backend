@@ -86,6 +86,7 @@ exports.subscriptionValidation = Joi.object({
   purchaseTime: Joi.date().required(),
   purchaseToken: Joi.string().required(),
   autoRenewing: Joi.boolean().required(),
+  isActive:Joi.boolean().optional(),
   socialAuthId: Joi.string(),
   email: Joi.string().email()
 }).or('socialAuthId', 'email')

@@ -106,22 +106,30 @@ exports.getPremiumNonPremiumCount = async () => {
   const response = await UserModel.aggregate([
     {
       $group: {
-        _id: "$isSubscribed",
+        _id: {
+          isPremium: {
+            $cond: {
+              if: { $eq: ["$subscription.isActive", true] },
+              then: true,
+              else: false
+            }
+          }
+        },
         count: { $sum: 1 }
       }
     },
     {
       $project: {
         _id: 0,
-        isSubscribed: "$_id",
+        isPremium: "$_id.isPremium",
         count: 1
       }
     }
   ]).exec();
 
   const counts = response.reduce(
-    (acc, { isSubscribed, count }) => {
-      if (isSubscribed) {
+    (acc, { isPremium, count }) => {
+      if (isPremium) {
         acc.premiumUsersCount = count;
       } else {
         acc.nonPremiumUsersCount = count;
@@ -132,8 +140,7 @@ exports.getPremiumNonPremiumCount = async () => {
   );
 
   return counts;
-
-}
+};
 
 exports.getAdmins = async () => {
   const admins = await UserModel.find({ role: ROLES.ADMIN, isDeleted: false }).select('_id');

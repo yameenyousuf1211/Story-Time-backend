@@ -499,8 +499,10 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   });
 
   const query = {};
+
   if (socialAuthId) query.socialAuthId = socialAuthId;
   if (email) query.email = email;
+
   
   const updatedUser = await findAndUpdateUser(query, { subscription: { ...subscriptionDetails } });
   if (!updatedUser) return next({

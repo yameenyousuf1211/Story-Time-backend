@@ -46,6 +46,7 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: echo '${{secrets.FIREBASE_JSON}}' > firebase.json
+    - run: echo '${{secrets.SERVICE_ACCOUNT_KEY}}' > serviceAccountKey.json
     - run: git checkout main
     - run: git pull
     - run: npm install

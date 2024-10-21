@@ -5,13 +5,12 @@ const { default: mongoose } = require('mongoose');
 const firebase = require("firebase-admin");
 const serviceAccount = require("../firebase.json");
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
-const serviceAccountKey = require('../serviceAccountKey.json');
+// const serviceAccountKey = require('../serviceAccountKey.json');
 
-// console.log('serviceAccount', serviceAccount);
-const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
-const analyticsDataClient = new BetaAnalyticsDataClient({
-    credentials: serviceAccountKey,
-});
+// const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
+// const analyticsDataClient = new BetaAnalyticsDataClient({
+//     credentials: serviceAccountKey,
+// });
 
 // Response generation utility
 exports.generateResponse = (data, message, res, code = 200) => {

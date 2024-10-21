@@ -489,7 +489,7 @@ exports.getGuestAndUserCount = asyncHandler(async (req, res, next) => {
 });
 
 exports.subscribeUser = asyncHandler(async (req, res, next) => {
-  const { socialAuthId, email, ...subscriptionDetails } = req.body;
+  const {  user, ...subscriptionDetails } = req.body;
 
   const { error } = subscriptionValidation.validate(req.body);
 
@@ -499,8 +499,7 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   });
 
   const query = {};
-  if (socialAuthId) query.socialAuthId = socialAuthId;
-  if (email) query.email = email;
+  if (user) query._id = user;
   
   const updatedUser = await findAndUpdateUser(query, { subscription: { ...subscriptionDetails } });
   if (!updatedUser) return next({

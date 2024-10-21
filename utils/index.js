@@ -214,7 +214,7 @@ exports.sendFirebaseNotification = async (title, body, deviceTokens, data) => {
         data: stringData,
         token: token,
     }));
-
+    
     console.log('message', { messages });
     try {
         const response = await firebaseApp.messaging().sendEach(messages);

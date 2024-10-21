@@ -109,8 +109,12 @@ exports.createAndSendNotification = async ({
             data = {
                 notificationId: notification?._id.toString(),
                 type: notification?.type,
-                storyId: notification?.story?.toString(),
             };
+
+            // Only include storyId if it's not an admin notification
+            if (type !== NOTIFICATION_TYPES.ADMIN_NOTIFICATION && notification?.story) {
+                data.storyId = notification.story.toString();
+            }
 
             if (fcmTokens.length > 0) {
 

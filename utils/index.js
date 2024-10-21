@@ -7,7 +7,6 @@ const serviceAccount = require("../firebase.json");
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 const serviceAccountKey = require('../serviceAccountKey.json');
 
-// console.log('serviceAccount', serviceAccount);
 const firebaseApp = firebase.initializeApp({ credential: firebase.credential.cert(serviceAccount) });
 const analyticsDataClient = new BetaAnalyticsDataClient({
     credentials: serviceAccountKey,

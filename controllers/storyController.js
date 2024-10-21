@@ -130,7 +130,7 @@ exports.likeStoryToggle = asyncHandler(async (req, res, next) => {
         statusCode: STATUS_CODES.UNPROCESSABLE_ENTITY,
         message: 'Please, provide valid storyId.'
     });
-
+    
     const story = await findStoryById(storyId);
     if (!story) return next({
         statusCode: STATUS_CODES.NOT_FOUND,

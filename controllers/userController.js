@@ -499,7 +499,9 @@ exports.subscribeUser = asyncHandler(async (req, res, next) => {
   });
 
   const query = {};
+
   if (user) query._id = user;
+
   
   const updatedUser = await findAndUpdateUser(query, { subscription: { ...subscriptionDetails } });
   if (!updatedUser) return next({
